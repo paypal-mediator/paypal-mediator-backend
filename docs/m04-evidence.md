@@ -1,11 +1,12 @@
 # M04 — Evidence Vault: registros y archivos originales
 
 M04 conserva registros estructurados y archivos originales versionados. La base
-estructurada está desplegada. El incremento de archivos se verificó con una foto
-existente del usuario, NestJS local y Supabase Storage/PostgreSQL reales: carga,
-duplicado y descarga idéntica por SHA-256. Ver [resultados](evidence/m04-real-storage-20261106.json).
-El despliegue de estas rutas en Render se registra por separado en la guía de
-validación. Los conectores comerciales y el análisis de documentos siguen pendientes.
+estructurada y las rutas de archivos están desplegadas en Render (PR #11,
+`f49fd6c`). Se verificó una foto existente del usuario con Supabase Storage y
+PostgreSQL reales: carga, duplicado y descarga idéntica por SHA-256 desde NestJS
+local y desde Render. Ver [resultados de Render](evidence/m04-real-storage-render-20261106.json)
+y [validación](validation.md). Los conectores comerciales y el análisis de
+documentos siguen pendientes.
 
 ## Propiedad y contrato entre módulos
 

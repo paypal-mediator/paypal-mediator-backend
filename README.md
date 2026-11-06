@@ -20,11 +20,13 @@ merchant con checklist documental. Su worker está activo por defecto en producc
 en desarrollo se activa con `TRANSACTION_WORKER_ENABLED=true`. Un `false` explícito
 lo desactiva en cualquier entorno. La ampliación de M03 agrega órdenes,
 vinculación y checklist dinámico mediante una [base estructurada de M04](docs/m04-evidence.md).
-Está desplegada en Render con la quinta migración aplicada. El incremento local
+Está desplegada en Render con la quinta migración aplicada. El incremento
 de M04 agrega PDF/PNG/JPEG privados con hashes y versiones; requiere una sexta
 migración y una séptima para compatibilidad de procedencia en la base desplegada.
 La carga y descarga de una foto existente del usuario se verificaron contra
-Storage real con hashes idénticos; ver [M04](docs/m04-evidence.md). Los conectores
+Storage real con hashes idénticos, también por la API de Render tras desplegar
+PR #11 (`f49fd6c`); las siete migraciones están aplicadas en Supabase. Ver
+[M04](docs/m04-evidence.md). Los conectores
 de M04, M05–M09 y OpenAI siguen pendientes. Las pruebas automatizadas de
 PayPal usan respuestas MOCK explícitas; la verificación real está registrada
 en [docs/validation.md](docs/validation.md).
