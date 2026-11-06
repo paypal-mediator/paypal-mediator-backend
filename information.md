@@ -34,7 +34,8 @@ Validación local: `pnpm check` con 124 pruebas y `pnpm test:db` con 63 pruebas 
 PostgreSQL desechable; quinta migración aplicada, repetida y sin diferencias de
 schema. Integrada por PR #8 (`5dfae91`) y desplegada en Render con la quinta
 migración aplicada en Supabase.
-Storage privado/archivos binarios, conectores comerciales y M05–M09 siguen pendientes.
+En esa entrega quedaron pendientes archivos/Storage (resueltos en el incremento
+M04 descrito arriba), conectores comerciales y M05–M09.
 Ver [M03](docs/m03-transactions.md) y [base M04](docs/m04-evidence.md).
 Prueba nueva en Render: orden `1BY117808X500542F`, captura `2D098449XH6131418`
 por 1 USD ficticio, webhook genuino y trabajo `COMPLETED`. M03 vinculó el pedido
@@ -88,9 +89,10 @@ producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito
 - **M03 — Transaction Manager:** consumidor transaccional de capturas, órdenes
   comerciales, vinculación, idempotencia y consultas por merchant. Readiness dinámico
   con cobertura, faltantes y contradicciones para una captura/un paquete por pedido.
-- **M04 — Base estructurada:** expedientes JSON, origen, hashes y versiones mediante
-  interfaz pública. Archivos binarios, Storage y conectores comerciales siguen pendientes.
-- **Infraestructura:** PostgreSQL y Auth de Supabase configurados, cinco
+- **M04 — Evidence Vault:** expedientes JSON y archivos PDF/PNG/JPEG privados,
+  origen, hashes y versiones mediante interfaz pública. Storage real verificado
+  con un archivo del usuario. Conectores comerciales siguen pendientes.
+- **Infraestructura:** PostgreSQL, Auth y Storage privado de Supabase configurados, siete
   migraciones aplicadas, con conexión TLS y CA oficial. Backend publicado en
   Render Free, Virginia, con despliegue desde `main` después de pasar CI.
 
@@ -115,10 +117,11 @@ producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito
 - La prueba detectó un rechazo inicial de firma por reordenamiento de campos
   durante la validación. Se corrigió preservando el objeto original validado,
   se añadió regresión y se desplegó la corrección (`34e908b`, PR #5).
-- Última validación de código: **124 pruebas unitarias/HTTP y 63 pruebas con
+- Última validación de código: **148 pruebas unitarias/HTTP y 64 pruebas con
   PostgreSQL aprobadas**, además de lint, formato, tipos, Prisma y build.
-  Las suites automatizadas usan PayPal/JWKS MOCK identificados; la prueba
-  publicada de pago, firma y reenvío sí utilizó PayPal Sandbox real.
+  Las suites automatizadas usan PayPal/JWKS/Storage MOCK identificados; las
+  pruebas externas de pago, firma y reenvío usaron PayPal Sandbox real. Una foto
+  del usuario se recuperó desde Render/Storage real con bytes y hashes idénticos.
 
 ### Límites y siguiente paso
 
@@ -128,14 +131,14 @@ producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito
   Investigator, Verifier, presentación de evidencia ni auditoría completa.
 - Se registraron eventos de disputas, pero no se ha demostrado una entrega
   genuina de disputa ni una llamada real a `provide-evidence`.
-- OpenAI, Supabase Storage y el frontend no están integrados en este backend.
+- OpenAI y el frontend no están integrados en este backend. Storage privado sí.
   No se instaló pg-boss; la cola actual es una outbox persistida en PostgreSQL.
 - Swagger está desactivado en Render. El servicio Free puede suspenderse por
   inactividad. CORS sigue configurado para `http://localhost:3000`; al publicar
   el frontend habrá que configurar su origen exacto.
 - El repositorio sigue **privado**; publicación, licencia y video de entrega
   siguen pendientes. No cambiar su visibilidad sin autorización del equipo.
-- **Siguiente paso recomendado:** completar archivos/Storage y fuentes de M04,
+- **Siguiente paso recomendado:** completar conectores y fuentes comerciales de M04,
   y avanzar hacia Investigator/Verifier sobre los originales persistidos.
 
 Detalles operativos y evidencia: [M01](docs/m01-merchants.md),
@@ -250,7 +253,7 @@ paypal-mediator-backend/
 ├── apps/
 │   └── api/                        # Backend NestJS único
 │       ├── prisma.config.ts
-│       ├── prisma/                 # Schema y cinco migraciones
+│       ├── prisma/                 # Schema y siete migraciones
 │       ├── test/                   # unit/, http/, integration/, fixtures/
 │       └── src/
 │           ├── modules/
@@ -294,7 +297,7 @@ cuando se implementen; no añadir carpetas vacías que aparenten trabajo termina
 
 En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M01 y M02
 están implementados; M03 incluye capturas, órdenes y readiness; M04 tiene la base
-estructurada. Archivos/conectores de M04 y M05–M09 son alcance futuro. M10 vive en el repositorio
+estructurada y archivos privados. Conectores de M04 y M05–M09 son alcance futuro. M10 vive en el repositorio
 del frontend. Evitar que un módulo escriba las tablas privadas de otro sin una
 interfaz definida.
 
@@ -681,7 +684,7 @@ El repositorio tendrá un solo `main` estable; **no** mantener ramas largas perm
 - **Render, operativo:** `apps/api`, servicio `resolve-ai-api`, HTTPS y webhook
   público. `npm run start:render` aplica migraciones y arranca la API; readiness
   es `/api/health/ready`. Secretos y CA se configuran fuera de Git.
-- **Supabase, operativo:** PostgreSQL y Auth. Storage privado queda pendiente.
+- **Supabase, operativo:** PostgreSQL, Auth y Storage privado; originales recuperados sin alteraciones.
 - **PayPal Sandbox, operativo:** OAuth, lectura de disputas, suscripción de
   webhooks y prueba genuina de captura/entrega. No se habilitó Live.
 - **Frontend/Vercel:** repositorio separado; despliegue no verificado aquí.
@@ -689,8 +692,9 @@ El repositorio tendrá un solo `main` estable; **no** mantener ramas largas perm
 
 **Variables estimadas para el producto completo:** los valores y variables
 actualmente soportados se documentan en `.env.example` y `docs/deployment.md`.
-OpenAI, Storage y los límites de agentes del ejemplo son para módulos futuros;
-la verificación JWT actual usa `SUPABASE_URL`/JWKS, sin service role.
+OpenAI y los límites de agentes del ejemplo son para módulos futuros. Storage
+usa `SUPABASE_SECRET_KEY` solo en backend (o JWT service role legado). La
+verificación de usuarios usa `SUPABASE_URL`/JWKS y no necesita la clave de Storage.
 
 ```dotenv
 # Backend
