@@ -16,7 +16,8 @@ apps/api/
       http/                 # Errores, request ID y pipe Zod
       core.module.ts        # Proveedores compartidos
     modules/
-      health/               # Único módulo funcional de la base
+      health/               # Liveness y readiness
+      merchants/            # M01: usuarios, políticas e integración Sandbox
     generated/prisma/       # Generado, ignorado en Git
   test/
     unit/
@@ -62,17 +63,21 @@ de dominio de `information.md` siguen siendo propuestas.
   `DATABASE_URL` es conexión de runtime; `DIRECT_URL` es para migraciones y
   puede caer en `DATABASE_URL`. En Supabase usar conexión directa o session
   pooler para migraciones, no transaction pooler.
-- Solo existe una tabla mínima `Merchant`, sin usuarios, permisos ni fixtures.
+- M01 es propietario de Merchant, MerchantMember, MerchantIntegration y
+  MerchantEvent. Usuarios de Supabase Auth se vinculan por UUID; los roles
+  locales se consultan desde PostgreSQL. Ver [M01](m01-merchants.md).
 - Pool de cinco conexiones, tiempos de espera configurables, conexión bajo
   demanda. Liveness no afirma conectividad; readiness consulta PostgreSQL.
 - Errores `{ code, message, requestId }`. Los errores internos se sanitizan y
   solo se registran código, estado y request ID, sin cuerpos ni secretos.
 - `rawBody` disponible para que M02 implemente firma de webhooks. No existe
   todavía ningún endpoint de webhook.
-- Helmet, límite de cuerpo de 1 MB y CORS exacto. M01 debe definir autenticación
-  y autorización antes de exponer operaciones de negocio.
-- Solo `PAYPAL_ENV=sandbox`. Las variables futuras de PayPal, OpenAI y Storage
-  están documentadas, pero no se usan como integraciones activas.
+- Helmet, límite de cuerpo de 1 MB y CORS exacto. M01 valida JWT asimétricos de
+  Supabase y membresías activas antes de acceder al merchant. Roles ADMIN y
+  VIEWER; las políticas exigen aprobación humana.
+- Solo `PAYPAL_ENV=sandbox`. M01 puede comprobar OAuth y lectura de disputas
+  mediante petición explícita del administrador. OpenAI y Storage siguen
+  pendientes. Los tests externos son MOCK identificados.
 - Aprobación humana por defecto para futuros envíos. La IA nunca tendrá
   acceso directo a la operación de presentación de evidencia.
 
@@ -85,6 +90,6 @@ Revisar el override cuando NestJS actualice su dependencia.
 ESLint y typescript-eslint usan Minimatch 11.0.1 mediante override por
 [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 
-M01–M09, autenticación, auditoría append-only, Storage, herramientas de IA,
+M02–M09, auditoría append-only, Storage, herramientas de IA,
 contratos de dominio, prueba real de disputas Sandbox, despliegue y licencia
 acordada por el equipo.

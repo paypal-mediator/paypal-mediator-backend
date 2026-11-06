@@ -7,9 +7,12 @@ Consulta [information.md](information.md) para el producto y
 ## Estado real
 
 Base común: HTTP, configuración Zod, Prisma/PostgreSQL, health/readiness,
-errores uniformes, Swagger y CI. La tabla mínima `merchants` comprueba
-persistencia; M01 aún debe implementar integraciones y autorización.
-M01–M09, PayPal, OpenAI, Storage y autenticación siguen pendientes.
+errores uniformes, Swagger y CI. M01 agrega usuarios Supabase Auth, roles,
+políticas del merchant y comprobación de conectividad PayPal Sandbox.
+La guía de configuración y el contrato para el frontend están en
+[docs/m01-merchants.md](docs/m01-merchants.md).
+M02–M09, OpenAI, Storage y la verificación con cuentas externas reales siguen
+pendientes. Las pruebas PayPal usan respuestas MOCK explícitas.
 
 ## Arranque
 
@@ -43,7 +46,8 @@ readiness devuelve 503. Nunca subir credenciales al repositorio.
 Swagger se desactiva por defecto en producción; `SWAGGER_ENABLED` permite
 configurarlo explícitamente. `CORS_ORIGIN` acepta orígenes exactos separados
 por comas y es obligatorio en producción. CORS no sustituye autenticación.
-Solo existen rutas públicas de salud y documentación.
+Las rutas de salud y documentación son públicas; las rutas de M01 exigen JWT
+de usuario Supabase y una membresía activa provisionada en el servidor.
 
 ## Validación y desarrollo
 

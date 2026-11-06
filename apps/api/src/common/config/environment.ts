@@ -12,6 +12,11 @@ const postgresUrl = z.url().refine((value) => {
 const booleanFlag = z
   .enum(['true', 'false'])
   .transform((value) => value === 'true');
+const optionalString = (schema: z.ZodType<string>) =>
+  z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    schema.optional(),
+  );
 const originList = z.string().transform((value, ctx) => {
   const origins = value.split(',').map((origin) => origin.trim());
   if (
@@ -51,6 +56,23 @@ export const EnvironmentSchema = z.object({
     .default(3000),
   SWAGGER_ENABLED: booleanFlag.optional(),
   PAYPAL_ENV: z.literal('sandbox').default('sandbox'),
+  PAYPAL_CLIENT_ID: optionalString(z.string().trim().min(1).max(512)),
+  PAYPAL_CLIENT_SECRET: optionalString(z.string().min(1).max(512)),
+  PAYPAL_WEBHOOK_ID: optionalString(z.string().trim().min(1).max(512)),
+  PAYPAL_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),
+  SUPABASE_URL: optionalString(
+    z.url().refine((value) => {
+      try {
+        const url = new URL(value);
+        return (
+          ['http:', 'https:'].includes(url.protocol) && url.origin === value
+        );
+      } catch {
+        return false;
+      }
+    }),
+  ),
+  MERCHANT_ID: optionalString(z.uuid()),
   MAX_INVESTIGATION_ROUNDS: z.coerce.number().int().min(1).max(5).default(2),
 });
 
@@ -72,6 +94,25 @@ export function parseEnvironment(input: Record<string, unknown>): Environment {
   ) {
     throw new Error(
       'Invalid environment configuration: CORS_ORIGIN is required in production',
+    );
+  }
+  if (
+    Boolean(result.data.PAYPAL_CLIENT_ID) !==
+    Boolean(result.data.PAYPAL_CLIENT_SECRET)
+  ) {
+    throw new Error(
+      'Invalid environment configuration: PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET must be configured together',
+    );
+  }
+  if (
+    result.data.SUPABASE_URL?.startsWith('http:') &&
+    (result.data.NODE_ENV === 'production' ||
+      !['localhost', '127.0.0.1', '[::1]'].includes(
+        new URL(result.data.SUPABASE_URL).hostname,
+      ))
+  ) {
+    throw new Error(
+      'Invalid environment configuration: SUPABASE_URL requires HTTPS except for local development',
     );
   }
   return result.data;

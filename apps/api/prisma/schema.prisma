@@ -10,10 +10,60 @@ datasource db {
 
 // Minimal merchant identity anchor. M01 will own its integration and authorization.
 model Merchant {
-  id          String   @id @default(uuid()) @db.Uuid
-  displayName String   @map("display_name")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                      String               @id @default(uuid()) @db.Uuid
+  displayName             String               @map("display_name")
+  createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  allowInvestigations     Boolean              @default(false) @map("allow_investigations")
+  allowSubmissions        Boolean              @default(false) @map("allow_submissions")
+  requireMerchantApproval Boolean              @default(true) @map("require_merchant_approval")
+  members                 MerchantMember[]
+  integration             MerchantIntegration?
+  events                  MerchantEvent[]
 
   @@map("merchants")
+}
+
+enum MerchantRole {
+  ADMIN
+  VIEWER
+}
+
+model MerchantMember {
+  id         String       @id @default(uuid()) @db.Uuid
+  merchantId String       @map("merchant_id") @db.Uuid
+  authUserId String       @unique @map("auth_user_id") @db.Uuid
+  role       MerchantRole @default(VIEWER)
+  active     Boolean      @default(true)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  merchant   Merchant     @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@index([merchantId])
+  @@map("merchant_members")
+}
+
+model MerchantIntegration {
+  merchantId            String   @id @map("merchant_id") @db.Uuid
+  connectionStatus      String   @map("connection_status")
+  disputesReadStatus    String   @map("disputes_read_status")
+  credentialFingerprint String   @map("credential_fingerprint")
+  lastCheckedAt         DateTime @map("last_checked_at") @db.Timestamptz(3)
+  paypalHttpStatus      Int?     @map("paypal_http_status")
+  paypalDebugId         String?  @map("paypal_debug_id")
+  merchant              Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@map("merchant_integrations")
+}
+
+model MerchantEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  merchantId  String   @map("merchant_id") @db.Uuid
+  actorUserId String   @map("actor_user_id") @db.Uuid
+  action      String
+  details     Json
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@index([merchantId, createdAt])
+  @@map("merchant_events")
 }

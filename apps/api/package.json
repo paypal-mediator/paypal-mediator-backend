@@ -19,6 +19,7 @@
     "@resolve-ai/contracts": "workspace:*",
     "dotenv": "^17.0.0",
     "helmet": "^8.1.0",
+    "jose": "6.2.15",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "4.6.7"
