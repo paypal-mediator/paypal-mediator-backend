@@ -199,3 +199,10 @@ por HTTP. La clave service role debe mantenerse fuera de clientes y Git.
 
 El adaptador usa las operaciones de [carga estándar de Supabase](https://supabase.com/docs/guides/storage/uploads/standard-uploads)
 y [descarga autenticada de buckets privados](https://supabase.com/docs/guides/storage/serving/downloads).
+
+# Originales de fuentes conectadas
+
+`ORDER_SOURCE_RECORD` conserva la respuesta original del adaptador y su
+normalización, con origen `PAYPAL` o `CONNECTED_SYSTEM`, versiones y SHA-256.
+`ORDER_RECORD` conserva cada fuente por separado; no reemplaza registros DEMO
+ni certifica envío/entrega. Ver [fuentes de pedidos](order-information-sources.md).

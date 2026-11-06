@@ -101,6 +101,7 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/settings/integrations',
       '/api/settings/integrations/paypal/check',
       '/api/webhooks/paypal',
+      '/api/transactions/{id}/refresh-order-sources',
       '/api/transactions/{id}/evidence/files',
       '/api/transactions/{id}/evidence/files/{evidenceId}',
       '/api/transactions',

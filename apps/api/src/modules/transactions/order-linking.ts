@@ -54,6 +54,6 @@ export async function reconcileOrder(
       merchantOrderId: candidate && !error ? candidate.id : null,
       orderLinkError: error,
     },
-    include: { merchantOrder: true },
+    include: { merchantOrder: true, orderSources: true },
   });
 }

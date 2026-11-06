@@ -3,6 +3,7 @@ export * from './merchants.js';
 export * from './event-ingestion.js';
 export * from './transactions.js';
 export * from './orders.js';
+export * from './order-sources.js';
 export * from './evidence.js';
 
 export const HealthResponseSchema = z.object({

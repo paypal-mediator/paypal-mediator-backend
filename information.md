@@ -1,5 +1,19 @@
 # ResolveAI — Contexto de proyecto para Codex CLI
 
+## Incremento M03/M04: fuentes de pedidos
+
+La consulta automática de Orders v2 y la interfaz extensible para fuentes ERP
+están implementadas. Prueba real nueva: orden Sandbox `5AA87137A4512751T`, captura
+`9L5781332K437132K` por 1 USD ficticio, aprobada en Opera GX. M02 remoto verificó
+el evento; el worker nuevo local recuperó dos artículos, cantidades/SKU/importes
+exactos, sin pedido manual. M04 guardó original y normalización con integridad
+válida; refresh sin duplicados. Faltan envío/entrega, por lo que readiness sigue
+`INCOMPLETE`. ERP aún no conectado; segundo adaptador probado con MOCK.
+Validación: `pnpm check` (168 pruebas unitarias/HTTP), `pnpm test:db` (72),
+migración aplicada/repetida en PostgreSQL de pruebas, sin diferencia de schema,
+y aplicada en Supabase. Ver [fuentes](docs/order-information-sources.md) y
+[evidencia real](docs/evidence/order-sources-sandbox-20261106.json).
+
 > **Estado del documento:** contexto de producto, estado verificado del backend y especificación de los módulos pendientes. Los flujos futuros descritos abajo no implican que todo el MVP esté implementado.
 > **Versión:** 1.1 · **Actualizado:** 2026-11-06 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
 > **Alcance del repositorio:** únicamente backend. El frontend/M10 se desarrolla en otro repositorio.
