@@ -79,9 +79,11 @@ RLS sin políticas públicas protege ambas tablas frente a clientes Supabase.
 No se registran cuerpos, tokens, firmas ni credenciales en logs.
 
 La cola es una outbox persistida en PostgreSQL, sin Redis ni proceso en memoria.
-Los consumidores de M03/M07 y su interfaz de ejecución se implementarán junto
-con esos módulos. Por ahora los trabajos permanecen `QUEUED`; no existe ningún
-worker que simule procesarlos.
+La interfaz pública `IngestionQueueService` permite consumir trabajos con locks
+y una transacción compartida. M03 consume `TRANSACTION_CAPTURED` y confirma el
+trabajo junto con la captura; registra rechazos terminales como `FAILED` y revierte
+errores inesperados para permitir reintentos. Los trabajos `DISPUTE_CHANGED`
+permanecen `QUEUED` hasta implementar M07. Ver [M03](m03-transactions.md).
 
 ## Configuración y límites de prueba
 
@@ -91,8 +93,9 @@ Sandbox. Sin esa configuración el webhook falla cerrado.
 
 Registrar una URL pública HTTPS real terminada en `/api/webhooks/paypal` y
 suscribir los cuatro eventos de la tabla. No registrar localhost ni un dominio
-ficticio. La API todavía no tiene un despliegue HTTPS configurado y no se ha
-demostrado una entrega firmada real de PayPal. Las pruebas usan cabeceras y
+ficticio. La API está publicada en Render y se verificaron entregas firmadas
+genuinas de PayPal Sandbox; ver [validación](validation.md). Las suites
+automatizadas usan cabeceras y
 respuestas de PayPal **MOCK**, sin añadir un bypass de firma en producción.
 
 `pnpm test` cubre validaciones, firma, errores y HTTP. `pnpm test:db` cubre la

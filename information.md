@@ -209,12 +209,13 @@ paypal-mediator-backend/
 ├── apps/
 │   └── api/                        # Backend NestJS único
 │       ├── prisma.config.ts
-│       ├── prisma/                 # Schema y tres migraciones
+│       ├── prisma/                 # Schema y cuatro migraciones
 │       ├── test/                   # unit/, http/, integration/, fixtures/
 │       └── src/
 │           ├── modules/
 │           │   ├── merchants/
 │           │   ├── event-ingestion/
+│           │   ├── transactions/
 │           │   └── health/
 │           ├── common/             # Auth, guards, errores, logging
 │           └── main.ts
@@ -229,7 +230,7 @@ paypal-mediator-backend/
 └── README.md
 ```
 
-El frontend vive en un repositorio separado. Las carpetas de M03–M09 se crearán
+El frontend vive en un repositorio separado. Las carpetas de M04–M09 se crearán
 cuando se implementen; no añadir carpetas vacías que aparenten trabajo terminado.
 
 ---
@@ -250,7 +251,8 @@ cuando se implementen; no añadir carpetas vacías que aparenten trabajo termina
 | M10 | Merchant Dashboard | UX e integración frontend de M01–M09 | Pantallas end-to-end |
 
 En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M01 y M02
-están implementados; M03–M09 son el alcance futuro. M10 vive en el repositorio
+están implementados; M03 tiene el primer incremento de capturas y consultas;
+órdenes comerciales de M03 y M04–M09 son alcance futuro. M10 vive en el repositorio
 del frontend. Evitar que un módulo escriba las tablas privadas de otro sin una
 interfaz definida.
 
@@ -488,7 +490,7 @@ Barra lateral: `Overview`, `Transactions`, `Disputes`, `Agent Activity`, `Settin
 
 ## 11. Contratos HTTP internos
 
-### Rutas implementadas de la base, M01 y M02
+### Rutas implementadas de la base, M01, M02 y M03
 
 | Método | Ruta | Protección / comportamiento |
 |---|---|---|
@@ -499,6 +501,8 @@ Barra lateral: `Overview`, `Transactions`, `Disputes`, `Agent Activity`, `Settin
 | GET | `/api/settings/integrations` | JWT y membresía; sin secretos |
 | POST | `/api/settings/integrations/paypal/check` | JWT y rol ADMIN; OAuth/lectura real y resultado persistido |
 | POST | `/api/webhooks/paypal` | Sin JWT; exige firma PayPal válida antes de guardar/encolar |
+| GET | `/api/transactions` | JWT y membresía; listado paginado y filtro por captura |
+| GET | `/api/transactions/:id` | JWT y membresía; detalle del merchant con checklist documental |
 
 ### Rutas objetivo del producto
 
