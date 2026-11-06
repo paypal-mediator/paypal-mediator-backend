@@ -6,6 +6,23 @@ const base = {
 };
 
 describe('environment validation', () => {
+  it('enables the capture worker in production and respects an explicit override', () => {
+    const production = {
+      ...base,
+      NODE_ENV: 'production',
+      CORS_ORIGIN: 'https://merchant.example',
+    };
+    expect(parseEnvironment(production).TRANSACTION_WORKER_ENABLED).toBe(true);
+    expect(
+      parseEnvironment({ ...production, TRANSACTION_WORKER_ENABLED: 'false' })
+        .TRANSACTION_WORKER_ENABLED,
+    ).toBe(false);
+    expect(parseEnvironment(base).TRANSACTION_WORKER_ENABLED).toBe(false);
+    expect(
+      parseEnvironment({ ...base, NODE_ENV: 'test' })
+        .TRANSACTION_WORKER_ENABLED,
+    ).toBe(false);
+  });
   it('applies safe defaults and parses explicit false', () => {
     expect(
       parseEnvironment({ ...base, SWAGGER_ENABLED: 'false' }),
@@ -26,6 +43,7 @@ describe('environment validation', () => {
     { CORS_ORIGIN: '' },
     { PAYPAL_ENV: 'live' },
     { SWAGGER_ENABLED: 'yes' },
+    { TRANSACTION_WORKER_ENABLED: 'yes' },
     { DB_CONNECTION_TIMEOUT_MS: '0' },
     { MAX_INVESTIGATION_ROUNDS: '100' },
     { SUPABASE_URL: 'not-a-url' },

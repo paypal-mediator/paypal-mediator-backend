@@ -7,6 +7,23 @@
 
 ## Estado real al 6 de noviembre de 2026
 
+### Trabajo local posterior en M03
+
+En `feat/m03-transaction-manager` se implementó el primer incremento de M03:
+consumo idempotente de capturas verificadas, persistencia, listado/detalle
+autorizados y checklist documental. Validación local: `pnpm check` (109 pruebas)
+y `pnpm test:db` (43 pruebas), con migraciones en PostgreSQL desechable.
+No integrado en `main` ni desplegado. Órdenes comerciales y coordinación con M04
+siguen pendientes. Ver [M03](docs/m03-transactions.md).
+Posteriormente se aplicó la migración de M03 en Supabase y el worker local
+consumió dos capturas genuinas pendientes; listado autenticado real: HTTP 200.
+También se capturó la nueva orden Sandbox `8E96636933870233U` por 1 USD ficticio
+(captura `7HV195624A539251X`, HTTP 201): webhook genuino recibido por M02 en
+Render, trabajo `COMPLETED` y una transacción M03 persistida. Listado y detalle
+locales con JWT real: HTTP 200; acceso sin sesión: HTTP 401.
+Ver [validación](docs/validation.md).
+El estado publicado de Render descrito abajo sigue correspondiendo a M01/M02.
+
 ### Implementado e integrado en `main`
 
 - **Base común:** workspace pnpm, Node 24, TypeScript estricto/ESM, NestJS 11,

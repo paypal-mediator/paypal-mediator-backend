@@ -1,5 +1,77 @@
 # Validaciones del backend
 
+## M03 — Primer incremento, 6 de noviembre de 2026
+
+Validación local en `feat/m03-transaction-manager`, actualizada por avance directo
+desde `main` (`73faa2b`). Las suites automatizadas usan PayPal MOCK;
+la comprobación posterior con Sandbox real se detalla abajo. M03 no desplegado.
+
+- `pnpm check`: correcto; generación/validación Prisma, lint, formato, tipos,
+  **109 pruebas unitarias/HTTP** y build.
+- Cuatro migraciones aplicadas con `pnpm db:deploy` en una base PostgreSQL 18.6
+  desechable en loopback. Segunda aplicación: sin migraciones pendientes.
+- `pnpm test:db`: **43 pruebas aprobadas**, incluidas nueve de M03.
+- La app NestJS, las transacciones PostgreSQL y la comunicación M02–M03 son
+  reales. Firma PayPal/OAuth y JWT/JWKS usan mocks explícitos.
+- Comprobados duplicados concurrentes, conflicto sin sobrescritura, datos
+  inválidos, rollback y reintento, savepoint de rechazos, acceso VIEWER,
+  aislamiento de merchant, paginación y RLS con un rol no propietario.
+- Worker probado con temporizadores controlados: activación explícita,
+  merchant configurado, pausa con cola vacía, reintento tras errores sanitizados,
+  ausencia de solapamiento y espera de la operación activa al cerrar.
+
+La suite de DB se ejecuta por archivos en serie porque comparte un schema y M02
+instala temporalmente un trigger de fallo para probar rollback; así ese trigger
+no interfiere con inserciones de otros módulos. No se modificó Supabase ni Render.
+Ver [alcance y pendientes de M03](m03-transactions.md).
+
+### Validación de M03 con capturas Sandbox genuinas
+
+El 6 de noviembre de 2026, a las 14:25 UTC, se aplicó la cuarta migración
+(`20261106010000_transactions`) en el PostgreSQL Supabase del proyecto. Se inició
+el build local de la rama M03 en `127.0.0.1:3001`, con el worker activado para el
+merchant configurado. Render conserva M01/M02 en `main`; no se desplegó M03.
+
+- El worker consumió los dos trabajos `TRANSACTION_CAPTURED` que estaban en cola.
+  Ambos quedaron `COMPLETED`, con `finishedAt` y sin código de error.
+- La captura histórica `4TD91052PF072424A` produjo la transacción
+  `44c3e329-60db-496c-998a-2131625b5255`, por 1 USD ficticio, vinculada a la orden
+  `5Y118346C7856021V` y al evento persistido
+  `d7423e66-42c2-4b71-8d3c-b799f2267726`.
+- La segunda captura `42311647XV020574X` produjo la transacción
+  `3dc4f887-f710-4511-b524-4c47e1c8ee9e`, vinculada a la orden
+  `8U481631H66031715` y al evento persistido
+  `caef6f2e-fe37-48b9-bdd1-2e0121a9fcee`.
+- Login real Supabase: HTTP 200. Listado protegido local de M03: HTTP 200,
+  dos transacciones, importes como cadenas y checklist `INCOMPLETE` con pedido,
+  tracking y entrega ausentes. No se utilizaron mocks en esta comprobación.
+
+### Nuevo pago Sandbox → Render M02 → worker local M03
+
+El usuario aprobó en Opera GX la orden Sandbox `8E96636933870233U`, por
+1 USD ficticio. El checkout se preparó por API; su aprobación fue manual porque
+el control del navegador falló al iniciar (`failed to write kernel assets`).
+Después de comprobar el estado `APPROVED`, se capturó por la API oficial Sandbox.
+
+- Captura HTTP 201: `7HV195624A539251X`, estado `COMPLETED`, importe `1.00 USD`.
+- Webhook genuino `WH-4D3309745X8121805-54836339YA430861F`, recibido por M02
+  en Render y persistido en Supabase a las `2026-11-06T14:28:28.947Z`.
+- Evento local persistido: `d17c008c-bb82-4c6b-8101-fa8d6a303aae`.
+- Trabajo `f550983c-d386-4466-b763-f419fb68ce0c`: `COMPLETED` a las
+  `2026-11-06T14:28:29.141Z`.
+- Transacción M03: `762e5e48-ed95-4093-ab83-29951fdff0d3`; una sola fila
+  para la captura, con orden y referencia comercial coincidentes con la orden
+  enviada a PayPal. Importe expuesto como cadena `1`, moneda `USD`.
+- Listado filtrado por captura y detalle, con JWT real Supabase: HTTP 200.
+  Listado: exactamente un resultado. Detalle sin sesión: HTTP 401.
+- Checklist `INCOMPLETE`: pago y referencia presentes; documento de pedido,
+  tracking y comprobante de entrega ausentes.
+
+Verificación completada a las `2026-11-06T14:28:44.854Z`, sin mocks ni eventos
+inyectados manualmente. Esta prueba utiliza M01/M02 publicados y el worker/API
+M03 de la rama local contra Supabase compartido. No demuestra un despliegue M03
+en Render, ni pedidos comerciales, M04, agentes o presentación de evidencia.
+
 ## Base común — fea0718
 
 Ejecutada el 5 de noviembre de 2026 en Windows, Node 24.19.0 y pnpm 10.34.9.

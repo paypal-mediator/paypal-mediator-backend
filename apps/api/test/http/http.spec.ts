@@ -101,6 +101,8 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/settings/integrations',
       '/api/settings/integrations/paypal/check',
       '/api/webhooks/paypal',
+      '/api/transactions',
+      '/api/transactions/{id}',
     ]);
     await request(context.app.getHttpServer()).get('/api/docs/').expect(200);
   });

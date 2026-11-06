@@ -21,6 +21,8 @@ services:
         value: 'false'
       - key: PAYPAL_ENV
         value: sandbox
+      - key: TRANSACTION_WORKER_ENABLED
+        value: 'true'
       - key: DB_CONNECTION_TIMEOUT_MS
         value: '10000'
       - key: PAYPAL_TIMEOUT_MS

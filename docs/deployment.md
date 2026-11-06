@@ -37,6 +37,10 @@ Las variables secretas del Blueprint usan `sync: false`.
   Puede permanecer vacío durante el primer despliegue; la ingesta falla cerrada.
 - `CORS_ORIGIN`: origen del frontend; para desarrollo puede ser
   `http://localhost:3000`, aunque la API esté publicada.
+- `TRANSACTION_WORKER_ENABLED=true`: consumidor M03 de capturas verificadas.
+  El código lo habilita por defecto en producción cuando la variable no está
+  definida; un `false` explícito lo desactiva. Requiere `MERCHANT_ID` y las cuatro
+  migraciones aplicadas. Las disputas permanecen en cola para M07.
 
 Agregar en Environment → Secret Files el certificado oficial de Supabase con
 nombre `supabase-ca.crt`. En las URLs de PostgreSQL reemplazar la ruta local
