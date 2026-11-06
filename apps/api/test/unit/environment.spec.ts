@@ -28,6 +28,12 @@ describe('environment validation', () => {
     { SWAGGER_ENABLED: 'yes' },
     { DB_CONNECTION_TIMEOUT_MS: '0' },
     { MAX_INVESTIGATION_ROUNDS: '100' },
+    { SUPABASE_URL: 'not-a-url' },
+    { SUPABASE_URL: 'https://project.supabase.co/auth/v1' },
+    { SUPABASE_URL: 'http://untrusted.example' },
+    { MERCHANT_ID: 'not-a-uuid' },
+    { PAYPAL_CLIENT_ID: 'MOCK_CLIENT_WITHOUT_SECRET' },
+    { PAYPAL_TIMEOUT_MS: '0' },
   ])('rejects invalid configuration %j', (invalid) => {
     expect(() => parseEnvironment({ ...base, ...invalid })).toThrow(
       'Invalid environment configuration',

@@ -1,4 +1,6 @@
-# Validación de la base común
+# Validaciones del backend
+
+## Base común — fea0718
 
 Ejecutada el 5 de noviembre de 2026 en Windows, Node 24.19.0 y pnpm 10.34.9.
 
@@ -26,5 +28,49 @@ y denegado, JSON inválido sin filtración de datos y documentación desactivada
 por defecto en producción. Los casos de entorno comprueban puertos, URLs,
 orígenes, flags, límites de iteraciones y configuración inválida sin secretos.
 
-No se han probado integraciones PayPal/OpenAI, autenticación, Storage ni un
-despliegue remoto: todavía no están implementados.
+En esa entrega no se implementaron ni probaron PayPal/OpenAI, autenticación,
+Storage o despliegue remoto.
+
+## M01 — Merchant e integraciones
+
+Validado localmente el 5 de noviembre de 2026, con Node 24.19.0 y PostgreSQL
+18.6 temporal. Se ejecutaron las dos migraciones en una base vacía y se volvió
+a ejecutar `db:deploy` sin cambios pendientes.
+
+- `pnpm check`: schema, cliente Prisma, lint, formato, tipos, 58 pruebas y build correctos.
+- `pnpm test:db`: 19 pruebas aprobadas contra PostgreSQL real.
+- `pnpm audit`: ninguna vulnerabilidad conocida al ejecutarse.
+- Alta CLI ejecutada dos veces: sin duplicación de membresías ni reinicio de políticas.
+- JWTs con firmas ES256 y servidor JWKS local MOCK: se verifica firma, issuer,
+  audience y expiración; se rechazan tokens inválidos y usuarios anónimos.
+- Membresías, roles, desactivación, configuración, historial, RLS y aprobación
+  obligatoria comprobados contra la base real.
+- PayPal se prueba con respuestas MOCK identificadas: OAuth, lectura, acceso
+  denegado, timeout, respuestas inválidas y rotación de credenciales.
+
+### Verificación con servicios reales
+
+Ejecutada el 5 de noviembre de 2026 (registro UTC:
+`2026-11-06T04:05:13.961Z`) desde el backend compilado, con configuración local
+guardada fuera de Git. Se utilizó Opera GX con las sesiones del usuario para
+configurar una organización/proyecto Supabase Free y la app PayPal Sandbox
+existente, habilitando Customer disputes.
+
+| Comprobación real                                          | Resultado                                    |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| Migraciones en PostgreSQL Supabase                         | Dos migraciones aplicadas                    |
+| Conexión Prisma con session pooler y CA oficial            | Correcta, TLS verificado                     |
+| JWKS de Supabase                                           | HTTP 200, ES256                              |
+| Login de usuario con email y contraseña                    | HTTP 200                                     |
+| Readiness del backend                                      | HTTP 200                                     |
+| Acceso al merchant sin sesión                              | HTTP 401                                     |
+| Acceso con JWT real y membresía ADMIN                      | HTTP 200                                     |
+| OAuth PayPal Sandbox                                       | CONNECTED                                    |
+| Lectura de disputas Sandbox                                | AVAILABLE, HTTP 200                          |
+| Check a través de la ruta protegida y resultado persistido | Correcto                                     |
+| Política de envío                                          | Deshabilitado; aprobación humana obligatoria |
+
+La contraseña inicial del usuario se generó localmente y no se envió correo.
+No se guardaron tokens de sesión en Git. No se probó presentación de evidencia,
+existencia de una disputa elegible, webhooks ni despliegue remoto.
+Ver [configuración de M01](m01-merchants.md).

@@ -20,10 +20,12 @@
     "db:validate": "pnpm --filter @resolve-ai/api exec prisma validate",
     "db:migrate": "pnpm --filter @resolve-ai/api exec prisma migrate dev",
     "db:deploy": "pnpm --filter @resolve-ai/api exec prisma migrate deploy",
+    "merchant:setup": "pnpm --filter @resolve-ai/api exec tsx --tsconfig tsconfig.json src/commands/setup-merchant.ts",
     "check": "pnpm db:generate && pnpm db:validate && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "jose": "6.2.15",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^6.0.0",

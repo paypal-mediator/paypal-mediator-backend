@@ -96,6 +96,10 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
     expect(Object.keys(response.body.paths)).toEqual([
       '/api/health',
       '/api/health/ready',
+      '/api/merchants/me',
+      '/api/merchants/me/settings',
+      '/api/settings/integrations',
+      '/api/settings/integrations/paypal/check',
     ]);
     await request(context.app.getHttpServer()).get('/api/docs/').expect(200);
   });

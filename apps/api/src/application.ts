@@ -38,9 +38,13 @@ export async function createApp(
     const config = new DocumentBuilder()
       .setTitle('ResolveAI Backend')
       .setDescription(
-        'Backend foundation. PayPal, AI and business modules are not implemented yet.',
+        'ResolveAI backend: health and merchant integrations. User JWTs are issued by Supabase Auth.',
       )
       .setVersion('0.1.0')
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        'supabase',
+      )
       .build();
     SwaggerModule.setup(
       'api/docs',

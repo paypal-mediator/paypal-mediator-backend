@@ -11,6 +11,7 @@ import {
 import type { Response } from 'express';
 import type { ApiError } from '@resolve-ai/contracts';
 import type { RequestWithId } from './request-id.middleware.js';
+import { ApiException } from './api.exception.js';
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
@@ -38,7 +39,15 @@ export class ApiExceptionFilter implements ExceptionFilter {
       body.message = 'Database is unavailable';
     }
     if (status >= 500) {
+      if (exception instanceof ApiException) {
+        body.code = exception.code;
+        body.message = exception.publicMessage;
+      }
       this.logger.error({ requestId, status, code: body.code });
+    }
+    if (exception instanceof ApiException && status < 500) {
+      body.code = exception.code;
+      body.message = exception.publicMessage;
     }
     response.status(status).json(body);
   }
