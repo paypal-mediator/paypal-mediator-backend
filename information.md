@@ -7,7 +7,7 @@
 
 ## Estado real al 6 de noviembre de 2026
 
-### Ampliación local M03 — órdenes y coordinación M04
+### Ampliación M03 — órdenes y coordinación M04, integrada y desplegada
 
 En `feat/m03-transaction-manager` se implementaron órdenes comerciales con artículos,
 importes exactos, origen y vinculación antes/después de la captura. La base M04
@@ -17,12 +17,19 @@ Los datos DEMO se etiquetan explícitamente. `READY` es cobertura documental.
 
 Validación local: `pnpm check` con 124 pruebas y `pnpm test:db` con 63 pruebas en
 PostgreSQL desechable; quinta migración aplicada, repetida y sin diferencias de
-schema. No se aplicó esta ampliación en Supabase ni se desplegó todavía a Render.
+schema. Integrada por PR #8 (`5dfae91`) y desplegada en Render con la quinta
+migración aplicada en Supabase.
 Storage privado/archivos binarios, conectores comerciales y M05–M09 siguen pendientes.
 Ver [M03](docs/m03-transactions.md) y [base M04](docs/m04-evidence.md).
-El estado publicado descrito abajo corresponde al primer incremento de M03.
+Prueba nueva en Render: orden `1BY117808X500542F`, captura `2D098449XH6131418`
+por 1 USD ficticio, webhook genuino y trabajo `COMPLETED`. M03 vinculó el pedido
+DEMO y M04 conservó ocho versiones. Se verificaron `READY`, bloqueo por tracking
+contradictorio, retractación y restauración; listado/detalle HTTP 200, sin sesión 401.
+Pedido, tracking y entrega fueron DEMO; autenticación, PayPal y PostgreSQL reales.
+Ver [prueba completa](docs/validation.md). El apartado siguiente conserva el
+historial del primer incremento.
 
-### M03 — Primer incremento integrado y desplegado
+### Historial M03 — Primer incremento integrado y desplegado
 
 En `feat/m03-transaction-manager` se implementó el primer incremento de M03:
 consumo idempotente de capturas verificadas, persistencia, listado/detalle
@@ -30,8 +37,9 @@ autorizados y checklist documental. Validación local: `pnpm check` (109 pruebas
 y `pnpm test:db` (43 pruebas), con migraciones en PostgreSQL desechable.
 Integrado en `main` por PR #6 (`ff12287`) y desplegado en Render el 6 de noviembre.
 La validación posterior para despliegue pasó `pnpm check` con 111 pruebas y CI con
-las 43 pruebas PostgreSQL. Órdenes comerciales y coordinación con M04
-siguen pendientes. Ver [M03](docs/m03-transactions.md).
+las 43 pruebas PostgreSQL. En esa fase quedaban pendientes órdenes comerciales
+y coordinación con M04; se resolvieron en la ampliación descrita arriba.
+Ver [M03](docs/m03-transactions.md).
 Posteriormente se aplicó la migración de M03 en Supabase y el worker local
 consumió dos capturas genuinas pendientes; listado autenticado real: HTTP 200.
 También se capturó la nueva orden Sandbox `8E96636933870233U` por 1 USD ficticio
@@ -62,11 +70,13 @@ producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito
   detección de contenido conflictivo, rollback y RLS en sus tablas.
 - **Comunicación M01–M02:** M02 usa la interfaz pública de M01 para obtener
   contexto del merchant y OAuth. No accede a credenciales desde el frontend.
-- **M03 — Transaction Manager, parcial:** consumidor transaccional de capturas,
-  idempotencia, detección de conflictos, listado/detalle por merchant y checklist
-  documental. No implementa todavía órdenes comerciales ni expedientes M04.
-- **Infraestructura:** PostgreSQL y Auth de Supabase configurados, tres
-  migraciones iniciales y la cuarta de M03 aplicadas, con conexión TLS y CA oficial. Backend publicado en
+- **M03 — Transaction Manager:** consumidor transaccional de capturas, órdenes
+  comerciales, vinculación, idempotencia y consultas por merchant. Readiness dinámico
+  con cobertura, faltantes y contradicciones para una captura/un paquete por pedido.
+- **M04 — Base estructurada:** expedientes JSON, origen, hashes y versiones mediante
+  interfaz pública. Archivos binarios, Storage y conectores comerciales siguen pendientes.
+- **Infraestructura:** PostgreSQL y Auth de Supabase configurados, cinco
+  migraciones aplicadas, con conexión TLS y CA oficial. Backend publicado en
   Render Free, Virginia, con despliegue desde `main` después de pasar CI.
 
 ### Verificado con servicios externos reales
@@ -90,15 +100,16 @@ producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito
 - La prueba detectó un rechazo inicial de firma por reordenamiento de campos
   durante la validación. Se corrigió preservando el objeto original validado,
   se añadió regresión y se desplegó la corrección (`34e908b`, PR #5).
-- Última validación de código: **111 pruebas unitarias/HTTP y 43 pruebas con
+- Última validación de código: **124 pruebas unitarias/HTTP y 63 pruebas con
   PostgreSQL aprobadas**, además de lint, formato, tipos, Prisma y build.
   Las suites automatizadas usan PayPal/JWKS MOCK identificados; la prueba
   publicada de pago, firma y reenvío sí utilizó PayPal Sandbox real.
 
 ### Límites y siguiente paso
 
-- **M03 es parcial; M04–M09 siguen pendientes.** M03 consume capturas verificadas;
-  los trabajos de disputas permanecen `QUEUED`. No hay consumidores de disputas, expedientes,
+- **M04 es parcial; M05–M09 siguen pendientes.** M03 consume capturas verificadas;
+  los trabajos de disputas permanecen `QUEUED`. Hay expedientes estructurados,
+  pero no consumidores de disputas,
   Investigator, Verifier, presentación de evidencia ni auditoría completa.
 - Se registraron eventos de disputas, pero no se ha demostrado una entrega
   genuina de disputa ni una llamada real a `provide-evidence`.
@@ -109,8 +120,8 @@ producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito
   el frontend habrá que configurar su origen exacto.
 - El repositorio sigue **privado**; publicación, licencia y video de entrega
   siguen pendientes. No cambiar su visibilidad sin autorización del equipo.
-- **Siguiente paso recomendado:** completar órdenes comerciales de M03 y
-  coordinar el expediente con M04 mediante contratos públicos.
+- **Siguiente paso recomendado:** completar archivos/Storage y fuentes de M04,
+  y avanzar hacia Investigator/Verifier sobre los originales persistidos.
 
 Detalles operativos y evidencia: [M01](docs/m01-merchants.md),
 [M02](docs/m02-event-ingestion.md), [despliegue](docs/deployment.md) y
@@ -224,13 +235,14 @@ paypal-mediator-backend/
 ├── apps/
 │   └── api/                        # Backend NestJS único
 │       ├── prisma.config.ts
-│       ├── prisma/                 # Schema y cuatro migraciones
+│       ├── prisma/                 # Schema y cinco migraciones
 │       ├── test/                   # unit/, http/, integration/, fixtures/
 │       └── src/
 │           ├── modules/
 │           │   ├── merchants/
 │           │   ├── event-ingestion/
 │           │   ├── transactions/
+│           │   ├── evidence/
 │           │   └── health/
 │           ├── common/             # Auth, guards, errores, logging
 │           └── main.ts
@@ -245,7 +257,7 @@ paypal-mediator-backend/
 └── README.md
 ```
 
-El frontend vive en un repositorio separado. Las carpetas de M04–M09 se crearán
+El frontend vive en un repositorio separado. Las carpetas de M05–M09 se crearán
 cuando se implementen; no añadir carpetas vacías que aparenten trabajo terminado.
 
 ---
@@ -266,8 +278,8 @@ cuando se implementen; no añadir carpetas vacías que aparenten trabajo termina
 | M10 | Merchant Dashboard | UX e integración frontend de M01–M09 | Pantallas end-to-end |
 
 En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M01 y M02
-están implementados; M03 tiene el primer incremento de capturas y consultas;
-órdenes comerciales de M03 y M04–M09 son alcance futuro. M10 vive en el repositorio
+están implementados; M03 incluye capturas, órdenes y readiness; M04 tiene la base
+estructurada. Archivos/conectores de M04 y M05–M09 son alcance futuro. M10 vive en el repositorio
 del frontend. Evitar que un módulo escriba las tablas privadas de otro sin una
 interfaz definida.
 
@@ -518,6 +530,10 @@ Barra lateral: `Overview`, `Transactions`, `Disputes`, `Agent Activity`, `Settin
 | POST | `/api/webhooks/paypal` | Sin JWT; exige firma PayPal válida antes de guardar/encolar |
 | GET | `/api/transactions` | JWT y membresía; listado paginado y filtro por captura |
 | GET | `/api/transactions/:id` | JWT y membresía; detalle del merchant con checklist documental |
+| GET/POST | `/api/orders` | Lectura por membresía; registro de pedido solo ADMIN |
+| GET | `/api/orders/:id` | Pedido comercial del merchant |
+| GET/POST | `/api/transactions/:id/evidence` | Expediente/historial; escritura de tracking y entrega solo ADMIN |
+| POST | `/api/transactions/:id/refresh-evidence` | ADMIN; vinculación y registros base de evidencia síncronos |
 
 ### Rutas objetivo del producto
 

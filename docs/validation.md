@@ -1,5 +1,66 @@
 # Validaciones del backend
 
+## Prueba completa M01–M03 en Render con base M04 — 6 de noviembre de 2026
+
+Ampliación integrada por PR #8 (`5dfae91`, implementación `bd8857c`). CI del PR
+y de `main` `42241302830` aprobado: 124 pruebas unitarias/HTTP, 63 PostgreSQL,
+Prisma, lint, formato, tipos, build y migraciones repetibles. Render aplicó la
+quinta migración en Supabase y publicó el consumidor actualizado.
+
+Prueba autorizada por el usuario, íntegramente contra Render/Supabase y PayPal
+Sandbox, sin consumidor local. Se preparó el checkout por API y el usuario aprobó
+el pago con su comprador de pruebas. La captura se ejecutó después de publicar
+las rutas nuevas y registrar el pedido DEMO.
+
+| Dato                  | Identificador / resultado                                      |
+| --------------------- | -------------------------------------------------------------- |
+| Orden PayPal          | `1BY117808X500542F`                                            |
+| Captura               | `2D098449XH6131418`, HTTP 201, `COMPLETED`, 1 USD ficticio     |
+| Pedido comercial DEMO | `3238f3db-6eb7-437e-af35-71a391fb1a19`                         |
+| Evento PayPal genuino | `WH-1UC87426W66536315-7UH97843UM042004A`                       |
+| Evento persistido M02 | `bab0154e-f6b8-4c5b-a0d0-972df010c20f`                         |
+| Trabajo               | `81b31a1d-55a0-4c29-bde6-f2301cc131d8`, `COMPLETED`, sin error |
+| Transacción M03       | `933cc99f-4926-46a4-9bf9-a41a6c914941`                         |
+| Expediente M04        | `dda534d0-07c5-4bc6-bb8c-7a3c57ffb23e`, revisión 8             |
+
+### Comprobaciones reales
+
+- **M01:** login Supabase y merchant ADMIN HTTP 200; acceso sin sesión HTTP 401.
+  Check protegido HTTP 201, OAuth `CONNECTED`, lectura de disputas `AVAILABLE`,
+  webhook configurado y aprobación humana obligatoria. No se habilitaron envíos.
+- **M02:** webhook sin cabeceras de firma rechazado con HTTP 400 y cero filas para
+  ese control DEMO. Evento genuino recibido a las `2026-11-06T15:18:18.352Z`,
+  trabajo completado a las `2026-11-06T15:18:19.480Z`. La API oficial de PayPal
+  confirmó HTTP 200 el ID de evento y su captura correspondiente.
+- **M03:** pedido registrado HTTP 201, repetición `DUPLICATE` y cambio de contenido
+  HTTP 409. El worker en Render creó una sola transacción, vinculada al pedido
+  por referencias e importe coincidentes. Listado y detalle HTTP 200.
+- **Base M04:** expediente inicial con pago/pedido, tracking DEMO y entrega DEMO
+  persistidos; `INCOMPLETE → READY`. Repetir la misma entrega conservó ID/revisión.
+  Evidencia para otra orden fue rechazada con HTTP 409.
+- Tracking contradictorio produjo `NEEDS_REVIEW/TRACKING_CONTRADICTION`; una
+  corrección restauró `READY`. Retractar la entrega produjo
+  `INCOMPLETE/DELIVERY_RETRACTED`; una nueva versión coherente restauró `READY`.
+- El expediente terminó con ocho versiones, cuatro registros vigentes, todos con
+  integridad válida y `containsDemo=true`. El historial conserva contradicción,
+  correcciones y retractación. Lectura de expediente sin sesión: HTTP 401.
+
+La comprobación funcional terminó a las `2026-11-06T15:18:22.277Z`. Después se
+solicitó un reenvío oficial del mismo webhook: HTTP 202. A las
+`2026-11-06T15:20:12.472Z` se conservaban un evento, un job, una transacción y un
+expediente, sin incrementar su revisión. La API de eventos no expuso confirmaciones
+de transmisión: **no se afirma HTTP 200 de esa segunda entrega**.
+El primer intento de preflight tuvo timeout de transporte; el reintento pasó.
+
+El pago, firma, autorización y persistencia utilizaron servicios Sandbox reales.
+Los datos de pedido/envío/entrega se aportaron como **DEMO**, no mediante un carrier
+real; `READY` describe cobertura documental. No se enviaron evidencias a PayPal
+ni se probaron archivos o Storage.
+
+Evidencia sin credenciales: [resultados de la prueba](evidence/m01-m03-full-sandbox.json)
+y [expediente JSON devuelto por M04](evidence/m04-full-sandbox-dossier.json).
+El segundo archivo es la respuesta del módulo, no un informe visual generado.
+
 ## Ampliación local M03: órdenes y base M04 — 6 de noviembre de 2026
 
 - `pnpm check`: generación/validación Prisma, lint, formato, tipos, **124 pruebas

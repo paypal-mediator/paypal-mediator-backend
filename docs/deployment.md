@@ -8,11 +8,17 @@
   (solo POST; abrirlo en el navegador no genera una entrega).
 - Render: `resolve-ai-api`, plan Free, Virginia, rama `main`.
 
-M03 está publicado desde PR #6 (`ff12287`, implementación `6c3302c`). Verificado
+La ampliación de órdenes comerciales y base M04 está publicada por PR #8
+(`5dfae91`, implementación `bd8857c`). Hay cinco migraciones aplicadas en Supabase.
+El nuevo pago Sandbox `2D098449XH6131418` recorrió M01/M02/M03 exclusivamente en
+Render y produjo un expediente versionado. Pedidos, tracking y entrega de esa
+prueba están etiquetados DEMO. Ver [validación completa](validation.md).
+
+Historial del primer incremento: PR #6 (`ff12287`, implementación `6c3302c`). Verificado
 el 6 de noviembre de 2026 a las 14:40 UTC: readiness HTTP 200, listado filtrado
 y detalle de la captura `7HV195624A539251X` HTTP 200 con JWT real Supabase;
 acceso sin sesión HTTP 401. El worker local temporal se detuvo antes de verificar
-las rutas públicas. Hay cuatro migraciones aplicadas en Supabase. El worker de
+las rutas públicas. En esa fase había cuatro migraciones aplicadas. El worker de
 capturas está habilitado por defecto en producción; ver la variable descrita abajo.
 
 El 6 de noviembre de 2026 se publicó el servicio y se registró la suscripción
@@ -46,7 +52,7 @@ Las variables secretas del Blueprint usan `sync: false`.
   `http://localhost:3000`, aunque la API esté publicada.
 - `TRANSACTION_WORKER_ENABLED=true`: consumidor M03 de capturas verificadas.
   El código lo habilita por defecto en producción cuando la variable no está
-  definida; un `false` explícito lo desactiva. Requiere `MERCHANT_ID` y las cuatro
+  definida; un `false` explícito lo desactiva. Requiere `MERCHANT_ID` y las cinco
   migraciones aplicadas. Las disputas permanecen en cola para M07.
 
 Agregar en Environment → Secret Files el certificado oficial de Supabase con

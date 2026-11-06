@@ -1,0 +1,185 @@
+{
+  "id": "dda534d0-07c5-4bc6-bb8c-7a3c57ffb23e",
+  "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+  "transactionId": "933cc99f-4926-46a4-9bf9-a41a6c914941",
+  "revision": 8,
+  "items": [
+    {
+      "id": "97ba7e24-c988-4862-b7cd-51cd0c2e257f",
+      "type": "PROOF_OF_DELIVERY",
+      "version": 8,
+      "sourceKind": "DEMO",
+      "sourceSystem": "DEMO / MOCK E2E carrier",
+      "externalReference": "DEMO-PROOF-1BY117808X500542F",
+      "retrievedAt": "2026-11-06T15:18:21.534Z",
+      "contentHash": "f5ab4360a5f9239bb73ac9cfd9f63c14955f05b6a21534b1091201b38a884f29",
+      "content": {
+        "status": "DELIVERED",
+        "carrier": "DEMO-CARRIER",
+        "deliveredAt": "2026-11-06T15:18:19.945Z",
+        "trackingNumber": "DEMO-TRACK-1BY117808X500542F",
+        "paypalCaptureId": "2D098449XH6131418",
+        "merchantOrderReference": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3"
+      },
+      "current": true,
+      "integrity": "VALID"
+    },
+    {
+      "id": "f80940f3-f245-4042-ba98-459e64fdf030",
+      "type": "PROOF_OF_DELIVERY",
+      "version": 7,
+      "sourceKind": "DEMO",
+      "sourceSystem": "DEMO / MOCK E2E carrier",
+      "externalReference": "DEMO-PROOF-1BY117808X500542F",
+      "retrievedAt": "2026-11-06T15:18:21.305Z",
+      "contentHash": "3e1c156948f890b30df8792664f6c03d8a1a8da77e7bb67816bbdbc4d757bfbb",
+      "content": {
+        "status": "RETRACTED",
+        "carrier": "DEMO-CARRIER",
+        "deliveredAt": "2026-11-06T15:18:19.945Z",
+        "trackingNumber": "DEMO-TRACK-1BY117808X500542F",
+        "paypalCaptureId": "2D098449XH6131418",
+        "merchantOrderReference": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3"
+      },
+      "current": false,
+      "integrity": "VALID"
+    },
+    {
+      "id": "f276e743-481f-4bd9-8eb7-f76af3a67365",
+      "type": "PROOF_OF_DELIVERY",
+      "version": 6,
+      "sourceKind": "DEMO",
+      "sourceSystem": "DEMO / MOCK E2E carrier",
+      "externalReference": "DEMO-PROOF-1BY117808X500542F",
+      "retrievedAt": "2026-11-06T15:18:21.053Z",
+      "contentHash": "f5ab4360a5f9239bb73ac9cfd9f63c14955f05b6a21534b1091201b38a884f29",
+      "content": {
+        "status": "DELIVERED",
+        "carrier": "DEMO-CARRIER",
+        "deliveredAt": "2026-11-06T15:18:19.945Z",
+        "trackingNumber": "DEMO-TRACK-1BY117808X500542F",
+        "paypalCaptureId": "2D098449XH6131418",
+        "merchantOrderReference": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3"
+      },
+      "current": false,
+      "integrity": "VALID"
+    },
+    {
+      "id": "f870faea-62e0-473a-906c-342e207a7cc8",
+      "type": "PROOF_OF_DELIVERY",
+      "version": 5,
+      "sourceKind": "DEMO",
+      "sourceSystem": "DEMO / MOCK E2E carrier",
+      "externalReference": "DEMO-PROOF-1BY117808X500542F",
+      "retrievedAt": "2026-11-06T15:18:20.779Z",
+      "contentHash": "d2f2e77af38665f35a24daa7d8de91a002526a7c53973396d6e3ebcc9475cdc6",
+      "content": {
+        "status": "DELIVERED",
+        "carrier": "DEMO-CARRIER",
+        "deliveredAt": "2026-11-06T15:18:19.945Z",
+        "trackingNumber": "DEMO-CONTRADICTORY-TRACKING",
+        "paypalCaptureId": "2D098449XH6131418",
+        "merchantOrderReference": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3"
+      },
+      "current": false,
+      "integrity": "VALID"
+    },
+    {
+      "id": "ed9edf63-ab7f-4021-9947-0371f5345472",
+      "type": "PROOF_OF_DELIVERY",
+      "version": 4,
+      "sourceKind": "DEMO",
+      "sourceSystem": "DEMO / MOCK E2E carrier",
+      "externalReference": "DEMO-PROOF-1BY117808X500542F",
+      "retrievedAt": "2026-11-06T15:18:19.945Z",
+      "contentHash": "f5ab4360a5f9239bb73ac9cfd9f63c14955f05b6a21534b1091201b38a884f29",
+      "content": {
+        "status": "DELIVERED",
+        "carrier": "DEMO-CARRIER",
+        "deliveredAt": "2026-11-06T15:18:19.945Z",
+        "trackingNumber": "DEMO-TRACK-1BY117808X500542F",
+        "paypalCaptureId": "2D098449XH6131418",
+        "merchantOrderReference": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3"
+      },
+      "current": false,
+      "integrity": "VALID"
+    },
+    {
+      "id": "2f9d50a7-f579-4aca-bb5e-a50d3802b8ba",
+      "type": "TRACKING",
+      "version": 3,
+      "sourceKind": "DEMO",
+      "sourceSystem": "DEMO / MOCK E2E carrier",
+      "externalReference": "DEMO-SHIP-1BY117808X500542F",
+      "retrievedAt": "2026-11-06T15:18:19.628Z",
+      "contentHash": "362fc2a097f8bef6f3fc9c8d5953efc6d8f1153d10c7929b21f9561bdbc7c462",
+      "content": {
+        "status": "IN_TRANSIT",
+        "carrier": "DEMO-CARRIER",
+        "shippedAt": "2026-11-06T15:18:06.188Z",
+        "trackingNumber": "DEMO-TRACK-1BY117808X500542F",
+        "paypalCaptureId": "2D098449XH6131418",
+        "merchantOrderReference": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3"
+      },
+      "current": true,
+      "integrity": "VALID"
+    },
+    {
+      "id": "5285910f-998e-4fef-82cb-dbbe29eb7882",
+      "type": "ORDER_RECORD",
+      "version": 2,
+      "sourceKind": "DEMO",
+      "sourceSystem": "DEMO / MOCK E2E commerce",
+      "externalReference": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3",
+      "retrievedAt": "2026-11-06T15:18:19.381Z",
+      "contentHash": "81330080723d0ddd6793811adbd726dd65dc434f738f37fe27b342b55add66dc",
+      "content": {
+        "id": "3238f3db-6eb7-437e-af35-71a391fb1a19",
+        "items": [
+          {
+            "sku": "DEMO-E2E-001",
+            "quantity": 1,
+            "unitAmount": "1",
+            "description": "DEMO physical item for Sandbox integration test"
+          }
+        ],
+        "createdAt": "2026-11-06T15:17:57.754Z",
+        "orderedAt": "2026-11-06T15:11:51.216Z",
+        "taxAmount": "0",
+        "externalId": "M03-SANDBOX-7721802b-105c-4801-8b16-542beb57fcc3",
+        "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+        "sourceKind": "DEMO",
+        "contentHash": "dbf2e119fe225096da957424a398ac259c7177f2317f9b5463bd456ae9855726",
+        "environment": "sandbox",
+        "totalAmount": "1",
+        "currencyCode": "USD",
+        "sourceSystem": "DEMO / MOCK E2E commerce",
+        "paypalOrderId": "1BY117808X500542F",
+        "discountAmount": "0",
+        "shippingAmount": "0"
+      },
+      "current": true,
+      "integrity": "VALID"
+    },
+    {
+      "id": "cd5a2891-8746-4d48-a6c5-3aeba1487697",
+      "type": "PAYMENT_RECORD",
+      "version": 1,
+      "sourceKind": "PAYPAL",
+      "sourceSystem": "paypal-sandbox",
+      "externalReference": "2D098449XH6131418",
+      "retrievedAt": "2026-11-06T15:18:19.266Z",
+      "contentHash": "4afdbbce1432836e2996dfc0d8e2c81244b98aa553ebfd42d359e697c8329f20",
+      "content": {
+        "amount": "1",
+        "capturedAt": "2026-11-06T15:18:05.000Z",
+        "currencyCode": "USD",
+        "paypalOrderId": "1BY117808X500542F",
+        "sourceEventId": "bab0154e-f6b8-4c5b-a0d0-972df010c20f",
+        "paypalCaptureId": "2D098449XH6131418"
+      },
+      "current": true,
+      "integrity": "VALID"
+    }
+  ]
+}
