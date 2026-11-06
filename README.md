@@ -13,7 +13,9 @@ La guía de configuración y el contrato para el frontend están en
 [docs/m01-merchants.md](docs/m01-merchants.md).
 M01 se verificó con Supabase Auth/PostgreSQL reales y PayPal Sandbox: login,
 acceso del administrador, consulta de disputas y persistencia del check.
-M02–M09, OpenAI y Storage siguen pendientes. Las pruebas automatizadas de
+M02 agrega [webhooks verificados y una outbox persistida](docs/m02-event-ingestion.md),
+con deduplicación y comunicación con M01. Los consumidores de la outbox y
+M03–M09, OpenAI y Storage siguen pendientes. Las pruebas automatizadas de
 PayPal usan respuestas MOCK explícitas; la verificación real está registrada
 en [docs/validation.md](docs/validation.md).
 

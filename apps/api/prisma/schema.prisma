@@ -20,6 +20,7 @@ model Merchant {
   members                 MerchantMember[]
   integration             MerchantIntegration?
   events                  MerchantEvent[]
+  webhookEvents           WebhookEvent[]
 
   @@map("merchants")
 }
@@ -66,4 +67,38 @@ model MerchantEvent {
 
   @@index([merchantId, createdAt])
   @@map("merchant_events")
+}
+
+model WebhookEvent {
+  id             String        @id @default(uuid()) @db.Uuid
+  merchantId     String        @map("merchant_id") @db.Uuid
+  environment    String        @default("sandbox")
+  paypalEventId  String        @map("paypal_event_id") @db.VarChar(255)
+  eventType      String        @map("event_type") @db.VarChar(128)
+  eventCreatedAt DateTime      @map("event_created_at") @db.Timestamptz(3)
+  webhookId      String        @map("webhook_id")
+  transmissionId String        @map("transmission_id")
+  payload        Json
+  rawBody        String        @map("raw_body")
+  payloadHash    String        @map("payload_hash") @db.VarChar(64)
+  rawBodyHash    String        @map("raw_body_hash") @db.VarChar(64)
+  receivedAt     DateTime      @default(now()) @map("received_at") @db.Timestamptz(3)
+  merchant       Merchant      @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  job            IngestionJob?
+
+  @@unique([merchantId, environment, paypalEventId])
+  @@index([merchantId, receivedAt])
+  @@map("webhook_events")
+}
+
+model IngestionJob {
+  id        String       @id @default(uuid()) @db.Uuid
+  eventId   String       @unique @map("event_id") @db.Uuid
+  kind      String
+  status    String       @default("QUEUED")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  event     WebhookEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@map("ingestion_jobs")
 }

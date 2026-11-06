@@ -22,10 +22,19 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const response = context.getResponse<Response>();
     const request = context.getRequest<RequestWithId>();
     const requestId = request.requestId ?? randomUUID();
+    const parserTooLarge =
+      typeof exception === 'object' &&
+      exception !== null &&
+      'type' in exception &&
+      exception.type === 'entity.too.large' &&
+      'status' in exception &&
+      exception.status === 413;
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+        : parserTooLarge
+          ? HttpStatus.PAYLOAD_TOO_LARGE
+          : HttpStatus.INTERNAL_SERVER_ERROR;
     const body: ApiError = {
       code: `HTTP_${status}`,
       message: status >= 500 ? 'Internal server error' : 'Request failed',

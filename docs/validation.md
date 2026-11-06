@@ -74,3 +74,29 @@ La contraseña inicial del usuario se generó localmente y no se envió correo.
 No se guardaron tokens de sesión en Git. No se probó presentación de evidencia,
 existencia de una disputa elegible, webhooks ni despliegue remoto.
 Ver [configuración de M01](m01-merchants.md).
+
+## Integración M01 + M02 — 6 de noviembre de 2026
+
+Se recuperó la configuración de la rama M02 desde la base actualizada y M01:
+`.gitignore`, `.env.example`, configuración de formato y CI. M01 comparte OAuth
+y el contexto del merchant mediante su interfaz pública. M02 agrega la ruta
+de webhook, verificación oficial, persistencia y outbox transaccional.
+
+- M01 actualizado: 61 pruebas unitarias/HTTP y 19 pruebas PostgreSQL aprobadas.
+- M01 + M02: 88 pruebas unitarias/HTTP y 34 pruebas PostgreSQL aprobadas.
+- Build, tipos, lint y configuración Prisma correctos.
+- Tercera migración aplicada en PostgreSQL desechable y repetida sin pendientes.
+- Comunicación probada por HTTP con una app Nest real: token OAuth de M01,
+  contexto del merchant, verificación PayPal, respuesta y filas persistidas.
+- Firmas fallidas y errores de OAuth/verificación no crean eventos ni trabajos.
+- Entregas concurrentes generan un solo evento y un solo trabajo; cambios de
+  contenido bajo un mismo ID se rechazan sin sobrescribir datos.
+- Un trigger PostgreSQL de prueba provocó un fallo real de inserción de trabajo:
+  se confirmó rollback del evento y recuperación mediante redelivery.
+- RLS comprobada en las tablas de M02 usando un rol lector no propietario.
+- Se corrigió la respuesta de cuerpos superiores a 1 MB: HTTP 413.
+
+PayPal y el emisor JWKS se simulan con fixtures identificados como MOCK en estas
+pruebas; PostgreSQL, Nest y la comunicación entre módulos son reales. No se ha
+demostrado recepción de una entrega firmada de PayPal a un endpoint HTTPS público.
+Los trabajos permanecen QUEUED hasta implementar M03/M07.

@@ -3,6 +3,7 @@ import type { Environment } from './common/config/environment.js';
 import { CoreModule } from './common/core.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MerchantsModule } from './modules/merchants/index.js';
+import { EventIngestionModule } from './modules/event-ingestion/index.js';
 
 @Module({})
 export class AppModule {
@@ -13,6 +14,7 @@ export class AppModule {
         CoreModule.register(environment),
         HealthModule,
         MerchantsModule,
+        EventIngestionModule,
       ],
     };
   }
