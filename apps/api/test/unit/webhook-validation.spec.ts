@@ -18,6 +18,22 @@ describe('M02 webhook validation and routing (MOCK inputs)', () => {
       'SHA256withRSA',
     );
   });
+  it('preserves original property order for PayPal signature verification', () => {
+    const event = mockWebhookEvent();
+    const original = JSON.stringify({
+      id: event.id,
+      event_version: '1.0',
+      create_time: event.create_time,
+      resource_type: 'capture',
+      event_type: event.event_type,
+      summary: event.summary,
+      resource: event.resource,
+      resource_version: '2.0',
+    });
+    expect(JSON.stringify(parseWebhookBody(Buffer.from(original)))).toBe(
+      original,
+    );
+  });
   it.each([
     {},
     { ...mockTransmissionHeaders, 'paypal-auth-algo': 'none' },

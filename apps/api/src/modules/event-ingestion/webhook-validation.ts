@@ -76,10 +76,11 @@ export function parseWebhookBody(
       400,
     );
   try {
-    const parsed = PayPalWebhookEnvelopeSchema.safeParse(
-      JSON.parse(rawBody.toString('utf8')),
-    );
-    if (parsed.success) return parsed.data;
+    const original: unknown = JSON.parse(rawBody.toString('utf8'));
+    const parsed = PayPalWebhookEnvelopeSchema.safeParse(original);
+    // Zod rebuilds objects in schema-key order. PayPal's signature postback
+    // must receive the original event ordering, including unknown fields.
+    if (parsed.success) return original as PayPalWebhookEnvelope;
   } catch {
     /* Normalize parse errors without returning submitted data. */
   }
