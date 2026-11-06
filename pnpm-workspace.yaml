@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+overrides:
+  '@nestjs/platform-express>multer': 2.5.0
+  'minimatch@>=7 <11.0.1': 11.0.1
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - esbuild
+  - prisma

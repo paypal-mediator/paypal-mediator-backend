@@ -1,0 +1,621 @@
+# ResolveAI — Contexto de proyecto para Codex CLI
+
+> **Estado del documento:** especificación de producto y guía técnica propuesta; **no** implica que las funciones ya estén implementadas.
+> **Versión:** 1.0 · **Fecha:** 2026-11-05 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
+> **Objetivo de uso:** copiar este archivo a la raíz del repositorio como `information.md` y solicitar a Codex que lo lea antes de implementar funcionalidades.
+
+## 0. Instrucciones esenciales para Codex
+
+Antes de implementar cualquier tarea:
+
+1. Lee `information.md`, revisa la estructura real del repositorio, y comprueba los archivos `AGENTS.md` aplicables, si existen.
+2. **No supongas que el código ya existe.** Distingue entre requisitos planificados, código implementado y funcionalidad verificada.
+3. Confirma el alcance de la tarea, identifica el módulo propietario y utiliza contratos públicos para interactuar con otros módulos. Haz cambios pequeños, coherentes y probables de integrar mediante Pull Request.
+4. Mantén el sistema como **un solo backend NestJS modular**, no microservicios. No introduzcas herramientas o infraestructura adicionales sin justificar la necesidad.
+5. No inventes respuestas de PayPal ni datos de evidencia. Los fixtures/simulaciones deben estar claramente marcados como **DEMO / MOCK**.
+6. Antes de llamar APIs externas, confirma forma de los endpoints, estados permitidos y requisitos de permisos contra la documentación oficial y la implementación existente.
+7. Nunca construyas una ruta que permita que el modelo de IA envíe evidencia a PayPal saltándose las validaciones deterministas y las autorizaciones.
+8. Ejecuta pruebas correspondientes y comunica qué se probó realmente, qué quedó simulado y qué falta integrar.
+9. Si cambia un contrato compartido, actualiza su schema, tipos, tests y consumidores, o evita el cambio.
+10. No reestructures carpetas de otros equipos ni reescribas módulos no relacionados sin una necesidad demostrable.
+
+**Regla de priorización:** un flujo end-to-end real, demostrable y honesto vale más que muchas funcionalidades incompletas.
+
+---
+
+## 1. Visión del producto
+
+**Nombre:** ResolveAI
+
+**Tagline:** **Be ready for disputes before they happen.**
+
+**Descripción:** ResolveAI es un agente de preparación y representación de disputas para comercios que usan PayPal. Mantiene un expediente de evidencias desde que se captura un pago; cuando un comprador abre una disputa en PayPal, investiga el caso, recopila información adicional, valida independientemente la calidad/suficiencia de la evidencia y prepara o presenta una respuesta en nombre del comerciante, sujeto a permisos y controles.
+
+### Actores
+
+- **Comerciante:** conecta integraciones, consulta protección de transacciones, revisa alertas, aprueba/envía acciones y ve resultados.
+- **Comprador:** puede iniciar disputas directamente **en PayPal**; no opera ResolveAI ni autoriza a ResolveAI a abrir disputas.
+- **PayPal:** origen de pagos, disputas, estados y recepción de evidencia; el sistema oficial decide resultados cuando corresponda.
+- **Investigator Agent:** recopila y analiza registros para preparar evidencia.
+- **Verifier Agent:** audita de manera independiente las afirmaciones y suficiencia de lo recopilado.
+- **Submission Guard:** código determinista que valida condiciones antes de enviar a PayPal.
+
+### No objetivos del MVP
+
+- ResolveAI **nunca abre disputas** en nombre de compradores.
+- No decide formalmente quién gana, ni garantiza el resultado de una disputa.
+- No ejecuta reembolsos, pagos, conciliaciones financieras ni apelaciones automáticas.
+- No necesita multi-tenant real en el MVP: se usa **un merchant de PayPal Sandbox**.
+- No necesita integraciones comerciales reales con Shopify, paqueterías o SaaS para el demo: puede utilizar una base de datos de pedidos/envíos **simulada y etiquetada**.
+- No construir paneles complejos de BI, microservicios, Kubernetes ni flujos de onboarding de producción.
+
+### Audiencia inicial
+
+Pequeños y medianos comercios e-commerce que reciben pagos con PayPal y deben responder disputas con evidencia de orden, pago y entrega.
+
+### Disputa prioritaria
+
+**Item Not Received / Producto no recibido (INR)** para mercancía física. Es el primer caso a soportar porque tiene evidencia estructurada (orden, captura, tracking, envío, entrega) y muestra el valor proactivo del producto.
+
+---
+
+## 2. Criterios del PayPal AI Hackathon
+
+La entrega requiere integración sustantiva con PayPal, uso sustantivo de IA, demo funcional reproducible, repositorio público con código y licencia, instrucciones de instalación y video público menor de 3 minutos. Se evaluarán implementación técnica, diseño, impacto, innovación y presentación. Trabajar para la **demo antes de optimizaciones de producción**.
+
+**Historia del demo recomendada:**
+
+1. Un pago capturado llega desde PayPal (o se selecciona un pago Sandbox real ya existente).
+2. ResolveAI genera expediente y detecta que falta evidencia de envío/entrega.
+3. Investigator encuentra un registro adicional en el sistema comercial de prueba; la preparación mejora.
+4. Un **comprador inicia la disputa en PayPal** y ResolveAI detecta ese caso.
+5. Investigator prepara pruebas específicas; Verifier revisa originales y explica qué cumple/falta.
+6. Submission Guard deja enviar solo cuando el estado y permisos lo permiten; se registra el resultado **real** de la llamada Sandbox si está disponible.
+7. Se muestra un segundo caso con evidencia contradictoria donde el Verifier bloquea el envío y pide intervención humana.
+
+**Riesgo crítico:** validar cuanto antes si existen disputas de prueba accesibles en las cuentas Sandbox y si la API permite `provide-evidence` en el estado concreto. Si el flujo de creación de disputa de Sandbox no está habilitado, no afirmar que se ejecutó. Usar fixtures SOLO para el segmento imposible de demostrar, con señalización visual, e intentar mantener una operación real de PayPal en el demo.
+
+---
+
+## 3. Stack acordado
+
+| Capa | Tecnología | Propósito |
+|---|---|---|
+| Lenguaje | TypeScript | Frontend, backend y contratos |
+| Frontend | Next.js + React | App web merchant |
+| Componentes | Tailwind CSS + shadcn/ui | UI consistente |
+| Tablas | AG Grid Community | Transacciones y disputas |
+| Estado HTTP | TanStack Query | Fetch, caché, polling |
+| Backend | Node.js + NestJS | Monolito modular, REST, eventos |
+| Base de datos | PostgreSQL en Supabase | Transacciones, disputas, jobs, auditoría |
+| ORM | Prisma | Modelado y migraciones |
+| Almacenamiento | Supabase Storage privado | Evidencia y documentos |
+| Modelos IA | OpenAI Responses API | Investigator y Verifier con tools / structured output |
+| Validación | Zod | Contratos entre módulos y entradas externas |
+| Trabajos | pg-boss (si la integración lo requiere) | Webhooks, retries, investigaciones asincrónicas |
+| PayPal | PayPal Developer APIs / Sandbox | Capturas, webhooks, consultas y evidencia de disputas |
+| Tests | Vitest y Playwright | Unitarios, integración y E2E |
+| API docs | Swagger/OpenAPI | Especificar contratos internos |
+| Monorepo | pnpm workspaces | Dependencias y paquetes compartidos |
+| Control | GitHub + GitHub Actions | PRs, CI y repositorio público |
+| Hosting | Vercel (web), Render (API/worker), Supabase (DB/Storage) | Demo desplegado |
+
+**No agregar por defecto:** LangChain/LangGraph, Python, Redis, Kafka, Terraform, microservicios, contenedores complejos. Puede usarse Docker para desarrollo local, sin volverlo requisito para cada integrante.
+
+---
+
+## 4. Estructura objetivo del repositorio
+
+```text
+resolve-ai/
+├── apps/
+│   ├── web/                        # Next.js, frontend del comerciante
+│   └── api/                        # Backend NestJS único
+│       └── src/
+│           ├── modules/
+│           │   ├── merchants/
+│           │   ├── event-ingestion/
+│           │   ├── transactions/
+│           │   ├── evidence/
+│           │   ├── investigator/
+│           │   ├── verifier/
+│           │   ├── disputes/
+│           │   ├── submissions/
+│           │   └── monitoring/
+│           ├── common/             # Auth, guards, errores, logging
+│           └── main.ts
+├── packages/
+│   └── contracts/                  # Schemas Zod y tipos compartidos
+├── prisma/                         # Schema y migraciones; puede ubicarse en apps/api
+├── docs/                           # Diagramas, decisiones, API y demo
+├── information.md                  # Este documento
+├── .env.example                    # Solo placeholders, nunca secretos
+├── pnpm-workspace.yaml
+└── README.md
+```
+
+**Nota:** adaptar rutas al repositorio existente; no forzar cambios de estructura si ya hay una organización equivalente.
+
+---
+
+## 5. Los 10 módulos funcionales
+
+| ID | Módulo | Responsabilidad | Entregable mínimo |
+|---|---|---|---|
+| M01 | Merchant & Integrations | Merchant, configuración, autorización, integración PayPal/tienda | Cuenta demo y estado de conexión |
+| M02 | Event Ingestion | Recibir/verificar/deduplicar webhooks | Evento persistido y trabajo en cola |
+| M03 | Transaction Manager | Capturas de pago, órdenes y readiness proactiva | Lista y detalle de transacciones |
+| M04 | Evidence Vault | Guardar evidencia, origen, integridad y versiones | Expediente consultable |
+| M05 | Investigator Agent | Buscar fuentes, hechos, faltantes y borrador | `InvestigationResult` trazable |
+| M06 | Verifier Agent | Revisión independiente, contradicciones, cobertura y veredicto | `VerificationResult` estructurado |
+| M07 | Dispute Orchestrator | Máquina de estados y coordinación de workflow | Gestión de cada disputa |
+| M08 | PayPal Submission | Guard de seguridad y envío a PayPal | Resultado con ID y log de API |
+| M09 | Monitoring & Audit | Actividad, métricas, eventos, errores, seguimiento | Timeline auditable |
+| M10 | Merchant Dashboard | UX e integración frontend de M01–M09 | Pantallas end-to-end |
+
+En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M10 vive en `apps/web`. Evitar que un módulo escriba las tablas privadas de otro sin una interfaz definida.
+
+### Interfaces entre módulos
+
+```text
+PayPal Webhooks → Event Ingestion → Transaction Manager / Dispute Orchestrator
+                                        ↓                  ↓
+                                  Evidence Vault ← Investigator Agent
+                                        ↓                  ↓
+                                  Originales → Verifier Agent
+                                                       ↓
+                                               Dispute Orchestrator
+                                                       ↓
+                                                Submission Guard
+                                                       ↓
+                                                 PayPal Disputes
+                                                       ↓
+                                                Monitoring & Audit
+                                                       ↕
+                                                Merchant Dashboard
+```
+
+---
+
+## 6. Flujos funcionales
+
+### 6.1 Preparación preventiva (antes de una disputa)
+
+1. Se captura un pago en PayPal.
+2. M02 recibe el evento validado **o** se sincroniza una transacción Sandbox existente.
+3. M03 crea/vincula `Transaction` y la orden del comerciante.
+4. M04 crea `EvidenceDossier` con referencias a pago, pedido, tracking y entrega disponibles.
+5. M05 recopila automáticamente evidencia disponible y señala vacíos.
+6. M06 puede aplicar una revisión de **readiness documental** para detectar contradicciones y faltantes antes de una disputa.
+7. Se muestra un checklist determinista de preparación en la UI.
+8. Si cambia el estado del envío, el expediente se actualiza; **no se crea disputa**.
+
+**No mostrar readiness = probabilidad de ganar.** Es cobertura documental respecto al checklist y a los datos que se conocen.
+
+### 6.2 Respuesta ante disputa abierta por el comprador
+
+1. El comprador inicia la disputa directamente en PayPal.
+2. Se recibe webhook o se descubre la disputa al sincronizar.
+3. Se recuperan detalles de PayPal y **las acciones disponibles en su estado real**.
+4. M07 vincula la disputa al expediente existente por identificadores confiables de transacción.
+5. M05 reúne documentos adicionales específicos del motivo y produce `InvestigationResult`.
+6. M06 revisa **las fuentes originales**, no solo el relato de M05, y genera `VerificationResult`.
+7. Si hay faltantes: nuevo ciclo de investigación con límite de intentos, solicitud al comerciante o escalamiento.
+8. Si el Verifier considera el expediente aprobado: M08 vuelve a comprobar requisitos de API, permisos, estado/acción y aprobación merchant según configuración.
+9. Si está permitido y autorizado, se envía evidencia por PayPal Disputes API.
+10. Se registra confirmación o error; se continúa monitoreando el resultado oficial.
+
+### 6.3 Casos en que no se debe enviar
+
+- Falta evidencia requerida para el caso o existe una contradicción crítica.
+- Los IDs de pago, orden o tracking no pueden emparejarse confiablemente.
+- El modelo no puede respaldar una afirmación con registros verificables.
+- No existe autorización del comerciante para ese tipo de acción.
+- La disputa no está en un estado que permita proporcionar evidencia.
+- Ya se registró una presentación equivalente: no repetir a ciegas.
+- Error de API cuya resolución requiera validación humana.
+
+---
+
+## 7. Verificación independiente: requisito crítico
+
+**Nunca se permite que Investigator se autocertifique.** M05 y M06 deben tener responsabilidades y herramientas separadas. No es suficiente hacer una segunda pregunta al mismo contexto: M06 debe recuperar y contrastar **datos fuente** mediante el vault/adaptadores.
+
+### 7.1 Checklist del Verifier
+
+1. **Procedencia:** fuente, ID externo, fecha de captura, referencia a documento y permisos de lectura.
+2. **Integridad:** contenido presente y sin manipulación; opcionalmente hash SHA-256 del archivo original.
+3. **Identidad:** correspondencia de `paypalTransactionId`, `merchantOrderId`, tracking y comprador según campos disponibles.
+4. **Consistencia:** ausencia de incompatibilidades en fechas, importes, tracking, estado o dirección.
+5. **Relevancia:** evidencia relacionada con el motivo de disputa y lo que PayPal solicita.
+6. **Cobertura:** evidencia obligatoria completa o explícitamente no disponible.
+7. **Explicabilidad:** cada afirmación del borrador apunta a al menos un `EvidenceItem`.
+8. **Estado:** hallazgos vigentes y no obsoletos al momento de enviar.
+
+### 7.2 Resultado del Verifier
+
+- `APPROVED`: expediente supera controles internos para consideración de envío; **no** significa victoria ni aceptación por PayPal.
+- `INCOMPLETE`: se requieren más datos; detallar campos faltantes y próximos pasos.
+- `REJECTED`: evidencia contradictoria/no confiable o afirmaciones no sustentadas; bloquear y escalar.
+
+**Diseño híbrido:** el LLM evalúa relevancia/consistencia semántica; código TypeScript determinista valida IDs, campos requeridos, restricciones y permisos. Si hay discrepancia crítica, prevalece el bloqueo.
+
+### 7.3 Bucle controlado
+
+`Investigate → Verify → (APPROVED | INCOMPLETE | REJECTED)`
+
+Ante `INCOMPLETE`, permitir un número pequeño y configurado de nuevas investigaciones (por ejemplo `MAX_INVESTIGATION_ROUNDS=2`). Si el dato no existe, escalar; nunca inventarlo. `REJECTED` requiere revisión humana salvo una corrección verificable de fuentes.
+
+---
+
+## 8. Contratos de dominio iniciales (propuesta)
+
+Ubicarlos en `packages/contracts` y definir schemas Zod. Nombres ilustrativos y ajustables con acuerdo del equipo.
+
+```ts
+export type EvidenceStatus = "FOUND" | "VERIFIED" | "MISSING" | "CONTRADICTORY";
+export type VerificationVerdict = "APPROVED" | "INCOMPLETE" | "REJECTED";
+export type AgentRunStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "ESCALATED";
+
+export interface EvidenceItem {
+  id: string;
+  dossierId: string;
+  type: string; // Ej. PAYMENT_RECORD, ORDER_CONFIRMATION, TRACKING, PROOF_OF_DELIVERY
+  sourceSystem: string;
+  externalReference?: string;
+  storagePath?: string; // Ubicación privada, no URL pública
+  retrievedAt: string; // ISO8601
+  status: EvidenceStatus;
+  contentHash?: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface InvestigationResult {
+  id: string;
+  disputeId: string;
+  agentRunId: string;
+  collectedEvidenceIds: string[];
+  findings: Array<{
+    statement: string;
+    evidenceIds: string[];
+  }>;
+  missingEvidence: string[];
+  suggestedResponse: string; // Borrador; NO enviado
+  completedAt: string;
+}
+
+export interface VerificationResult {
+  id: string;
+  disputeId: string;
+  investigationId: string;
+  verdict: VerificationVerdict;
+  verifiedEvidenceIds: string[];
+  missingRequirements: string[];
+  contradictions: string[];
+  reasons: Array<{
+    code: string;
+    explanation: string;
+    evidenceIds: string[];
+  }>;
+  verifiedAt: string;
+}
+
+export interface SubmissionResult {
+  disputeId: string;
+  status: "SUBMITTED" | "BLOCKED" | "FAILED";
+  paypalRequestId?: string;
+  paypalResponseStatus?: number;
+  submittedAt?: string;
+  message?: string;
+}
+```
+
+### Entidades de persistencia sugeridas
+
+`Merchant`, `MerchantIntegration`, `Transaction`, `MerchantOrder`, `EvidenceDossier`, `EvidenceItem`, `Dispute`, `AgentRun`, `AgentEvent`, `Investigation`, `Verification`, `Submission`, `WebhookEvent`, `AuditLog`.
+
+Relaciones clave:
+
+- `Transaction` 1→1/varios `EvidenceDossier` según estrategia de versiones.
+- `Dispute` se vincula a `Transaction` y al expediente usado para defenderla.
+- `Investigation` referencia IDs de evidencia; `Verification` referencia investigación + evidencia.
+- `Submission` referencia la verificación aprobada, la autorización aplicable y la respuesta de PayPal.
+- `AuditLog` es append-only; no sobrescribir el historial.
+
+Crear índices únicos para IDs externos que requieren idempotencia, y definir explícitamente el alcance merchant de cada clave.
+
+---
+
+## 9. Máquinas de estados
+
+### 9.1 Preparación de expediente
+
+`CREATED → COLLECTING → READY | INCOMPLETE`
+
+La llegada de nueva evidencia puede producir `INCOMPLETE → COLLECTING` o reevaluación de un expediente `READY`. Un expediente `READY` **no prueba** que una futura disputa sea defendible.
+
+### 9.2 Flujo interno de disputa
+
+```text
+DETECTED
+  → INVESTIGATING
+    → VERIFYING
+      → INCOMPLETE → INVESTIGATING / NEEDS_REVIEW
+      → REJECTED → NEEDS_REVIEW
+      → APPROVED → READY_TO_SUBMIT
+        → (si requiere aprobación) AWAITING_MERCHANT_APPROVAL
+        → SUBMITTING
+          → SUBMITTED → AWAITING_PAYPAL → CLOSED
+          → SUBMISSION_FAILED → NEEDS_REVIEW / RETRY_SAFELY
+```
+
+El estado oficial de PayPal se guarda **por separado** (`paypalStatus`, `paypalStage`, etc.) y solo se actualiza desde respuestas PayPal; nunca debe confundirse con `INVESTIGATING`, que es estado local. No asumir que todos los casos admiten el mismo endpoint/acción.
+
+---
+
+## 10. Frontend — pantallas y UX
+
+### Layout base
+
+Barra lateral: `Overview`, `Transactions`, `Disputes`, `Agent Activity`, `Settings`. Navegación a detalles desde tablas. Mostrar Sandbox claramente y distinguir datos MOCK vs datos reales.
+
+| Ruta sugerida | Pantalla | Elementos imprescindibles |
+|---|---|---|
+| `/` o `/overview` | Overview | KPIs de preparación, actividad reciente, alertas, disputas a revisar |
+| `/transactions` | Transactions | Tabla AG Grid, readiness checklist resumido, filtros |
+| `/transactions/[id]` | Transaction Detail | Datos de pago/orden, evidence vault, checklist, timeline, fuente de cada prueba |
+| `/disputes` | Disputes | Lista, motivo, monto, deadline, estado interno, estado PayPal, necesidad de atención |
+| `/disputes/[id]` | Dispute Detail | Caso, investigación, evidencias, Verifier, respuesta, envío, timeline |
+| `/activity` | Agent Activity | Eventos del agente, tool calls, éxito/error, timestamp |
+| `/settings` | Settings | PayPal Sandbox, fuente de datos, política de aprobación |
+
+### Dispute Detail: 4 secciones internas
+
+- **Overview:** reclamo, tiempo restante, estados y recomendación.
+- **Evidence:** documentos y relaciones entre afirmación ↔ fuentes originales.
+- **Agent Log / Verification:** pasos de Investigator, checklist del Verifier, faltantes, contradicciones, motivos de bloqueo.
+- **Submission:** borrador, revisión, controles de autorización, botón condicionado, resultado real de API.
+
+### Experiencia de usuario obligatoria
+
+- Mostrar con claridad `Investigator → Verifier → Submission Guard`.
+- Botón de envío bloqueado cuando el verificador no haya aprobado o falten permisos.
+- Distinguir `READY` documental de `APPROVED` para responder a un caso concreto.
+- Nunca mostrar `SUBMITTED` hasta recibir confirmación de API y registrar el resultado.
+- Mostrar logs útiles para demo, evitando datos personales y secretos.
+- Los fixtures deben permitir visualizar al menos un expediente exitoso y otro bloqueado por contradicción.
+
+---
+
+## 11. Contratos HTTP internos propuestos
+
+**Estos son endpoints de ResolveAI, NO URLs oficiales de PayPal.** Versionar/documentar con OpenAPI e implementar inicialmente contra fixtures si los otros módulos aún no están listos.
+
+| Método | Ruta | Respuesta o comportamiento |
+|---|---|---|
+| GET | `/api/health` | Salud del backend |
+| GET | `/api/dashboard` | KPIs, actividad y alertas |
+| GET | `/api/transactions` | Página de transacciones |
+| GET | `/api/transactions/:id` | Detalle + readiness + evidencia |
+| POST | `/api/transactions/:id/refresh-evidence` | Encolar actualización autorizada |
+| GET | `/api/disputes` | Lista con estados internos y oficiales |
+| GET | `/api/disputes/:id` | Detalle completo |
+| GET | `/api/disputes/:id/investigation` | Findings, tool events y faltantes |
+| GET | `/api/disputes/:id/verification` | Veredicto, checklist, razones |
+| POST | `/api/disputes/:id/investigate` | Encolar o continuar investigación autorizada |
+| POST | `/api/disputes/:id/approve` | Guardar aprobación del merchant |
+| POST | `/api/disputes/:id/submit` | Validar guard + enviar si corresponde |
+| GET | `/api/activity` | Eventos paginados |
+| GET | `/api/settings/integrations` | Conexiones y permisos (sin secretos) |
+| POST | `/api/webhooks/paypal` | Webhook firmado de PayPal; acceso público restringido por validación |
+
+Recomendaciones: esquema de error uniforme `{ code, message, details?, requestId }`, paginación y filtrado desde el inicio, protección contra escrituras repetidas y autorizaciones merchant antes de acciones con efecto.
+
+---
+
+## 12. Integración PayPal y límites de Sandbox
+
+**Documentación a comprobar durante implementación:**
+
+- PayPal Disputes integración: https://developer.paypal.com/platforms/disputes/integrate-disputes/
+- PayPal Disputes API: https://developer.paypal.com/api/customer-disputes/v1/
+- PayPal uso de Disputes API: https://developer.paypal.com/platforms/disputes/handle-disputes/use-disputes-api/
+- Portal developer: https://developer.paypal.com/
+
+Operaciones relevantes para este MVP (verificar disponibilidad, permisos y payload actual):
+
+- `GET /v1/customer/disputes`
+- `GET /v1/customer/disputes/{id}`
+- `POST /v1/customer/disputes/{id}/provide-evidence` (solo en estados/acciones permitidos)
+- Webhooks de pago capturado y de disputas; verificar los nombres de eventos en configuración.
+
+**Reglas de implementación:**
+
+1. Utilizar credenciales Sandbox a nivel servidor; no exponer secretos al navegador.
+2. Verificar autenticidad/firma de webhook con el mecanismo oficial de PayPal, almacenar ID de evento y deduplicar.
+3. Confirmar las acciones disponibles en los detalles del caso **justo antes** de enviar.
+4. No crear ninguna disputa como parte del comportamiento normal de ResolveAI; el comprador la abre por PayPal.
+5. El remitente autorizado es el comerciante Sandbox configurado; soporte multiparty/terceros es fase posterior y necesita permisos y consentimiento correctos.
+6. Guardar IDs y estados reales de respuesta; no simular una recepción exitosa.
+7. Emplear reintentos solo cuando sean seguros/idempotentes. Ante resultados ambiguos, consultar el estado antes de reenviar.
+8. No suponer que un PDF o archivo arbitrario satisface la evidencia esperada; enviar conforme a tipos permitidos por PayPal.
+
+---
+
+## 13. Seguridad, privacidad y resiliencia
+
+- Guardar `PAYPAL_CLIENT_SECRET`, `OPENAI_API_KEY`, `DATABASE_URL` y claves de storage solo en variables de entorno del servidor.
+- `NEXT_PUBLIC_*` solo para valores realmente públicos.
+- No subir `.env` ni datos reales de clientes al repositorio público. Proveer `.env.example` con placeholders.
+- Documentos en bucket privado; acceder mediante permisos server-side o URLs firmadas temporales.
+- El agente solo debe tener herramientas de lectura sobre evidencia y generación de borradores; no acceso directo a secretos ni a la función de envío.
+- Tratar mensajes y documentos de comprador/comerciante como **contenido no confiable**: no obedecer instrucciones incrustadas en PDFs, correos o notas; son datos para investigar, no órdenes para el agente.
+- Cada afirmación del modelo debe enlazar a `EvidenceItem.id`; si falta respaldo, presentarla como hipótesis no verificada y no enviarla.
+- Auditoría de acciones sensibles: actor, momento, acción, razones, aprobación y resultado.
+- Endpoint de webhook rápido: validar/guardar/encolar y responder; la investigación corre asíncronamente.
+- Comportamiento seguro ante caídas de IA o PayPal: fallar cerrado para envíos; conservar expedientes y errores recuperables.
+- Diseñar límites de iteraciones del agente, timeouts, control de costos y sanitización de logs.
+
+---
+
+## 14. Desarrollo colaborativo y Git
+
+El repositorio tendrá un solo `main` estable; **no** mantener ramas largas permanentes por módulo. Usar ramas por feature y PRs pequeños:
+
+- `feat/frontend-dispute-detail`
+- `feat/paypal-dispute-webhook`
+- `feat/evidence-vault`
+- `feat/investigator-agent`
+- `feat/verifier-checklist`
+- `feat/submission-guard`
+
+### Convenciones
+
+- No modificar `packages/contracts` sin coordinar con consumidores.
+- Actualizar/añadir tests en cada cambio de reglas de negocio.
+- No dejar funciones ficticias que silenciosamente devuelvan éxito.
+- Para endpoints sin implementar, utilizar adaptadores mock explícitos en desarrollo; no confundirlos con integraciones reales.
+- Revisar lint, typecheck, tests y build antes de merge.
+- Documentar nuevas variables de entorno en `.env.example`.
+- Mantener imports entre módulos a través de sus interfaces públicas.
+
+---
+
+## 15. Testing y criterios de aceptación
+
+### Pruebas fundamentales
+
+1. **Webhook duplicado:** un evento genera a lo sumo un trabajo lógico, sin evidencia duplicada.
+2. **Pago sin tracking:** el expediente permanece incompleto y muestra faltante.
+3. **Llegada de tracking válido:** expediente se actualiza y mantiene historial.
+4. **Tracking de otra orden:** Verifier detecta contradicción y bloquea envío.
+5. **Documento faltante:** Verifier devuelve `INCOMPLETE` con justificación.
+6. **Evidencia suficiente:** Verifier devuelve `APPROVED` con IDs de evidencia.
+7. **Estado PayPal no elegible:** Submission Guard bloquea aun con `APPROVED`.
+8. **Sin aprobación merchant cuando se requiere:** envío bloqueado.
+9. **Error en PayPal:** se muestra `FAILED` y el error; no éxito falso.
+10. **Respuesta real de PayPal Sandbox:** se guarda código, referencia y momento; UI refleja estado con precisión.
+11. **Prompt injection en evidencia:** instrucciones dentro del documento no provocan herramientas o acciones no autorizadas.
+12. **Frontend demo:** todos los pasos se muestran con estados coherentes y se pueden repetir.
+
+### Definición de terminado para el MVP
+
+- [ ] Un merchant Sandbox configurado y operativo.
+- [ ] Al menos una operación API PayPal realmente funcional, demostrable y documentada; idealmente consulta y presentación de evidencia en disputa elegible.
+- [ ] Expediente preventivo persistido y visualizado en Transactions.
+- [ ] Investigator recupera datos de orden y shipping (pueden ser MOCK etiquetados).
+- [ ] Verifier revisa evidencia de fuente, no solo una respuesta del investigador.
+- [ ] Guard impide envíos no autorizados/contradictorios.
+- [ ] Dispute Detail muestra progreso, evidencia, verificación y resultado.
+- [ ] Casos exitoso y bloqueado reproducibles con fixtures de demo.
+- [ ] README con setup local, variables de entorno, comandos y limitaciones Sandbox.
+- [ ] Repositorio público, licencia visible y video funcional de menos de 3 minutos.
+
+---
+
+## 16. Despliegue
+
+- **Vercel:** `apps/web`, dominio web HTTPS público.
+- **Render:** `apps/api`, HTTPS, callbacks de PayPal, procesos de backend/worker; evitar suspensión durante evaluación.
+- **Supabase:** PostgreSQL y Storage privado.
+- **OpenAI:** se consume API externa (no hay que hospedar el modelo).
+- **PayPal Sandbox:** servicio externo de pagos y disputas.
+
+**Variables estimadas:**
+
+```dotenv
+# Backend
+NODE_ENV=development
+PORT=3001
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DB
+OPENAI_API_KEY=replace-me
+PAYPAL_CLIENT_ID=replace-me
+PAYPAL_CLIENT_SECRET=replace-me
+PAYPAL_WEBHOOK_ID=replace-me
+PAYPAL_ENV=sandbox
+SUPABASE_URL=https://project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=replace-me
+EVIDENCE_BUCKET=private-evidence
+MAX_INVESTIGATION_ROUNDS=2
+CORS_ORIGIN=http://localhost:3000
+
+# Frontend (solo datos públicos)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/api
+```
+
+No copiar valores reales al repo. Los nombres exactos deben alinearse con los módulos implementados.
+
+---
+
+## 17. Plan de implementación por dependencias
+
+**Fase A — Base común:** workspace pnpm, Next.js, NestJS, contratos compartidos, Prisma, lint/tests, health y deployment inicial.
+
+**Fase B — Core PayPal:** credenciales Sandbox, consultas reales de disputas, recepción/verificación de webhooks, pruebas de disponibilidad de `provide-evidence`.
+
+**Fase C — Evidence readiness:** transactions, orders demo, evidence vault, checklist, overview y transaction detail.
+
+**Fase D — AI:** Investigator con tools limitadas, Verifier independiente, veredictos, audit trail y pruebas de contradicción.
+
+**Fase E — Defense:** orquestador, approvals, Submission Guard, intento real de envío, respuesta, historial.
+
+**Fase F — Demo & delivery:** caso completo, caso bloqueado, UX pulida, deploy, README, licencia, video, ensayo reproducible.
+
+No construir funciones P1 (multi-merchant, actualizaciones avanzadas de tracking, analítica sofisticada) hasta cerrar las fases críticas.
+
+---
+
+## 18. Cómo pedir trabajo a Codex CLI
+
+**Importante:** Codex detecta automáticamente `AGENTS.md` cuando existe, pero **no debe asumirse** que lee arbitrariamente `information.md` sin pedírselo. Leer explícitamente este archivo al comenzar cada sesión, o crear después un pequeño `AGENTS.md` que lo referencie.
+
+Ejemplo de prompt para iniciar:
+
+```text
+Lee information.md y revisa la estructura actual del repositorio.
+Resume el objetivo de ResolveAI, el estado real del código y los contratos existentes.
+No implementes todavía: propón un plan de trabajo para el módulo [NOMBRE],
+señalando dependencias, archivos afectados, pruebas y bloqueos de PayPal Sandbox.
+No alteres módulos ajenos ni afirmes que una integración real está terminada
+sin evidencia de ejecución.
+```
+
+Ejemplo para ejecutar una tarea:
+
+```text
+Lee information.md, los AGENTS.md aplicables y el código existente.
+Implementa SOLO [FUNCIONALIDAD] dentro de [MODULO].
+Respeta los schemas de packages/contracts y agrega tests.
+Usa adaptador mock explícito si la API real no está disponible.
+Al finalizar, informa archivos modificados, comandos de prueba y resultados reales.
+```
+
+---
+
+## 19. Decisiones pendientes (no inventarlas)
+
+- Estrategia de autenticación del merchant en el frontend (solo demo vs autenticación real).
+- Proveedor y modelo exacto de OpenAI; elegir según costo/latencia y capacidad.
+- Si PayPal Sandbox ofrece una disputa elegible para `provide-evidence` dentro del tiempo disponible.
+- Política por defecto de autoenvío: **para el MVP, aprobación humana por defecto**, salvo que el equipo configure explícitamente un modo automatizado seguro.
+- Fuente de órdenes y envíos simulada: fixtures JSON o DB seed.
+- Qué se expondrá al público en demo y qué requerirá login.
+- Necesidad real de separar el worker dentro de Render; inicialmente puede estar en el proceso del backend.
+
+**Prioridad transversal:** seguridad y honestidad de la demo por encima de aparentar más autonomía de la que se implementó.
+
+---
+
+## 20. Referencias oficiales para validar implementación
+
+- PayPal Disputes: https://developer.paypal.com/platforms/disputes/integrate-disputes/
+- PayPal Disputes API: https://developer.paypal.com/api/customer-disputes/v1/
+- PayPal API usage: https://developer.paypal.com/platforms/disputes/handle-disputes/use-disputes-api/
+- PayPal Developer Dashboard: https://developer.paypal.com/dashboard/
+- NestJS: https://docs.nestjs.com/
+- Next.js: https://nextjs.org/docs
+- Prisma: https://www.prisma.io/docs
+- OpenAI API: https://platform.openai.com/docs/
+- Codex y AGENTS.md: https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex
+
+**Último principio:** ResolveAI *se prepara antes de que exista la disputa*, *investiga cuando el comprador abre el caso* y *solo envía evidencia real, trazable, verificada y autorizada*. El resultado oficial sigue perteneciendo a PayPal.
