@@ -41,6 +41,25 @@ Sin credenciales PayPal las consultas autenticadas funcionan y muestran
 `NOT_CONFIGURED`. Sin Auth configurado, M01 falla cerrado; health sigue
 disponible. La base no se modifica ni se hacen llamadas PayPal al arrancar.
 
+### TLS de PostgreSQL en Supabase
+
+Si la red no admite IPv6, utilizar el session pooler del diálogo Connect, puerto
+5432, tanto para runtime como para migraciones. Descargar el certificado oficial
+desde Database Settings → SSL configuration → Download certificate y guardarlo
+fuera del repositorio. Agregar `sslmode=verify-full` y `sslrootcert` con la ruta
+absoluta codificada del certificado a ambas URLs. El adaptador `pg` necesita esa
+CA para verificar la cadena TLS; no desactivar la validación de certificados.
+Para conexiones remotas, `DB_CONNECTION_TIMEOUT_MS=10000` deja margen al
+establecimiento de la conexión sin superar los límites de configuración.
+
+La cuenta inicial del entorno local se creó sin envío de correos. Su email,
+UUID y contraseña generada están en `RESOLVEAI_ADMIN_EMAIL`,
+`RESOLVEAI_ADMIN_USER_ID` y `RESOLVEAI_ADMIN_PASSWORD` dentro de `.env`.
+Son datos locales de aprovisionamiento, no variables requeridas por el runtime.
+La clave pública `SUPABASE_PUBLISHABLE_KEY` permite que el frontend inicie
+sesión; la API valida JWTs mediante JWKS y no necesita una clave privilegiada
+de Supabase para autenticar usuarios.
+
 ## Contrato para frontend
 
 Enviar el access token de la sesión Supabase:
@@ -114,7 +133,7 @@ No hay ninguna operación de escritura de disputas ni permiso de envío probado.
 - No hay multitenancy ni administración de usuarios por HTTP. La configuración
   admite un merchant; un usuario asociado a otro merchant es rechazado.
 
-## Pruebas y verificación externa pendiente
+## Pruebas y verificación externa
 
 `pnpm check` ejecuta pruebas de entorno, criptografía JWT con servidor JWKS
 **MOCK**, permisos de rutas y cliente PayPal con respuestas **MOCK**.
@@ -122,10 +141,12 @@ No hay ninguna operación de escritura de disputas ni permiso de envío probado.
 RLS y persistencia usando PostgreSQL real. El check PayPal está simulado en esa
 suite y no se presenta como una conexión real al Sandbox.
 
-Para la verificación real faltan un proyecto Supabase con usuarios, la conexión
-PostgreSQL correspondiente y las credenciales de la app PayPal Sandbox. Después
-de configurarlos, iniciar sesión desde el frontend y ejecutar las cuatro rutas
-para registrar el resultado real. Nunca copiar secretos a Git ni al chat.
+Se verificó M01 contra Supabase Auth/PostgreSQL y PayPal Sandbox reales el
+5 de noviembre de 2026: inicio de sesión, JWT ES256, rol ADMIN, readiness,
+comprobación PayPal y lectura del resultado persistido. Véase
+[el registro de validación](validation.md). Esto no demuestra un envío de
+evidencia ni una disputa elegible. Los webhooks se configurarán en M02 cuando
+exista un endpoint HTTPS real. Nunca copiar secretos a Git ni al chat.
 
 Referencias oficiales:
 [Supabase JWT](https://supabase.com/docs/guides/auth/jwts),

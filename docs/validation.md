@@ -48,6 +48,29 @@ a ejecutar `db:deploy` sin cambios pendientes.
 - PayPal se prueba con respuestas MOCK identificadas: OAuth, lectura, acceso
   denegado, timeout, respuestas inválidas y rotación de credenciales.
 
-No hay credenciales de Supabase Auth ni PayPal Sandbox configuradas. Por ello,
-no se ha afirmado que existan sesiones reales del proyecto o una conexión real
-de PayPal verificada. Ver [configuración de M01](m01-merchants.md).
+### Verificación con servicios reales
+
+Ejecutada el 5 de noviembre de 2026 (registro UTC:
+`2026-11-06T04:05:13.961Z`) desde el backend compilado, con configuración local
+guardada fuera de Git. Se utilizó Opera GX con las sesiones del usuario para
+configurar una organización/proyecto Supabase Free y la app PayPal Sandbox
+existente, habilitando Customer disputes.
+
+| Comprobación real                                          | Resultado                                    |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| Migraciones en PostgreSQL Supabase                         | Dos migraciones aplicadas                    |
+| Conexión Prisma con session pooler y CA oficial            | Correcta, TLS verificado                     |
+| JWKS de Supabase                                           | HTTP 200, ES256                              |
+| Login de usuario con email y contraseña                    | HTTP 200                                     |
+| Readiness del backend                                      | HTTP 200                                     |
+| Acceso al merchant sin sesión                              | HTTP 401                                     |
+| Acceso con JWT real y membresía ADMIN                      | HTTP 200                                     |
+| OAuth PayPal Sandbox                                       | CONNECTED                                    |
+| Lectura de disputas Sandbox                                | AVAILABLE, HTTP 200                          |
+| Check a través de la ruta protegida y resultado persistido | Correcto                                     |
+| Política de envío                                          | Deshabilitado; aprobación humana obligatoria |
+
+La contraseña inicial del usuario se generó localmente y no se envió correo.
+No se guardaron tokens de sesión en Git. No se probó presentación de evidencia,
+existencia de una disputa elegible, webhooks ni despliegue remoto.
+Ver [configuración de M01](m01-merchants.md).

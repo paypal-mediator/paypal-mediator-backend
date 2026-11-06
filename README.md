@@ -11,8 +11,11 @@ errores uniformes, Swagger y CI. M01 agrega usuarios Supabase Auth, roles,
 políticas del merchant y comprobación de conectividad PayPal Sandbox.
 La guía de configuración y el contrato para el frontend están en
 [docs/m01-merchants.md](docs/m01-merchants.md).
-M02–M09, OpenAI, Storage y la verificación con cuentas externas reales siguen
-pendientes. Las pruebas PayPal usan respuestas MOCK explícitas.
+M01 se verificó con Supabase Auth/PostgreSQL reales y PayPal Sandbox: login,
+acceso del administrador, consulta de disputas y persistencia del check.
+M02–M09, OpenAI y Storage siguen pendientes. Las pruebas automatizadas de
+PayPal usan respuestas MOCK explícitas; la verificación real está registrada
+en [docs/validation.md](docs/validation.md).
 
 ## Arranque
 
