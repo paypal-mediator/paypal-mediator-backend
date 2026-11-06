@@ -125,3 +125,34 @@ desde PayPal; esas rutas están cubiertas por las pruebas de integración con
 PayPal MOCK descritas arriba. No se crearon pagos ni disputas para la prueba.
 Credenciales y certificado se configuraron fuera de Git. Ver
 [despliegue](deployment.md) para operación y limitaciones del plan Free.
+
+## Pago Sandbox y entrega genuina — 6 de noviembre de 2026
+
+Se creó una orden con las credenciales Sandbox de la app; el usuario aprobó
+el checkout con la cuenta personal de prueba. Se capturó 1 USD ficticio, sin
+utilizar el entorno Live.
+
+- Orden: `5Y118346C7856021V`, estado `COMPLETED`.
+- Captura: `4TD91052PF072424A`, HTTP 201, estado `COMPLETED`.
+- Evento genuino: `WH-1YS32612YL8319623-7XB699471K872161N`,
+  `PAYMENT.CAPTURE.COMPLETED`.
+- Evento persistido: `d7423e66-42c2-4b71-8d3c-b799f2267726`, recibido a las
+  `2026-11-06T07:49:09.408Z`.
+- Trabajo: `f9699d90-ecdc-48e9-a4c9-54e053e02f46`, tipo
+  `TRANSACTION_CAPTURED`, estado `QUEUED`.
+
+La primera entrega recibió HTTP 401. Se detectó que la validación Zod
+reconstruía el envelope en el orden de campos del schema antes del postback
+de firma. Se corrigió conservando el objeto original después de validarlo,
+sin relajar la verificación de PayPal. Tras desplegar `34e908b` y solicitar
+el reenvío, el mismo evento superó la verificación y se guardó con su trabajo.
+Se solicitó un segundo envío del mismo evento: PayPal confirmó `SUCCESS`,
+HTTP 200, transmisión `9e320748-d9b6-11f1-9e97-6d78f882e18a` a las
+`2026-11-06T07:49:38Z`. PostgreSQL conservó un único evento y un único trabajo,
+con el registro original intacto; la deduplicación también quedó comprobada.
+La corrección incluye una prueba de regresión: 89 pruebas unitarias/HTTP
+y las 34 pruebas PostgreSQL aprobaron CI.
+
+Esto verifica el flujo de captura entre M01, M02, PayPal, Render y Supabase.
+No verifica eventos genuinos de disputas ni consumidores de M03/M07; el
+trabajo permanece en la outbox hasta implementar esos módulos.

@@ -11,9 +11,10 @@
 El 6 de noviembre de 2026 se publicó el servicio y se registró la suscripción
 en la app PayPal Sandbox con los cuatro eventos descritos abajo. Se verificaron
 readiness y acceso ADMIN con un JWT real de Supabase, además de OAuth y lectura
-de disputas de PayPal desde Render. La app no tenía eventos genuinos para
-reenviar: la recepción de una entrega firmada y su persistencia siguen
-pendientes de una operación Sandbox. No se generaron pagos ni disputas.
+de disputas de PayPal desde Render. Después se capturó un pago Sandbox de
+1 USD ficticio: su evento firmado se verificó y persistió en Supabase junto
+con un trabajo `TRANSACTION_CAPTURED` en estado `QUEUED`. Ver los identificadores
+y el alcance de la prueba en [validación](validation.md).
 
 ## Configuración
 
