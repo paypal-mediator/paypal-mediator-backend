@@ -1,0 +1,49 @@
+{
+  "verifiedAt": "2026-11-06T14:40:55.282Z",
+  "orderId": "8E96636933870233U",
+  "captureId": "7HV195624A539251X",
+  "transactionId": "762e5e48-ed95-4093-ab83-29951fdff0d3",
+  "amount": {
+    "currencyCode": "USD",
+    "value": "1"
+  },
+  "paypalEventId": "WH-4D3309745X8121805-54836339YA430861F",
+  "sourceEventId": "d17c008c-bb82-4c6b-8101-fa8d6a303aae",
+  "receivedAt": "2026-11-06T14:28:28.947Z",
+  "jobId": "f550983c-d386-4466-b763-f419fb68ce0c",
+  "jobStatus": "COMPLETED",
+  "finishedAt": "2026-11-06T14:28:29.141Z",
+  "m03ListHttp": 200,
+  "m03DetailHttp": 200,
+  "unauthenticatedHttp": 401,
+  "transactionCount": 1,
+  "readiness": {
+    "status": "INCOMPLETE",
+    "checks": [
+      {
+        "code": "PAYMENT_RECORD",
+        "status": "PRESENT"
+      },
+      {
+        "code": "ORDER_REFERENCE",
+        "status": "PRESENT"
+      },
+      {
+        "code": "ORDER_RECORD",
+        "status": "MISSING"
+      },
+      {
+        "code": "TRACKING",
+        "status": "MISSING"
+      },
+      {
+        "code": "PROOF_OF_DELIVERY",
+        "status": "MISSING"
+      }
+    ]
+  },
+  "apiLocation": "Render",
+  "apiBase": "https://resolve-ai-api-ybmj.onrender.com/api",
+  "readinessHttp": 200,
+  "originalCaptureProcessedBy": "local M03 worker"
+}

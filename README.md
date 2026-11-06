@@ -96,7 +96,9 @@ Build: `pnpm install --frozen-lockfile`, `pnpm db:generate`, `pnpm build`.
 Release: `pnpm db:deploy`. Arranque: `pnpm start`.
 Escucha en `0.0.0.0:$PORT` y cierra el pool al apagarse.
 Usar `/api/health/ready` para comprobar disponibilidad de DB.
-Todavía no hay un despliegue remoto configurado ni verificado.
+API publicada en Render: <https://resolve-ai-api-ybmj.onrender.com/api>.
+M01, M02 y el primer incremento de M03 están desplegados; ver
+[despliegue](docs/deployment.md) y [validación](docs/validation.md).
 
 La base inicial se trabaja en `main`; las siguientes funcionalidades van en
 `feat/m01-*` a `feat/m09-*` y se integran por PR. Actualizar cada rama desde

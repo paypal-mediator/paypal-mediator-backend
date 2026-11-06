@@ -76,7 +76,9 @@ Esto describe cobertura documental, nunca probabilidad de ganar una disputa.
 Pendientes para completar M03 y su coordinación con M04: adaptador de pedidos
 comerciales, registro de órdenes, expediente/evidencia y actualización de readiness
 a partir de fuentes documentales reales o fixtures identificados. No se incluye
-`refresh-evidence` sin un consumidor implementado. No se desplegó M03 a Render.
+`refresh-evidence` sin un consumidor implementado. M03 se desplegó a Render
+desde `main` por PR #6 (`ff12287`); readiness, listado y detalle autenticados
+se comprobaron por HTTPS con HTTP 200 y acceso sin sesión HTTP 401.
 Sí se verificó el consumidor local con dos capturas genuinas que M02 había
 persistido en Supabase y con un nuevo pago Sandbox: captura HTTP 201, webhook
 genuino recibido por Render, trabajo completado y listado/detalle locales HTTP 200.
