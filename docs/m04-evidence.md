@@ -1,8 +1,11 @@
-# M04 — Base de evidencia estructurada para M03
+# M04 — Evidence Vault: registros y archivos originales
 
-Esta entrega implementa la parte de M04 necesaria para que M03 coordine un
-expediente y actualice su checklist. No implementa todavía el Evidence Vault
-completo para archivos, PDFs, imágenes o Supabase Storage.
+M04 conserva registros estructurados y archivos originales versionados. La base
+estructurada está desplegada. El incremento de archivos se verificó con una foto
+existente del usuario, NestJS local y Supabase Storage/PostgreSQL reales: carga,
+duplicado y descarga idéntica por SHA-256. Ver [resultados](evidence/m04-real-storage-20261106.json).
+El despliegue de estas rutas en Render se registra por separado en la guía de
+validación. Los conectores comerciales y el análisis de documentos siguen pendientes.
 
 ## Propiedad y contrato entre módulos
 
@@ -20,6 +23,10 @@ La interfaz pública exporta `EvidenceService` y `EvidenceContext`:
 - `readinessFor(tx, contexts)`: devuelve cobertura, IDs y motivos para el snapshot
   de las transacciones solicitadas. El listado comparte una instantánea consistente.
 - `dossier(tx, context)`: devuelve originales estructurados y todas sus versiones.
+- `uploadFile(tx, context, input, actorUserId)`: valida y conserva un original
+  privado; registra metadatos y una revisión solo si Storage confirma los bytes.
+- `downloadFile(tx, context, evidenceId)`: recupera una versión autorizada y
+  compara tamaño y SHA-256 antes de devolver los bytes.
 
 Las claves foráneas compuestas impiden asociar un pedido o expediente a una
 transacción de otro merchant. Las tres tablas nuevas tienen RLS sin políticas
@@ -27,7 +34,7 @@ públicas. Solo el backend autorizado accede a datos de evidencia.
 
 ## Registros, procedencia e integridad
 
-Tipos: `PAYMENT_RECORD`, `ORDER_RECORD`, `TRACKING`, `PROOF_OF_DELIVERY`.
+Tipos: `PAYMENT_RECORD`, `ORDER_RECORD`, `TRACKING`, `PROOF_OF_DELIVERY`, `DOCUMENT`.
 Los dos primeros se generan exclusivamente desde los datos persistidos de M03.
 El registro PayPal es una representación normalizada con `sourceEventId`; el
 webhook original completo permanece en M02. No es una nueva consulta a PayPal.
@@ -48,6 +55,9 @@ Tampoco puede hacer que un contenido antiguo reemplace una corrección más reci
 El historial expone `current` y `integrity`, sin tokens o secretos. El hash detecta
 alteraciones del contenido; no es una firma del carrier ni evita que un propietario
 de la base con acceso privilegiado altere simultáneamente contenido y hash.
+En `DOCUMENT`, `contentHash` e `integrity` corresponden a los metadatos JSON.
+`content.sha256` corresponde a los bytes originales. Listar el expediente no
+consulta Storage: la integridad binaria se comprueba al cargar y descargar.
 
 ## Readiness y revisiones
 
@@ -59,6 +69,9 @@ pedido contradictorio o contenido alterado impiden `READY`. Una entrega
 
 `READY` significa cobertura estructurada. La evaluación semántica e independiente
 de fuentes corresponde al futuro M06, y el permiso de envío corresponde a M08.
+Un archivo `DOCUMENT` no sustituye tracking ni prueba estructurada de entrega.
+Metadatos de archivo alterados o inválidos provocan `NEEDS_REVIEW` con motivo
+`EVIDENCE_FILE_METADATA_INVALID`. Los archivos DEMO también activan `containsDemo`.
 
 ## Uso HTTP
 
@@ -93,3 +106,71 @@ Sin pedido coincidente la escritura devuelve 409. Fechas futuras/inconsistentes
 devuelven 400; fuente/versión en conflicto, 409. Los GET no crean expedientes:
 las capturas anteriores a esta migración pueden inicializarlos con
 `POST /api/transactions/:id/refresh-evidence`.
+
+## Archivos privados
+
+- `POST /api/transactions/:id/evidence/files`: ADMIN; JSON con procedencia,
+  `fileName`, `mediaType` y `dataBase64`. Devuelve `EvidenceReceipt`, HTTP 201,
+  con `CREATED` o `DUPLICATE` y el ID de la versión. Se puede adjuntar un archivo
+  a una captura autorizada aunque todavía no exista pedido comercial.
+- `GET /api/transactions/:id/evidence/files/:evidenceId`: ADMIN/VIEWER del
+  merchant; permite descargar versiones anteriores. Devuelve bytes con
+  `Content-Disposition: attachment` y `Cache-Control: private, no-store`.
+  No expone URLs firmadas ni credenciales de Storage.
+
+Ejemplo de carga desde Node.js, usando un PDF real elegido por el comerciante:
+
+```js
+const body = {
+  sourceKind: 'MERCHANT_INPUT',
+  sourceSystem: 'merchant-documents',
+  externalReference: 'DOCUMENT-001',
+  retrievedAt: new Date().toISOString(),
+  fileName: 'receipt.pdf',
+  mediaType: 'application/pdf',
+  dataBase64: bytes.toString('base64'),
+};
+// POST con el JWT del ADMIN; bytes es el Buffer del archivo elegido.
+```
+
+Límite: 512 KiB decodificados por archivo, compatible con el límite HTTP de 1 MiB
+incluyendo base64. Solo PDF, PNG y JPEG. Se valida base64 canónico, tamaño y
+firma inicial del formato; no se interpreta el documento ni se certifica que
+sea auténtico, esté libre de malware o demuestre una entrega. No se ejecuta su
+contenido. El nombre solo admite caracteres ASCII seguros y no determina la ruta.
+
+Configurar `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (solo backend) y
+`EVIDENCE_BUCKET=private-evidence`. Aprovisionar previamente un bucket privado,
+sin políticas públicas de lectura/escritura, con límite de 524288 bytes y MIME
+permitidos `application/pdf`, `image/png`, `image/jpeg`. La API comprueba que el
+bucket sea privado en cada operación. No lo crea ni cambia su configuración.
+La orden administrativa `pnpm storage:setup` crea el bucket privado si falta,
+con esos límites. Es idempotente y rechaza un bucket público existente sin
+alterar su configuración. No se ejecuta automáticamente al arrancar la API.
+La clave actual `sb_secret_...` se envía solo en `apikey`; se admite
+`SUPABASE_SERVICE_ROLE_KEY` como fallback legado JWT si no está definida la clave
+actual. Si se configuran ambas, tiene prioridad `SUPABASE_SECRET_KEY`.
+Sin configuración responde 503; Storage inaccesible o con fallos responde 502;
+hash/tamaño alterados, 409. No se registran respuestas, cuerpos o claves remotas.
+
+Las claves son `merchantId/transactionId/sha256`. La carga no sobrescribe objetos;
+un objeto existente solo se acepta tras leer y verificar su hash. El mismo
+contenido y fuente devuelve la versión vigente; una corrección agrega versión.
+La procedencia no puede pasar de DEMO a real para una misma fuente. La migración
+`20261106030000_evidence_documents` amplía la restricción de tipos y prohíbe
+documentos etiquetados como PayPal desde la base de datos.
+La séptima migración `20261106040000_evidence_document_provenance` extiende
+también la restricción por tipo/procedencia que existía en la base desplegada.
+Pedidos, tracking, entregas y documentos admiten solo MERCHANT_INPUT/DEMO;
+PAYMENT_RECORD exige PAYPAL. No se debilitan las restricciones existentes.
+
+Storage y PostgreSQL no comparten una transacción distribuida: un fallo de Storage
+revierte metadatos/revisión; un fallo de commit o un timeout después de escribir
+puede dejar un objeto privado sin referencia. Reintentar con los mismos bytes
+reutiliza el objeto. No se borran objetos automáticamente ni se implementa aún
+recolección de huérfanos. Mantener estable el proyecto y bucket; cambiar su
+ubicación requiere migrar los originales. No hay borrado ni edición de versiones
+por HTTP. La clave service role debe mantenerse fuera de clientes y Git.
+
+El adaptador usa las operaciones de [carga estándar de Supabase](https://supabase.com/docs/guides/storage/uploads/standard-uploads)
+y [descarga autenticada de buckets privados](https://supabase.com/docs/guides/storage/serving/downloads).

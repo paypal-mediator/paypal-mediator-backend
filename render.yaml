@@ -35,6 +35,10 @@ services:
         sync: false
       - key: SUPABASE_URL
         sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: EVIDENCE_BUCKET
+        value: private-evidence
       - key: MERCHANT_ID
         sync: false
       - key: PAYPAL_CLIENT_ID

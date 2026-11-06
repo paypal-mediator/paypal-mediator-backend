@@ -1,17 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   EvidenceDossierResponseSchema,
   RegisterEvidenceSchema,
   type RegisterEvidence,
+  UploadEvidenceFileSchema,
+  EvidenceFileMetadataSchema,
+  MAX_EVIDENCE_FILE_BYTES,
+  type UploadEvidenceFile,
 } from '@resolve-ai/contracts';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { contentHash } from '../../common/data/content-hash.js';
 import { ApiException } from '../../common/http/api.exception.js';
 import { paymentRecord, type EvidenceContext } from './evidence-context.js';
 import { currentEvidence, evaluateEvidence } from './evidence-readiness.js';
+import { EvidenceStorage, binaryHash } from './evidence-storage.js';
 
 interface EvidenceRecord {
-  type: 'PAYMENT_RECORD' | 'ORDER_RECORD' | 'TRACKING' | 'PROOF_OF_DELIVERY';
+  type:
+    | 'PAYMENT_RECORD'
+    | 'ORDER_RECORD'
+    | 'TRACKING'
+    | 'PROOF_OF_DELIVERY'
+    | 'DOCUMENT';
   sourceKind: 'PAYPAL' | 'MERCHANT_INPUT' | 'DEMO';
   sourceSystem: string;
   externalReference: string;
@@ -21,6 +31,118 @@ interface EvidenceRecord {
 
 @Injectable()
 export class EvidenceService {
+  constructor(
+    @Inject(EvidenceStorage) private readonly storage: EvidenceStorage,
+  ) {}
+
+  async uploadFile(
+    tx: Prisma.TransactionClient,
+    context: EvidenceContext,
+    input: UploadEvidenceFile,
+    actorUserId: string,
+  ) {
+    const parsed = UploadEvidenceFileSchema.parse(input);
+    const bytes = Buffer.from(parsed.dataBase64, 'base64');
+    const signatures = {
+      'application/pdf': Buffer.from('%PDF-'),
+      'image/png': Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      'image/jpeg': Buffer.from([255, 216, 255]),
+    };
+    if (
+      !bytes.length ||
+      bytes.length > MAX_EVIDENCE_FILE_BYTES ||
+      bytes.toString('base64') !== parsed.dataBase64 ||
+      !bytes
+        .subarray(0, signatures[parsed.mediaType].length)
+        .equals(signatures[parsed.mediaType])
+    )
+      throw new ApiException(
+        'EVIDENCE_FILE_INVALID',
+        'Invalid file size, encoding or signature',
+        400,
+      );
+    if (Date.parse(parsed.retrievedAt) > Date.now() + 300000)
+      throw new ApiException(
+        'EVIDENCE_DATE_INVALID',
+        'Evidence dates are inconsistent',
+        400,
+      );
+    const sha256 = binaryHash(bytes);
+    const receipt = await this.append(
+      tx,
+      context,
+      {
+        type: 'DOCUMENT',
+        sourceKind: parsed.sourceKind,
+        sourceSystem: parsed.sourceSystem,
+        externalReference: parsed.externalReference,
+        retrievedAt: parsed.retrievedAt,
+        content: {
+          fileName: parsed.fileName,
+          mediaType: parsed.mediaType,
+          byteLength: bytes.length,
+          sha256,
+        },
+      },
+      actorUserId,
+    );
+    // Validate provenance/version constraints before creating an external object.
+    // A storage failure rolls back the uncommitted metadata and revision.
+    await this.storage.put(
+      this.fileKey(context, sha256),
+      bytes,
+      parsed.mediaType,
+    );
+    return receipt;
+  }
+
+  private fileKey(context: EvidenceContext, sha256: string) {
+    return `${context.merchantId}/${context.transactionId}/${sha256}`;
+  }
+
+  async downloadFile(
+    tx: Prisma.TransactionClient,
+    context: EvidenceContext,
+    evidenceId: string,
+  ) {
+    const item = await tx.evidenceItem.findFirst({
+      where: {
+        id: evidenceId,
+        type: 'DOCUMENT',
+        dossier: {
+          merchantId: context.merchantId,
+          transactionId: context.transactionId,
+        },
+      },
+    });
+    if (!item)
+      throw new ApiException(
+        'EVIDENCE_FILE_NOT_FOUND',
+        'Evidence file not found',
+        404,
+      );
+    const metadata = EvidenceFileMetadataSchema.safeParse(item.content);
+    if (!metadata.success || item.contentHash !== contentHash(item.content))
+      throw new ApiException(
+        'EVIDENCE_FILE_INTEGRITY_MISMATCH',
+        'File metadata integrity check failed',
+        409,
+      );
+    await this.storage.ensurePrivate();
+    const bytes = await this.storage.get(
+      this.fileKey(context, metadata.data.sha256),
+    );
+    if (
+      bytes.length !== metadata.data.byteLength ||
+      binaryHash(bytes) !== metadata.data.sha256
+    )
+      throw new ApiException(
+        'EVIDENCE_FILE_INTEGRITY_MISMATCH',
+        'Stored file integrity check failed',
+        409,
+      );
+    return { bytes, ...metadata.data };
+  }
   private async append(
     tx: Prisma.TransactionClient,
     context: EvidenceContext,

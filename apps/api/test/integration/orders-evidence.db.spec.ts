@@ -19,6 +19,8 @@ import { contentHash } from '../../src/common/data/content-hash.js';
 import { createMockAuth } from '../fixtures/auth.js';
 import { captureEvent } from '../fixtures/capture.js';
 import { demoOrder, demoTracking, demoDelivery } from '../fixtures/commerce.js';
+import { EvidenceStorage } from '../../src/modules/evidence/evidence-storage.js';
+import { ApiException } from '../../src/common/http/api.exception.js';
 
 describe('M03 orders ↔ M04 structured evidence (real PostgreSQL/HTTP, explicit DEMO commerce/JWKS)', () => {
   const merchantId = randomUUID();
@@ -130,6 +132,152 @@ describe('M03 orders ↔ M04 structured evidence (real PostgreSQL/HTTP, explicit
     await orders.create(actor, demoOrder(reference));
     return capture(reference);
   }
+
+  it('stores and versions original files, authorizes downloads and detects tampering (MOCK Storage)', async () => {
+    const storage = context.app.get(EvidenceStorage);
+    const objects = new Map<string, Buffer>();
+    const put = vi
+      .spyOn(storage, 'put')
+      .mockImplementation(async (key, bytes) => {
+        objects.set(key, bytes);
+      });
+    const get = vi
+      .spyOn(storage, 'get')
+      .mockImplementation(async (key) => Buffer.from(objects.get(key)!));
+    const privateBucket = vi
+      .spyOn(storage, 'ensurePrivate')
+      .mockResolvedValue();
+    try {
+      const row = await paired('FILES');
+      const body = {
+        sourceKind: 'DEMO',
+        sourceSystem: 'DEMO / MOCK documents',
+        externalReference: 'DEMO-PDF',
+        retrievedAt: '2026-11-05T00:00:00Z',
+        fileName: 'demo.pdf',
+        mediaType: 'application/pdf',
+        dataBase64: Buffer.from(
+          '%PDF-1.7\nDEMO / MOCK original\n%%EOF',
+        ).toString('base64'),
+      };
+      const url = `/api/transactions/${row.id}/evidence/files`;
+      const upload = (input = body) =>
+        http().post(url).auth(adminToken, { type: 'bearer' }).send(input);
+      await http().post(url).send(body).expect(401);
+      await http().get(`${url}/${randomUUID()}`).expect(401);
+      await http()
+        .post(url)
+        .auth(viewerToken, { type: 'bearer' })
+        .send(body)
+        .expect(403);
+      expect(put).not.toHaveBeenCalled();
+      await upload({ ...body, fileName: '../bad.pdf' }).expect(400);
+      await upload({ ...body, mediaType: 'image/png' }).expect(400);
+      const oversized = Buffer.alloc(512 * 1024 + 1);
+      oversized.write('%PDF-');
+      await upload({
+        ...body,
+        dataBase64: oversized.toString('base64'),
+      }).expect(400);
+      const first = await upload().expect(201);
+      expect(first.body.outcome).toBe('CREATED');
+      const duplicate = await upload().expect(201);
+      expect(duplicate.body).toEqual({ ...first.body, outcome: 'DUPLICATE' });
+      const changed = await upload({
+        ...body,
+        dataBase64: Buffer.from('%PDF-1.7\nDEMO revision\n%%EOF').toString(
+          'base64',
+        ),
+      }).expect(201);
+      expect(changed.body.version).toBe(first.body.version + 1);
+      const writes = put.mock.calls.length;
+      await upload({ ...body, sourceKind: 'MERCHANT_INPUT' }).expect(409);
+      await upload({ ...body, retrievedAt: '2026-11-04T00:00:00Z' }).expect(
+        409,
+      );
+      expect(put).toHaveBeenCalledTimes(writes);
+      const dossier = await transactions.dossier(merchantId, row.id);
+      expect(dossier.items.filter((i) => i.type === 'DOCUMENT')).toHaveLength(
+        2,
+      );
+      expect((await detail(row.id)).readiness.status).toBe('INCOMPLETE');
+      const downloaded = await http()
+        .get(`${url}/${first.body.evidenceId}`)
+        .auth(viewerToken, { type: 'bearer' })
+        .expect(200);
+      expect(downloaded.headers['cache-control']).toBe('private, no-store');
+      expect(downloaded.headers['content-disposition']).toBe(
+        'attachment; filename="demo.pdf"',
+      );
+      expect(downloaded.body).toEqual(Buffer.from(body.dataBase64, 'base64'));
+      await expect(
+        transactions.downloadEvidenceFile(
+          otherMerchantId,
+          row.id,
+          first.body.evidenceId,
+        ),
+      ).rejects.toThrow('Transaction not found');
+      await expect(
+        transactions.uploadEvidenceFile(
+          { ...actor, merchantId: otherMerchantId },
+          row.id,
+          { ...body, sourceKind: 'DEMO', mediaType: 'application/pdf' },
+        ),
+      ).rejects.toThrow('Transaction not found');
+      await http()
+        .get(`${url}/${randomUUID()}`)
+        .auth(adminToken, { type: 'bearer' })
+        .expect(404);
+      const other = await paired('FILES-OTHER');
+      await http()
+        .get(
+          `/api/transactions/${other.id}/evidence/files/${first.body.evidenceId}`,
+        )
+        .auth(adminToken, { type: 'bearer' })
+        .expect(404);
+      get.mockResolvedValueOnce(Buffer.from('MOCK tampered'));
+      await http()
+        .get(`${url}/${first.body.evidenceId}`)
+        .auth(adminToken, { type: 'bearer' })
+        .expect(409);
+      put.mockRejectedValueOnce(
+        new ApiException('EVIDENCE_STORAGE_FAILED', 'MOCK Storage outage', 502),
+      );
+      const before = await prisma.evidenceItem.count();
+      const revisionBefore = (await transactions.dossier(merchantId, row.id))
+        .revision;
+      await upload({ ...body, externalReference: 'DEMO-FAILED' }).expect(502);
+      expect(await prisma.evidenceItem.count()).toBe(before);
+      expect((await transactions.dossier(merchantId, row.id)).revision).toBe(
+        revisionBefore,
+      );
+      const originalItem = await prisma.evidenceItem.findUniqueOrThrow({
+        where: { id: changed.body.evidenceId },
+      });
+      await prisma.evidenceItem.update({
+        where: { id: originalItem.id },
+        data: { content: { ...body, fileName: 'tampered.pdf' } },
+      });
+      expect((await detail(row.id)).readiness).toMatchObject({
+        status: 'NEEDS_REVIEW',
+        reasons: ['EVIDENCE_FILE_METADATA_INVALID'],
+      });
+      const reads = get.mock.calls.length;
+      await http()
+        .get(`${url}/${originalItem.id}`)
+        .auth(adminToken, { type: 'bearer' })
+        .expect(409);
+      expect(get).toHaveBeenCalledTimes(reads);
+      await prisma.evidenceItem.update({
+        where: { id: originalItem.id },
+        data: { content: originalItem.content! },
+      });
+    } finally {
+      put.mockRestore();
+      get.mockRestore();
+      privateBucket.mockRestore();
+    }
+  });
 
   it('registers a sourced commercial order, links a later capture and persists original payment/order evidence', async () => {
     const created = await create(demoOrder('BEFORE')).expect(201);

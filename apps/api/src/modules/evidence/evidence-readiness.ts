@@ -1,6 +1,7 @@
 import {
   TrackingContentSchema,
   DeliveryContentSchema,
+  EvidenceFileMetadataSchema,
   type TransactionResponse,
 } from '@resolve-ai/contracts';
 import type {
@@ -26,6 +27,7 @@ export function evaluateEvidence(
 ): TransactionResponse['readiness'] {
   const current = currentEvidence(dossier?.items ?? []);
   const reasons: string[] = [];
+  let invalidDocument = false;
   const checks: TransactionResponse['readiness']['checks'] = [
     { code: 'PAYMENT_RECORD', status: 'PRESENT', evidenceIds: [] },
     {
@@ -55,6 +57,16 @@ export function evaluateEvidence(
     data: ReturnType<typeof DeliveryContentSchema.parse>;
   }> = [];
   for (const item of current) {
+    if (item.type === 'DOCUMENT') {
+      if (
+        item.contentHash !== contentHash(item.content) ||
+        !EvidenceFileMetadataSchema.safeParse(item.content).success
+      ) {
+        invalidDocument = true;
+        reasons.push('EVIDENCE_FILE_METADATA_INVALID');
+      }
+      continue;
+    }
     const code = item.type === 'ORDER_RECORD' ? 'ORDER_RECORD' : item.type;
     const target = checks.find((c) => c.code === code);
     if (!target) continue;
@@ -138,11 +150,12 @@ export function evaluateEvidence(
   if (deliveries.some((d) => d.data.status === 'RETRACTED'))
     check('PROOF_OF_DELIVERY').status =
       check('PROOF_OF_DELIVERY').status === 'CONFLICT' ? 'CONFLICT' : 'MISSING';
-  const status = checks.some((c) => c.status === 'CONFLICT')
-    ? 'NEEDS_REVIEW'
-    : checks.every((c) => c.status === 'PRESENT')
-      ? 'READY'
-      : 'INCOMPLETE';
+  const status =
+    invalidDocument || checks.some((c) => c.status === 'CONFLICT')
+      ? 'NEEDS_REVIEW'
+      : checks.every((c) => c.status === 'PRESENT')
+        ? 'READY'
+        : 'INCOMPLETE';
   return {
     status,
     basis: 'DOCUMENT_COVERAGE',

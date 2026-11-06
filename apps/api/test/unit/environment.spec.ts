@@ -35,6 +35,8 @@ describe('environment validation', () => {
   });
 
   it.each([
+    { SUPABASE_SECRET_KEY: 'sb_publishable_MOCK_NOT_PRIVILEGED' },
+    { SUPABASE_SECRET_KEY: 'sb_secret_MOCK_WITHOUT_PROJECT_URL' },
     { PORT: '0' },
     { PORT: 'abc' },
     { DATABASE_URL: 'https://example.com' },

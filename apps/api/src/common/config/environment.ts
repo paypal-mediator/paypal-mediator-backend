@@ -74,6 +74,14 @@ export const EnvironmentSchema = z.object({
     }),
   ),
   MERCHANT_ID: optionalString(z.uuid()),
+  SUPABASE_SERVICE_ROLE_KEY: optionalString(z.string().min(1).max(2048)),
+  SUPABASE_SECRET_KEY: optionalString(
+    z.string().regex(/^sb_secret_[A-Za-z0-9_-]+$/),
+  ),
+  EVIDENCE_BUCKET: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9-]{0,62}$/)
+    .default('private-evidence'),
   MAX_INVESTIGATION_ROUNDS: z.coerce.number().int().min(1).max(5).default(2),
 });
 
@@ -108,6 +116,15 @@ export function parseEnvironment(input: Record<string, unknown>): Environment {
   ) {
     throw new Error(
       'Invalid environment configuration: PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET must be configured together',
+    );
+  }
+  if (
+    (result.data.SUPABASE_SECRET_KEY ||
+      result.data.SUPABASE_SERVICE_ROLE_KEY) &&
+    !result.data.SUPABASE_URL
+  ) {
+    throw new Error(
+      'Invalid environment configuration: SUPABASE_URL is required for Storage credentials',
     );
   }
   if (

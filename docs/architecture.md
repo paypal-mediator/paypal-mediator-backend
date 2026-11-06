@@ -20,7 +20,7 @@ apps/api/
       merchants/            # M01: usuarios, políticas e integración Sandbox
       event-ingestion/      # M02: firma, persistencia y outbox de webhooks
       transactions/         # M03: capturas, consultas y checklist documental
-      evidence/             # M04: registros estructurados, versiones y cobertura
+      evidence/             # M04: registros, archivos privados, versiones y cobertura
     generated/prisma/       # Generado, ignorado en Git
   test/
     unit/
@@ -79,8 +79,9 @@ de dominio de `information.md` siguen siendo propuestas.
   Supabase y membresías activas antes de acceder al merchant. Roles ADMIN y
   VIEWER; las políticas exigen aprobación humana.
 - Solo `PAYPAL_ENV=sandbox`. M01 puede comprobar OAuth y lectura de disputas
-  mediante petición explícita del administrador. OpenAI y Storage siguen
-  pendientes. Los tests externos son MOCK identificados.
+  mediante petición explícita del administrador. OpenAI sigue pendiente. M04
+  conserva archivos originales en Storage privado, verificado con una foto del
+  usuario y servicios Supabase reales; los tests automatizados usan MOCK explícito.
 - Aprobación humana por defecto para futuros envíos. La IA nunca tendrá
   acceso directo a la operación de presentación de evidencia.
 
@@ -93,7 +94,7 @@ Revisar el override cuando NestJS actualice su dependencia.
 ESLint y typescript-eslint usan Minimatch 11.0.1 mediante override por
 [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 
-Completar M04 para archivos/Storage y conectores, M05–M09, auditoría append-only, herramientas de IA,
+Completar conectores M04, M05–M09, auditoría append-only, herramientas de IA,
 contratos de dominio, prueba real de disputas Sandbox y licencia
 acordada por el equipo.
 

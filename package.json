@@ -22,6 +22,7 @@
     "db:migrate": "pnpm --filter @resolve-ai/api exec prisma migrate dev",
     "db:deploy": "pnpm --filter @resolve-ai/api exec prisma migrate deploy",
     "merchant:setup": "pnpm --filter @resolve-ai/api exec tsx --tsconfig tsconfig.json src/commands/setup-merchant.ts",
+    "storage:setup": "pnpm --filter @resolve-ai/api exec tsx --tsconfig tsconfig.json src/commands/setup-evidence-storage.ts",
     "check": "pnpm db:generate && pnpm db:validate && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
