@@ -18,8 +18,10 @@ con deduplicación y comunicación con M01. El primer incremento de
 [M03](docs/m03-transactions.md) consume capturas y expone listado/detalle por
 merchant con checklist documental. Su worker está activo por defecto en producción;
 en desarrollo se activa con `TRANSACTION_WORKER_ENABLED=true`. Un `false` explícito
-lo desactiva en cualquier entorno. Órdenes comerciales y coordinación con M04
-siguen pendientes. M04–M09, OpenAI y Storage siguen pendientes. Las pruebas automatizadas de
+lo desactiva en cualquier entorno. La ampliación local de M03 agrega órdenes,
+vinculación y checklist dinámico mediante una [base estructurada de M04](docs/m04-evidence.md).
+Requiere la quinta migración y aún no está desplegada. Archivos/Storage y conectores
+de M04, M05–M09 y OpenAI siguen pendientes. Las pruebas automatizadas de
 PayPal usan respuestas MOCK explícitas; la verificación real está registrada
 en [docs/validation.md](docs/validation.md).
 

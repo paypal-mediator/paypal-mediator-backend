@@ -20,6 +20,7 @@ apps/api/
       merchants/            # M01: usuarios, políticas e integración Sandbox
       event-ingestion/      # M02: firma, persistencia y outbox de webhooks
       transactions/         # M03: capturas, consultas y checklist documental
+      evidence/             # M04: registros estructurados, versiones y cobertura
     generated/prisma/       # Generado, ignorado en Git
   test/
     unit/
@@ -92,7 +93,7 @@ Revisar el override cuando NestJS actualice su dependencia.
 ESLint y typescript-eslint usan Minimatch 11.0.1 mediante override por
 [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 
-Órdenes comerciales y coordinación M03–M04, M04–M09, auditoría append-only, Storage, herramientas de IA,
+Completar M04 para archivos/Storage y conectores, M05–M09, auditoría append-only, herramientas de IA,
 contratos de dominio, prueba real de disputas Sandbox y licencia
 acordada por el equipo.
 
@@ -106,3 +107,10 @@ que controla los locks y la transacción compartida; cada consumidor escribe sol
 sus tablas. El worker de M03 se activa por configuración. Las disputas permanecen
 `QUEUED` hasta implementar M07. Ver [M03](m03-transactions.md).
 Ver [M02](m02-event-ingestion.md) para contratos y límites de la verificación.
+
+La ampliación local de M03 agrega órdenes comerciales y utiliza el contrato público
+de M04 (`EvidenceService`) para expedientes JSON versionados y readiness dinámico.
+La unidad de trabajo Prisma se comparte por parámetro; cada servicio escribe solo
+sus tablas. M04 recibe contexto autorizado de M03 y no importa su módulo. Los GET
+leen snapshots; POST de pedido/evidencia/refresh reconcilian y persisten. Ver
+[contrato M04](m04-evidence.md) y los límites de una captura/un paquete por pedido.
