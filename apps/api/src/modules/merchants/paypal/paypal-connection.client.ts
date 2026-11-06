@@ -6,20 +6,20 @@ import {
   ENVIRONMENT,
   type Environment,
 } from '../../../common/config/environment.js';
-
-const TokenSchema = z.object({
-  access_token: z.string().min(1),
-  token_type: z.literal('Bearer'),
-  expires_in: z.number().positive(),
-});
+import {
+  PAYPAL_FETCH,
+  PAYPAL_SANDBOX_URL,
+  PayPalAuthService,
+  PayPalAuthError,
+  paypalDebugId,
+} from './paypal-auth.service.js';
+export { PAYPAL_FETCH } from './paypal-auth.service.js';
 const DisputeListSchema = z
   .object({
     items: z.array(z.unknown()).optional(),
     links: z.array(z.unknown()).optional(),
   })
   .refine((value) => value.items !== undefined || value.links !== undefined);
-const BASE_URL = 'https://api-m.sandbox.paypal.com';
-export const PAYPAL_FETCH = Symbol('PAYPAL_FETCH');
 export type PayPalCheck = Pick<
   PayPalIntegration,
   | 'connectionStatus'
@@ -33,6 +33,11 @@ export class PayPalConnectionClient {
   constructor(
     @Inject(ENVIRONMENT) private readonly environment: Environment,
     @Inject(PAYPAL_FETCH) private readonly fetcher: typeof fetch,
+    @Inject(PayPalAuthService)
+    private readonly auth: PayPalAuthService = new PayPalAuthService(
+      environment,
+      fetcher,
+    ),
   ) {}
 
   get credentialsConfigured(): boolean {
@@ -49,11 +54,6 @@ export class PayPalConnectionClient {
       .digest('hex');
   }
 
-  private debugId(response: Response): string | null {
-    const id = response.headers.get('paypal-debug-id');
-    return id && /^[a-zA-Z0-9-]{1,128}$/.test(id) ? id : null;
-  }
-
   async check(): Promise<PayPalCheck> {
     const result: PayPalCheck = {
       connectionStatus: 'UNAVAILABLE',
@@ -66,46 +66,25 @@ export class PayPalConnectionClient {
     // One deadline for the entire check, including both response bodies.
     const signal = AbortSignal.timeout(this.environment.PAYPAL_TIMEOUT_MS);
     try {
-      const response = await this.fetcher(`${BASE_URL}/v1/oauth2/token`, {
-        method: 'POST',
-        redirect: 'error',
-        signal,
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${this.environment.PAYPAL_CLIENT_ID}:${this.environment.PAYPAL_CLIENT_SECRET}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: 'application/json',
-        },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-        }).toString(),
-      });
-      result.paypalHttpStatus = response.status;
-      result.paypalDebugId = this.debugId(response);
-      if (!response.ok) {
-        result.connectionStatus = [400, 401].includes(response.status)
-          ? 'INVALID_CREDENTIALS'
-          : 'UNAVAILABLE';
-        await response.body?.cancel();
-        return result;
-      }
-      const token = TokenSchema.safeParse(await response.json());
-      if (!token.success) return result;
+      const token = await this.auth.getAccessToken(signal, true);
+      result.paypalHttpStatus = token.httpStatus;
+      result.paypalDebugId = token.debugId;
       result.connectionStatus = 'CONNECTED';
       result.disputesReadStatus = 'UNAVAILABLE';
       const disputes = await this.fetcher(
-        `${BASE_URL}/v1/customer/disputes?page_size=1`,
+        `${PAYPAL_SANDBOX_URL}/v1/customer/disputes?page_size=1`,
         {
           method: 'GET',
           redirect: 'error',
           signal,
           headers: {
-            Authorization: `Bearer ${token.data.access_token}`,
+            Authorization: `Bearer ${token.accessToken}`,
             Accept: 'application/json',
           },
         },
       );
       result.paypalHttpStatus = disputes.status;
-      result.paypalDebugId = this.debugId(disputes);
+      result.paypalDebugId = paypalDebugId(disputes);
       if (disputes.ok) {
         if (DisputeListSchema.safeParse(await disputes.json()).success)
           result.disputesReadStatus = 'AVAILABLE';
@@ -115,7 +94,15 @@ export class PayPalConnectionClient {
         await disputes.body?.cancel();
       }
       return result;
-    } catch {
+    } catch (error) {
+      if (error instanceof PayPalAuthError) {
+        result.paypalHttpStatus = error.httpStatus;
+        result.paypalDebugId = error.debugId;
+        result.connectionStatus =
+          error.httpStatus !== null && [400, 401].includes(error.httpStatus)
+            ? 'INVALID_CREDENTIALS'
+            : 'UNAVAILABLE';
+      }
       return result;
     }
   }

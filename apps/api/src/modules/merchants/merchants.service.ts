@@ -68,6 +68,23 @@ export class MerchantsService {
     return MerchantPolicySchema.parse(await this.findMerchant(merchantId));
   }
 
+  async getPayPalWebhookContext(): Promise<{
+    merchantId: string;
+    webhookId: string;
+  }> {
+    const merchantId = this.environment.MERCHANT_ID;
+    const webhookId = this.environment.PAYPAL_WEBHOOK_ID;
+    if (!merchantId || !webhookId || !this.paypal.credentialsConfigured) {
+      throw new ApiException(
+        'WEBHOOK_NOT_CONFIGURED',
+        'The Sandbox webhook integration is not configured',
+        503,
+      );
+    }
+    await this.findMerchant(merchantId);
+    return { merchantId, webhookId };
+  }
+
   async assertActionAllowed(
     merchantId: string,
     action: 'INVESTIGATE' | 'SUBMIT',

@@ -116,6 +116,13 @@ No hay ninguna operación de escritura de disputas ni permiso de envío probado.
 
 ## Controles y límites
 
+Módulos del servidor pueden importar `PayPalAuthService` y
+`MerchantsService.getPayPalWebhookContext()` desde la interfaz pública de M01.
+El primero comparte OAuth con caché hasta antes de la expiración; el segundo
+resuelve el merchant provisionado y el webhook configurado sin aceptar IDs
+elegidos por un payload externo. Estas interfaces no son endpoints ni tools
+de agentes y nunca deben devolver tokens al navegador.
+
 - JWT: firma mediante JWKS de un origen fijo de configuración, issuer y
   audience `authenticated`, expiración, `sub` UUID y rol de usuario autenticado.
   No se aceptan tokens `service_role`, firmas HS256 ni usuarios anónimos.

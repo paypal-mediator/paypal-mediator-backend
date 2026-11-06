@@ -7,6 +7,7 @@ import {
   PAYPAL_FETCH,
   PayPalConnectionClient,
 } from './paypal/paypal-connection.client.js';
+import { PayPalAuthService } from './paypal/paypal-auth.service.js';
 
 @Module({
   controllers: [MerchantsController],
@@ -15,8 +16,15 @@ import {
     MerchantAccessGuard,
     MerchantsService,
     PayPalConnectionClient,
-    { provide: PAYPAL_FETCH, useValue: globalThis.fetch },
+    PayPalAuthService,
+    { provide: PAYPAL_FETCH, useFactory: () => globalThis.fetch },
   ],
-  exports: [MerchantsService, MerchantAccessGuard, SupabaseAuthService],
+  exports: [
+    MerchantsService,
+    MerchantAccessGuard,
+    SupabaseAuthService,
+    PayPalAuthService,
+    PAYPAL_FETCH,
+  ],
 })
 export class MerchantsModule {}
