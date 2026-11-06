@@ -56,6 +56,7 @@ export const EnvironmentSchema = z.object({
     .default(3000),
   SWAGGER_ENABLED: booleanFlag.optional(),
   PAYPAL_ENV: z.literal('sandbox').default('sandbox'),
+  TRANSACTION_WORKER_ENABLED: booleanFlag.default(false),
   PAYPAL_CLIENT_ID: optionalString(z.string().trim().min(1).max(512)),
   PAYPAL_CLIENT_SECRET: optionalString(z.string().min(1).max(512)),
   PAYPAL_WEBHOOK_ID: optionalString(z.string().trim().min(1).max(512)),
@@ -80,7 +81,12 @@ export type Environment = z.infer<typeof EnvironmentSchema>;
 export const ENVIRONMENT = Symbol('ENVIRONMENT');
 
 export function parseEnvironment(input: Record<string, unknown>): Environment {
-  const result = EnvironmentSchema.safeParse(input);
+  const result = EnvironmentSchema.safeParse({
+    ...input,
+    TRANSACTION_WORKER_ENABLED:
+      input.TRANSACTION_WORKER_ENABLED ??
+      (input.NODE_ENV === 'production' ? 'true' : 'false'),
+  });
   if (!result.success) {
     // Report only field names: credentials and connection URLs must never enter logs.
     const fields = [

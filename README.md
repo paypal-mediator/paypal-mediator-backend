@@ -14,8 +14,12 @@ La guía de configuración y el contrato para el frontend están en
 M01 se verificó con Supabase Auth/PostgreSQL reales y PayPal Sandbox: login,
 acceso del administrador, consulta de disputas y persistencia del check.
 M02 agrega [webhooks verificados y una outbox persistida](docs/m02-event-ingestion.md),
-con deduplicación y comunicación con M01. Los consumidores de la outbox y
-M03–M09, OpenAI y Storage siguen pendientes. Las pruebas automatizadas de
+con deduplicación y comunicación con M01. El primer incremento de
+[M03](docs/m03-transactions.md) consume capturas y expone listado/detalle por
+merchant con checklist documental. Su worker está activo por defecto en producción;
+en desarrollo se activa con `TRANSACTION_WORKER_ENABLED=true`. Un `false` explícito
+lo desactiva en cualquier entorno. Órdenes comerciales y coordinación con M04
+siguen pendientes. M04–M09, OpenAI y Storage siguen pendientes. Las pruebas automatizadas de
 PayPal usan respuestas MOCK explícitas; la verificación real está registrada
 en [docs/validation.md](docs/validation.md).
 

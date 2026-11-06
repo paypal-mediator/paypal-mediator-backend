@@ -21,6 +21,8 @@ describe('M01 protected routes without external configuration', () => {
 
   it.each([
     ['get', '/api/merchants/me'],
+    ['get', '/api/transactions'],
+    ['get', '/api/transactions/00000000-0000-4000-8000-000000000000'],
     ['get', '/api/settings/integrations'],
     ['patch', '/api/merchants/me/settings'],
     ['post', '/api/settings/integrations/paypal/check'],
