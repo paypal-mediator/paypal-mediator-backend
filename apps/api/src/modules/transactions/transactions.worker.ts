@@ -48,6 +48,10 @@ export class TransactionsWorker implements OnModuleInit, OnModuleDestroy {
       );
       if (result !== 'EMPTY') delay = 0;
       if (result === 'FAILED') this.logger.warn('CAPTURE_JOB_REJECTED');
+      const enrichment = await this.transactions.processNextOrderSource(
+        this.environment.MERCHANT_ID!,
+      );
+      if (enrichment !== 'EMPTY') delay = 0;
     } catch {
       // No payloads, connection strings or raw database errors in logs.
       this.logger.error('CAPTURE_WORKER_UNAVAILABLE');

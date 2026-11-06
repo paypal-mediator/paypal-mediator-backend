@@ -19,10 +19,11 @@ interface EvidenceRecord {
   type:
     | 'PAYMENT_RECORD'
     | 'ORDER_RECORD'
+    | 'ORDER_SOURCE_RECORD'
     | 'TRACKING'
     | 'PROOF_OF_DELIVERY'
     | 'DOCUMENT';
-  sourceKind: 'PAYPAL' | 'MERCHANT_INPUT' | 'DEMO';
+  sourceKind: 'PAYPAL' | 'CONNECTED_SYSTEM' | 'MERCHANT_INPUT' | 'DEMO';
   sourceSystem: string;
   externalReference: string;
   retrievedAt: string;
@@ -31,6 +32,26 @@ interface EvidenceRecord {
 
 @Injectable()
 export class EvidenceService {
+  // Trusted module interface; no controller accepts this provenance.
+  async recordOrderSource(
+    tx: Prisma.TransactionClient,
+    context: EvidenceContext,
+    record: Pick<
+      EvidenceRecord,
+      'sourceKind' | 'sourceSystem' | 'externalReference' | 'content'
+    >,
+  ) {
+    return this.append(
+      tx,
+      context,
+      {
+        ...record,
+        type: 'ORDER_SOURCE_RECORD',
+        retrievedAt: new Date().toISOString(),
+      },
+      null,
+    );
+  }
   constructor(
     @Inject(EvidenceStorage) private readonly storage: EvidenceStorage,
   ) {}
@@ -237,17 +258,18 @@ export class EvidenceService {
       },
       null,
     );
-    if (context.order)
+    for (const order of context.orders ??
+      (context.order ? [context.order] : []))
       await this.append(
         tx,
         context,
         {
           type: 'ORDER_RECORD',
-          sourceKind: context.order.sourceKind,
-          sourceSystem: context.order.sourceSystem,
-          externalReference: context.order.externalId,
+          sourceKind: order.sourceKind,
+          sourceSystem: order.sourceSystem,
+          externalReference: order.externalId,
           retrievedAt: new Date().toISOString(),
-          content: { ...context.order },
+          content: { ...order },
         },
         context.orderRecordedBy,
       );
