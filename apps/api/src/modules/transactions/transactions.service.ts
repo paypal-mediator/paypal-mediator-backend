@@ -7,7 +7,10 @@ import {
 import { PrismaService } from '../../common/database/prisma.service.js';
 import { ApiException } from '../../common/http/api.exception.js';
 import { Prisma } from '../../generated/prisma/client.js';
-import type { RegisterEvidence } from '@resolve-ai/contracts';
+import type {
+  RegisterEvidence,
+  UploadEvidenceFile,
+} from '@resolve-ai/contracts';
 import type { MerchantActor } from '../merchants/index.js';
 import { EvidenceService } from '../evidence/index.js';
 import { lockMerchantOrders, reconcileOrder } from './order-linking.js';
@@ -222,6 +225,39 @@ export class TransactionsService {
           evidenceContext(await this.row(tx, merchantId, id)),
         ),
       { isolationLevel: 'RepeatableRead' },
+    );
+  }
+
+  async uploadEvidenceFile(
+    actor: MerchantActor,
+    id: string,
+    input: UploadEvidenceFile,
+  ) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.row(tx, actor.merchantId, id);
+        return this.evidence.uploadFile(
+          tx,
+          evidenceContext(row),
+          input,
+          actor.userId,
+        );
+      },
+      { timeout: 30000 },
+    );
+  }
+
+  async downloadEvidenceFile(
+    merchantId: string,
+    id: string,
+    evidenceId: string,
+  ) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.row(tx, merchantId, id);
+        return this.evidence.downloadFile(tx, evidenceContext(row), evidenceId);
+      },
+      { timeout: 15000 },
     );
   }
 }

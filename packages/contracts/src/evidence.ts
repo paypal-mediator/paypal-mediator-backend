@@ -43,6 +43,7 @@ export const EvidenceItemResponseSchema = z.object({
     'ORDER_RECORD',
     'TRACKING',
     'PROOF_OF_DELIVERY',
+    'DOCUMENT',
   ]),
   version: z.number().int(),
   sourceKind: z.enum(['PAYPAL', 'MERCHANT_INPUT', 'DEMO']),
@@ -66,3 +67,26 @@ export const EvidenceReceiptSchema = z.object({
   evidenceId: z.uuid(),
   version: z.number().int(),
 });
+
+export const MAX_EVIDENCE_FILE_BYTES = 512 * 1024;
+export const EvidenceFileMetadataSchema = z.strictObject({
+  fileName: z
+    .string()
+    .min(1)
+    .max(128)
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9._ -]*$/),
+  mediaType: z.enum(['application/pdf', 'image/png', 'image/jpeg']),
+  byteLength: z.number().int().min(1).max(MAX_EVIDENCE_FILE_BYTES),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+});
+export const UploadEvidenceFileSchema = z.strictObject({
+  ...provenance,
+  fileName: EvidenceFileMetadataSchema.shape.fileName,
+  mediaType: EvidenceFileMetadataSchema.shape.mediaType,
+  dataBase64: z
+    .string()
+    .min(4)
+    .max(4 * Math.ceil(MAX_EVIDENCE_FILE_BYTES / 3))
+    .regex(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/),
+});
+export type UploadEvidenceFile = z.infer<typeof UploadEvidenceFileSchema>;

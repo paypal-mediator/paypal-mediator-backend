@@ -8,6 +8,8 @@ import {
   UseGuards,
   Body,
   Post,
+  StreamableFile,
+  Header,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -28,6 +30,9 @@ import {
   EvidenceDossierResponseSchema,
   EvidenceRegistrationResponseSchema,
   type RegisterEvidence,
+  UploadEvidenceFileSchema,
+  EvidenceReceiptSchema,
+  type UploadEvidenceFile,
 } from '@resolve-ai/contracts';
 import {
   MerchantAccessGuard,
@@ -50,6 +55,80 @@ export class TransactionsController {
     @Inject(TransactionsService)
     private readonly transactions: TransactionsService,
   ) {}
+
+  @Post(':id/evidence/files')
+  @MerchantAdminOnly()
+  @ApiOperation({
+    summary:
+      'Store an original document in private Storage (ADMIN, maximum 512 KiB)',
+  })
+  @ApiBody({ schema: zodOpenApi(UploadEvidenceFileSchema) })
+  @ApiResponse({ status: 201, schema: zodOpenApi(EvidenceReceiptSchema) })
+  @ApiResponse({
+    status: 409,
+    description: 'Source, version or file integrity conflict',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Storage is unconfigured or bucket is public',
+  })
+  @ApiResponse({ status: 502, description: 'Storage operation failed' })
+  uploadFile(
+    @Req() request: MerchantRequest,
+    @Param('id', new ZodValidationPipe(z.uuid())) id: string,
+    @Body(new ZodValidationPipe(UploadEvidenceFileSchema))
+    body: UploadEvidenceFile,
+  ) {
+    return this.transactions.uploadEvidenceFile(
+      request.merchantActor,
+      id,
+      body,
+    );
+  }
+
+  @Get(':id/evidence/files/:evidenceId')
+  @Header('Cache-Control', 'private, no-store')
+  @ApiOperation({
+    summary: 'Download an authorized original after checking its SHA-256',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Original PDF, PNG or JPEG as an attachment',
+    content: {
+      'application/pdf': { schema: { type: 'string', format: 'binary' } },
+      'image/png': { schema: { type: 'string', format: 'binary' } },
+      'image/jpeg': { schema: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Transaction or file not found for this merchant',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Metadata or original file integrity check failed',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Storage is unconfigured or bucket is public',
+  })
+  @ApiResponse({ status: 502, description: 'Storage operation failed' })
+  async downloadFile(
+    @Req() request: MerchantRequest,
+    @Param('id', new ZodValidationPipe(z.uuid())) id: string,
+    @Param('evidenceId', new ZodValidationPipe(z.uuid())) evidenceId: string,
+  ) {
+    const file = await this.transactions.downloadEvidenceFile(
+      request.merchantActor.merchantId,
+      id,
+      evidenceId,
+    );
+    return new StreamableFile(file.bytes, {
+      type: file.mediaType,
+      length: file.byteLength,
+      disposition: `attachment; filename="${file.fileName}"`,
+    });
+  }
 
   @Get()
   @ApiQuery({

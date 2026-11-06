@@ -1,0 +1,205 @@
+{
+  "environment": "PAYPAL_SANDBOX",
+  "apiBase": "https://resolve-ai-api-ybmj.onrender.com/api",
+  "verifiedAt": "2026-11-06T18:51:11.566Z",
+  "notice": "Real Sandbox payment, buyer approval in Opera GX, signature verification, Supabase Auth and PostgreSQL. Order, shipping and delivery are explicitly DEMO. No evidence was submitted to PayPal. Binary Storage is not configured or tested.",
+  "orderId": "8YN46316PH6397206",
+  "captureId": "0R443662EP786444T",
+  "amount": {
+    "currency_code": "USD",
+    "value": "1.00"
+  },
+  "captureStatus": "COMPLETED",
+  "captureHttp": 201,
+  "m01": {
+    "readinessHttp": 200,
+    "merchantHttp": 200,
+    "role": "ADMIN",
+    "integrationHttp": 201,
+    "connectionStatus": "CONNECTED",
+    "disputesReadStatus": "AVAILABLE",
+    "requireMerchantApproval": true,
+    "allowSubmissions": false
+  },
+  "m02": {
+    "id": "8525c119-f6ad-4ce1-b709-3e27e0b3ceea",
+    "paypalEventId": "WH-2RM37796PX612733P-0F1768963A6127644",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "receivedAt": "2026-11-06T18:51:07.028Z",
+    "job": {
+      "id": "75a740c4-f7b6-4f78-ae4e-2df4804b5767",
+      "status": "COMPLETED",
+      "errorCode": null,
+      "finishedAt": "2026-11-06T18:51:07.357Z"
+    }
+  },
+  "m03": {
+    "transactionId": "c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a",
+    "commercialOrderId": "8f45a5f8-d765-4a8a-b9ec-95f67955b234",
+    "sourceKind": "DEMO",
+    "orderLink": {
+      "status": "LINKED",
+      "reason": null
+    },
+    "initialReadiness": "INCOMPLETE",
+    "detailHttp": 200
+  },
+  "m04": {
+    "dossierId": "d40624b3-1701-448b-9663-1b8414cfa7e0",
+    "revision": 6,
+    "dossierHttp": 200,
+    "unauthorizedHttp": 401,
+    "trackingEvidenceId": "5cca9f06-b7db-4052-bb01-04061e304bb7",
+    "deliveryEvidenceId": "85325b3d-2a4b-488a-b4d0-e37679dd3e34",
+    "deliveryOutcome": "CREATED",
+    "duplicateOutcome": "DUPLICATE",
+    "withDelivery": "READY",
+    "withContradiction": "NEEDS_REVIEW",
+    "restored": "READY",
+    "containsDemo": true,
+    "dossier": {
+      "id": "d40624b3-1701-448b-9663-1b8414cfa7e0",
+      "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+      "transactionId": "c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a",
+      "revision": 6,
+      "items": [
+        {
+          "id": "c3848b13-775b-4280-9cbb-45b6225f63da",
+          "type": "TRACKING",
+          "version": 6,
+          "sourceKind": "DEMO",
+          "sourceSystem": "DEMO / MOCK carrier for M04 Sandbox validation",
+          "externalReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-SHIP",
+          "retrievedAt": "2026-11-06T18:51:09.344Z",
+          "contentHash": "ded513ae7ad7f1badd15d57e63663d11d29157756947675af82373d51c3b5a8b",
+          "content": {
+            "status": "DELIVERED",
+            "carrier": "DEMO-CARRIER",
+            "shippedAt": "2026-11-06T18:50:36Z",
+            "trackingNumber": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-TRACK",
+            "paypalCaptureId": "0R443662EP786444T",
+            "merchantOrderReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46"
+          },
+          "current": true,
+          "integrity": "VALID"
+        },
+        {
+          "id": "b0f736fc-e5d5-4f20-8f44-9b46c52adb03",
+          "type": "TRACKING",
+          "version": 5,
+          "sourceKind": "DEMO",
+          "sourceSystem": "DEMO / MOCK carrier for M04 Sandbox validation",
+          "externalReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-SHIP",
+          "retrievedAt": "2026-11-06T18:51:09.133Z",
+          "contentHash": "03c1bdea8b31403b5de8c2ec60ebdc8264ba4e4bf9b171f4989a320e2a7960ee",
+          "content": {
+            "status": "DELIVERED",
+            "carrier": "DEMO-CARRIER",
+            "shippedAt": "2026-11-06T18:50:36Z",
+            "trackingNumber": "DEMO-CONTRADICTORY-PARCEL",
+            "paypalCaptureId": "0R443662EP786444T",
+            "merchantOrderReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46"
+          },
+          "current": false,
+          "integrity": "VALID"
+        },
+        {
+          "id": "85325b3d-2a4b-488a-b4d0-e37679dd3e34",
+          "type": "PROOF_OF_DELIVERY",
+          "version": 4,
+          "sourceKind": "DEMO",
+          "sourceSystem": "DEMO / MOCK carrier for M04 Sandbox validation",
+          "externalReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-DELIVERY",
+          "retrievedAt": "2026-11-06T18:51:08.303Z",
+          "contentHash": "f5a3e09e4d9ea5dbb8a6288e3592290fbaf0709eeefe0c26d62146c6f4b23401",
+          "content": {
+            "status": "DELIVERED",
+            "carrier": "DEMO-CARRIER",
+            "deliveredAt": "2026-11-06T18:51:08.303Z",
+            "trackingNumber": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-TRACK",
+            "paypalCaptureId": "0R443662EP786444T",
+            "merchantOrderReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46"
+          },
+          "current": true,
+          "integrity": "VALID"
+        },
+        {
+          "id": "5cca9f06-b7db-4052-bb01-04061e304bb7",
+          "type": "TRACKING",
+          "version": 3,
+          "sourceKind": "DEMO",
+          "sourceSystem": "DEMO / MOCK carrier for M04 Sandbox validation",
+          "externalReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-SHIP",
+          "retrievedAt": "2026-11-06T18:51:07.794Z",
+          "contentHash": "ded513ae7ad7f1badd15d57e63663d11d29157756947675af82373d51c3b5a8b",
+          "content": {
+            "status": "DELIVERED",
+            "carrier": "DEMO-CARRIER",
+            "shippedAt": "2026-11-06T18:50:36Z",
+            "trackingNumber": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-TRACK",
+            "paypalCaptureId": "0R443662EP786444T",
+            "merchantOrderReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46"
+          },
+          "current": false,
+          "integrity": "VALID"
+        },
+        {
+          "id": "6c797f87-61b5-4e2a-bbd5-325052368ae9",
+          "type": "ORDER_RECORD",
+          "version": 2,
+          "sourceKind": "DEMO",
+          "sourceSystem": "DEMO / MOCK M04 Sandbox validation",
+          "externalReference": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46",
+          "retrievedAt": "2026-11-06T18:51:07.289Z",
+          "contentHash": "5361972fb35096058b409a75298d0bebeb1abe5c07518acec8154fe08353b612",
+          "content": {
+            "id": "8f45a5f8-d765-4a8a-b9ec-95f67955b234",
+            "items": [
+              {
+                "quantity": 1,
+                "unitAmount": "1",
+                "description": "DEMO / MOCK test item - no real goods"
+              }
+            ],
+            "createdAt": "2026-11-06T18:44:39.340Z",
+            "orderedAt": "2026-11-06T18:43:51.692Z",
+            "taxAmount": "0",
+            "externalId": "M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46",
+            "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+            "sourceKind": "DEMO",
+            "contentHash": "d6d9aaf112b683541790e48bf45883afccff59d908dc037193627c5203ce5011",
+            "environment": "sandbox",
+            "totalAmount": "1",
+            "currencyCode": "USD",
+            "sourceSystem": "DEMO / MOCK M04 Sandbox validation",
+            "paypalOrderId": "8YN46316PH6397206",
+            "discountAmount": "0",
+            "shippingAmount": "0"
+          },
+          "current": true,
+          "integrity": "VALID"
+        },
+        {
+          "id": "31b25cc8-2a58-43a3-b001-50d0a3f65d18",
+          "type": "PAYMENT_RECORD",
+          "version": 1,
+          "sourceKind": "PAYPAL",
+          "sourceSystem": "paypal-sandbox",
+          "externalReference": "0R443662EP786444T",
+          "retrievedAt": "2026-11-06T18:51:07.242Z",
+          "contentHash": "1a6d914f22a0bf62adb3ca9b7a51af755dfa4ddb212d32cd14e0c173bf14e81b",
+          "content": {
+            "amount": "1",
+            "capturedAt": "2026-11-06T18:50:36.000Z",
+            "currencyCode": "USD",
+            "paypalOrderId": "8YN46316PH6397206",
+            "sourceEventId": "8525c119-f6ad-4ce1-b709-3e27e0b3ceea",
+            "paypalCaptureId": "0R443662EP786444T"
+          },
+          "current": true,
+          "integrity": "VALID"
+        }
+      ]
+    }
+  }
+}

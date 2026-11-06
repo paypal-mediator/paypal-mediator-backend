@@ -1,0 +1,37 @@
+{
+  "verifiedAt": "2026-11-06T19:05:39.986Z",
+  "apiExecution": "LOCAL_NESTJS_WITH_REAL_SUPABASE",
+  "transactionId": "c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a",
+  "captureId": "0R443662EP786444T",
+  "source": "EXISTING_USER_FILE_NOT_GENERATED",
+  "fileName": "WhatsApp Image 2026-11-05 at 5.41.42 PM.jpeg",
+  "byteLength": 83183,
+  "originalSha256": "8d9dcb9bb03fb86b5479aa7a2bb517edb68fa81c927eab705761291936bb1a30",
+  "storedSha256": "8d9dcb9bb03fb86b5479aa7a2bb517edb68fa81c927eab705761291936bb1a30",
+  "downloadedSha256": "8d9dcb9bb03fb86b5479aa7a2bb517edb68fa81c927eab705761291936bb1a30",
+  "bytesIdentical": true,
+  "uploadHttp": 201,
+  "receipt": {
+    "outcome": "CREATED",
+    "evidenceId": "9c04f004-93e7-404f-9a80-2747484919ed",
+    "version": 7
+  },
+  "duplicateOutcome": "DUPLICATE",
+  "downloadHttp": 200,
+  "unauthorizedHttp": 401,
+  "unauthenticatedPublicStorageHttp": 400,
+  "bucket": {
+    "id": "private-evidence",
+    "public": false,
+    "fileSizeLimit": 524288,
+    "allowedMimeTypes": ["application/pdf", "image/png", "image/jpeg"]
+  },
+  "storageObjectKey": "7114cb66-9836-4237-b764-7e43235684cc/c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a/8d9dcb9bb03fb86b5479aa7a2bb517edb68fa81c927eab705761291936bb1a30",
+  "dossierId": "d40624b3-1701-448b-9663-1b8414cfa7e0",
+  "revision": 7,
+  "contentType": "image/jpeg",
+  "contentDisposition": "attachment; filename=\"WhatsApp Image 2026-11-05 at 5.41.42 PM.jpeg\"",
+  "storageIsMock": false,
+  "databaseIsMock": false,
+  "notice": "The actual user photo was uploaded unchanged. It is an arbitrary storage test document, not proof of a shipment. No generated substitute was displayed."
+}

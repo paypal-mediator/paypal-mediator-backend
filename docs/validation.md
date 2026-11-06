@@ -1,5 +1,102 @@
 # Validaciones del backend
 
+## M04: archivo existente del usuario y Storage real — 6 de noviembre de 2026
+
+Se eligió, con autorización del usuario, una foto de apuntes de matemáticas
+existente en Descargas: `WhatsApp Image 2026-11-05 at 5.41.42 PM.jpeg`,
+**83.183 bytes**. No se generó, rotó, convirtió ni reemplazó su contenido.
+Se adjuntó a la transacción `c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a`, correspondiente
+al pago Sandbox ya capturado `0R443662EP786444T`. Es una prueba de almacenamiento,
+no una prueba comercial de envío.
+
+- Bucket `private-evidence` en Supabase, `public=false`, límite de 524288 bytes,
+  MIME PDF/PNG/JPEG. `pnpm storage:setup` lo creó; repetir devolvió `created=false`.
+- Credencial de servidor existente configurada fuera de Git. Se verificó el
+  uso de la clave actual en `apikey`, sin tratarla como un JWT Bearer.
+- Se aplicaron en Supabase las migraciones sexta y séptima. La prueba real
+  detectó una restricción previa `evidence_items_provenance_type_check` que
+  excluía DOCUMENT; la séptima migración la extiende conservando el control de
+  procedencia y se instala también en bases nuevas.
+- API NestJS local con Supabase Auth/PostgreSQL/Storage reales: carga HTTP 201,
+  evidencia `9c04f004-93e7-404f-9a80-2747484919ed`, versión 7. Repetir devolvió
+  `DUPLICATE` con el mismo ID. Descarga HTTP 200; sin sesión HTTP 401.
+- Original local, objeto descargado directamente de Storage y descarga por M04
+  tienen SHA-256 `8d9dcb9bb03fb86b5479aa7a2bb517edb68fa81c927eab705761291936bb1a30`.
+  Se comprobó además igualdad byte a byte. Acceso por URL pública: HTTP 400,
+  sin exposición del objeto privado.
+- Se guardó la respuesta binaria de M04 en `Downloads/ResolveAI-M04-recuperados`
+  y se abrió esa imagen en Opera GX, no un informe ni un documento sustituto.
+
+Resultados técnicos sin credenciales ni bytes del usuario:
+[prueba real de Storage](evidence/m04-real-storage-20261106.json).
+La foto no se añade al repositorio. El estado del despliegue de las rutas en
+Render se documenta tras su verificación independiente.
+
+Validación de código: `pnpm check` aprobado con **148 pruebas unitarias/HTTP**;
+`pnpm test:db` aprobado con **64 pruebas** en PostgreSQL desechable. Las siete
+migraciones se aplicaron desde cero y se repitieron sin pendientes. La clave y
+bucket se configuraron también en Render, guardando sin desplegar código antiguo.
+
+## Nuevo pago Sandbox aprobado en Opera GX — 6 de noviembre de 2026
+
+Prueba ejecutada contra Render/Supabase y PayPal Sandbox. Se abrió Opera GX
+mediante su canal local CDP, expresamente autorizado por el usuario, que inició
+sesión y aprobó el checkout con su comprador Sandbox. Se consultó la orden y se
+confirmó `APPROVED` antes de capturar por la API oficial; captura HTTP 201,
+`COMPLETED`, **1 USD ficticio**. No se añadieron funciones de cobro al producto.
+
+| Dato            | Resultado                                          |
+| --------------- | -------------------------------------------------- |
+| Orden PayPal    | `8YN46316PH6397206`                                |
+| Captura         | `0R443662EP786444T`                                |
+| Transacción M03 | `c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a`             |
+| Expediente M04  | `d40624b3-1701-448b-9663-1b8414cfa7e0`, revisión 6 |
+
+- **M01:** login Supabase, readiness y merchant ADMIN HTTP 200; check PayPal
+  HTTP 201, OAuth `CONNECTED` y disputas `AVAILABLE`. Aprobación humana
+  obligatoria y presentación de evidencia deshabilitada.
+- **M02:** webhook genuino `PAYMENT.CAPTURE.COMPLETED` persistido y trabajo
+  `COMPLETED`. Se verificaron las filas de evento/trabajo en PostgreSQL; el
+  consumidor fue el worker publicado en Render, sin worker local.
+- **M03:** pedido DEMO registrado y vinculado a la nueva captura; detalle HTTP 200. La preparación inicial fue `INCOMPLETE`.
+- **M04 estructurado:** tracking y entrega DEMO produjeron `READY`; duplicar
+  entrega devolvió `DUPLICATE` con el mismo ID. Tracking contradictorio produjo
+  `NEEDS_REVIEW`; corregirlo restauró `READY`. El expediente conserva seis
+  versiones con integridad JSON válida y `containsDemo=true`. Consulta del
+  expediente sin sesión: HTTP 401.
+
+El pago, autenticación, webhook y persistencia son servicios Sandbox reales.
+Pedido, carrier y entrega son **DEMO**, no documentos autenticados de un carrier.
+`READY` indica cobertura documental, no permiso de envío. No se enviaron
+evidencias a PayPal. **No se probó el incremento de archivos binarios/Storage**:
+faltan sus credenciales locales y el incremento no está desplegado en Render.
+
+Resultados sin credenciales y expediente completo:
+[evidencia de esta ejecución](evidence/m01-m04-sandbox-20261106.json).
+
+## Incremento local M04: archivos originales — 6 de noviembre de 2026
+
+- `pnpm check`: generación/validación Prisma, lint, formato, tipos, **142 pruebas
+  unitarias/HTTP** y build aprobados.
+- `pnpm test:db`: **64 pruebas PostgreSQL aprobadas**. La ampliación comprueba
+  carga/descarga HTTP, roles ADMIN/VIEWER, aislamiento por merchant y transacción,
+  versiones y duplicados, preservación de originales anteriores, límites/formato,
+  procedencia inmutable y rechazo de versiones antiguas antes de escribir Storage.
+- Se comprobaron hashes binarios alterados, metadatos corruptos, `NEEDS_REVIEW`
+  y rollback de item/revisión al fallar Storage. Un adjunto no completa por sí
+  solo la cobertura de tracking/entrega.
+- Adaptador Storage con **MOCK explícito**: bucket público rechazado, ausencia de
+  credenciales, errores sanitizados, cargas sin overwrite, lectura autenticada,
+  duplicados verificados y límite de bytes descargados.
+- Se aplicaron las seis migraciones en PostgreSQL desechable de loopback,
+  incluida `20261106030000_evidence_documents`. Segunda aplicación sin pendientes;
+  `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code`:
+  sin diferencias.
+- No se modificaron Supabase ni Render. Storage y JWKS son MOCK; los bytes de
+  documento son fixtures DEMO, no documentos comerciales auténticos. Quedan
+  pendientes aprovisionamiento/verificación de Storage real, despliegue y
+  conectores comerciales. Ver [contrato y configuración M04](m04-evidence.md).
+
 ## Prueba completa M01–M03 en Render con base M04 — 6 de noviembre de 2026
 
 Ampliación integrada por PR #8 (`5dfae91`, implementación `bd8857c`). CI del PR
