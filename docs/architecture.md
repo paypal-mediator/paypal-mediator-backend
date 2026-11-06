@@ -108,7 +108,7 @@ sus tablas. El worker de M03 se activa por configuración. Las disputas permanec
 `QUEUED` hasta implementar M07. Ver [M03](m03-transactions.md).
 Ver [M02](m02-event-ingestion.md) para contratos y límites de la verificación.
 
-La ampliación local de M03 agrega órdenes comerciales y utiliza el contrato público
+La ampliación de M03 agrega órdenes comerciales y utiliza el contrato público
 de M04 (`EvidenceService`) para expedientes JSON versionados y readiness dinámico.
 La unidad de trabajo Prisma se comparte por parámetro; cada servicio escribe solo
 sus tablas. M04 recibe contexto autorizado de M03 y no importa su módulo. Los GET

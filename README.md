@@ -18,9 +18,9 @@ con deduplicación y comunicación con M01. El primer incremento de
 [M03](docs/m03-transactions.md) consume capturas y expone listado/detalle por
 merchant con checklist documental. Su worker está activo por defecto en producción;
 en desarrollo se activa con `TRANSACTION_WORKER_ENABLED=true`. Un `false` explícito
-lo desactiva en cualquier entorno. La ampliación local de M03 agrega órdenes,
+lo desactiva en cualquier entorno. La ampliación de M03 agrega órdenes,
 vinculación y checklist dinámico mediante una [base estructurada de M04](docs/m04-evidence.md).
-Requiere la quinta migración y aún no está desplegada. Archivos/Storage y conectores
+Está desplegada en Render con la quinta migración aplicada. Archivos/Storage y conectores
 de M04, M05–M09 y OpenAI siguen pendientes. Las pruebas automatizadas de
 PayPal usan respuestas MOCK explícitas; la verificación real está registrada
 en [docs/validation.md](docs/validation.md).
@@ -99,7 +99,7 @@ Release: `pnpm db:deploy`. Arranque: `pnpm start`.
 Escucha en `0.0.0.0:$PORT` y cierra el pool al apagarse.
 Usar `/api/health/ready` para comprobar disponibilidad de DB.
 API publicada en Render: <https://resolve-ai-api-ybmj.onrender.com/api>.
-M01, M02 y el primer incremento de M03 están desplegados; ver
+M01, M02, M03 con órdenes y la base estructurada de M04 están desplegados; ver
 [despliegue](docs/deployment.md) y [validación](docs/validation.md).
 
 La base inicial se trabaja en `main`; las siguientes funcionalidades van en

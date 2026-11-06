@@ -4,9 +4,10 @@ Capturas, registro de órdenes comerciales, vinculación y preparación document
 por merchant dentro del backend NestJS. No crea pagos ni disputas. No hace llamadas
 nuevas a PayPal: consume exclusivamente eventos que M02 ya verificó y persistió.
 
-El primer incremento de capturas/consultas está desplegado en Render. La ampliación
-de órdenes y expedientes estructurados M04 está implementada y probada localmente
-en `feat/m03-transaction-manager`; requiere la quinta migración antes de desplegarse.
+Capturas, órdenes y expedientes estructurados M04 están desplegados en Render
+por PR #8 (`5dfae91`), con la quinta migración aplicada. La prueba completa con
+un nuevo pago Sandbox validó M01/M02/M03 en Render y el historial M04 con datos
+comerciales/envíos DEMO; ver [validación](validation.md).
 
 ## Consumo y persistencia
 
