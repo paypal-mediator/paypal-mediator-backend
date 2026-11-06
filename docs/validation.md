@@ -100,3 +100,28 @@ PayPal y el emisor JWKS se simulan con fixtures identificados como MOCK en estas
 pruebas; PostgreSQL, Nest y la comunicación entre módulos son reales. No se ha
 demostrado recepción de una entrega firmada de PayPal a un endpoint HTTPS público.
 Los trabajos permanecen QUEUED hasta implementar M03/M07.
+
+## Despliegue público — 6 de noviembre de 2026
+
+Servicio Render Free en Virginia, código `0363df6`, con las tres migraciones
+aplicadas y TLS verificado hacia Supabase. URL:
+<https://resolve-ai-api-ybmj.onrender.com/api>.
+
+- Readiness remoto: HTTP 200.
+- Ruta de merchant sin sesión: HTTP 401; con JWT real de Supabase: HTTP 200,
+  rol ADMIN.
+- Swagger desactivado: HTTP 404.
+- Check protegido PayPal desde Render: HTTP 201, `CONNECTED`, lectura de
+  disputas `AVAILABLE` y `webhookConfigured: true`.
+- Suscripción consultada nuevamente en la API oficial Sandbox: HTTP 200,
+  URL pública correcta y los cuatro eventos de M02 registrados.
+- POST público sin cabeceras PayPal: HTTP 400, `INVALID_WEBHOOK_HEADERS`.
+- `pnpm check`: correcto; 88 pruebas unitarias/HTTP aprobadas. No hubo cambios
+  de esquema ni de persistencia en esta fase de despliegue.
+
+La app Sandbox devolvió una lista vacía de eventos genuinos. No se demostró
+todavía entrega firmada, persistencia ni deduplicación con una entrega real
+desde PayPal; esas rutas están cubiertas por las pruebas de integración con
+PayPal MOCK descritas arriba. No se crearon pagos ni disputas para la prueba.
+Credenciales y certificado se configuraron fuera de Git. Ver
+[despliegue](deployment.md) para operación y limitaciones del plan Free.

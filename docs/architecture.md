@@ -92,8 +92,11 @@ ESLint y typescript-eslint usan Minimatch 11.0.1 mediante override por
 [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 
 M03–M09, auditoría append-only, Storage, herramientas de IA,
-contratos de dominio, prueba real de disputas Sandbox, despliegue y licencia
+contratos de dominio, prueba real de disputas Sandbox y licencia
 acordada por el equipo.
+
+El backend está publicado en Render; ver [despliegue](deployment.md) para la URL,
+configuración y límites de la validación externa.
 
 M02 recibe webhooks mediante M01 (contexto del merchant y OAuth público de
 módulo), verifica firmas con PayPal y guarda eventos/trabajos de forma atómica.

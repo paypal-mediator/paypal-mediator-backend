@@ -1,5 +1,22 @@
 # Backend público y webhook PayPal
 
+## Servicio del proyecto
+
+- API: <https://resolve-ai-api-ybmj.onrender.com/api>.
+- Readiness: <https://resolve-ai-api-ybmj.onrender.com/api/health/ready>.
+- Webhook Sandbox: <https://resolve-ai-api-ybmj.onrender.com/api/webhooks/paypal>
+  (solo POST; abrirlo en el navegador no genera una entrega).
+- Render: `resolve-ai-api`, plan Free, Virginia, rama `main`.
+
+El 6 de noviembre de 2026 se publicó el servicio y se registró la suscripción
+en la app PayPal Sandbox con los cuatro eventos descritos abajo. Se verificaron
+readiness y acceso ADMIN con un JWT real de Supabase, además de OAuth y lectura
+de disputas de PayPal desde Render. La app no tenía eventos genuinos para
+reenviar: la recepción de una entrega firmada y su persistencia siguen
+pendientes de una operación Sandbox. No se generaron pagos ni disputas.
+
+## Configuración
+
 Render publica el backend NestJS como Web Service con HTTPS. `render.yaml`
 describe un servicio Free en Virginia; usa Node 24, el lockfile pnpm y el
 build de contratos/API. `npm run start:render` aplica migraciones existentes y
