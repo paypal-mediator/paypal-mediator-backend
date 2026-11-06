@@ -1,8 +1,83 @@
 # ResolveAI — Contexto de proyecto para Codex CLI
 
-> **Estado del documento:** especificación de producto y guía técnica propuesta; **no** implica que las funciones ya estén implementadas.
-> **Versión:** 1.0 · **Fecha:** 2026-11-05 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
-> **Objetivo de uso:** copiar este archivo a la raíz del repositorio como `information.md` y solicitar a Codex que lo lea antes de implementar funcionalidades.
+> **Estado del documento:** contexto de producto, estado verificado del backend y especificación de los módulos pendientes. Los flujos futuros descritos abajo no implican que todo el MVP esté implementado.
+> **Versión:** 1.1 · **Actualizado:** 2026-11-06 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
+> **Alcance del repositorio:** únicamente backend. El frontend/M10 se desarrolla en otro repositorio.
+> **Objetivo de uso:** leer este documento y `AGENTS.md` al comenzar una sesión; contrastar las propuestas con el código y las pruebas existentes.
+
+## Estado real al 6 de noviembre de 2026
+
+### Implementado e integrado en `main`
+
+- **Base común:** workspace pnpm, Node 24, TypeScript estricto/ESM, NestJS 11,
+  Prisma 7 con adaptador PostgreSQL, contratos Zod, lint, formato, tipos,
+  pruebas, build y GitHub Actions. Código y pruebas organizados por carpetas;
+  ver [arquitectura](docs/architecture.md).
+- **M01 — Merchant & Integrations:** autenticación real con usuarios de
+  Supabase Auth, verificación de JWT asimétricos mediante JWKS, membresías
+  locales ADMIN/VIEWER, configuración del merchant y comprobación protegida
+  de OAuth/lectura de disputas PayPal Sandbox. Hay un usuario administrador
+  provisionado; sus credenciales permanecen fuera de Git.
+- **Políticas:** investigaciones y presentaciones deshabilitadas por defecto;
+  aprobación humana obligatoria. M01 no implementa el Submission Guard de M08.
+- **M02 — Event Ingestion:** endpoint público autenticado por firma PayPal,
+  validación de cabeceras y cuerpo original, verificación oficial por postback,
+  persistencia transaccional de `WebhookEvent` + `IngestionJob`, deduplicación,
+  detección de contenido conflictivo, rollback y RLS en sus tablas.
+- **Comunicación M01–M02:** M02 usa la interfaz pública de M01 para obtener
+  contexto del merchant y OAuth. No accede a credenciales desde el frontend.
+- **Infraestructura:** PostgreSQL y Auth de Supabase configurados, tres
+  migraciones aplicadas y conexión TLS con CA oficial. Backend publicado en
+  Render Free, Virginia, con despliegue desde `main` después de pasar CI.
+
+### Verificado con servicios externos reales
+
+- API: <https://resolve-ai-api-ybmj.onrender.com/api>.
+- Readiness: `GET /api/health/ready` devuelve HTTP 200 consultando PostgreSQL.
+- Login Supabase real y acceso ADMIN comprobados; acceso sin sesión HTTP 401.
+- OAuth PayPal `CONNECTED` y lectura de disputas `AVAILABLE`, HTTP 200.
+  Esto comprueba acceso a la API, no una disputa elegible para enviar evidencia.
+- Webhook registrado en la app Sandbox:
+  `https://resolve-ai-api-ybmj.onrender.com/api/webhooks/paypal`, solo POST.
+  Eventos: `PAYMENT.CAPTURE.COMPLETED`, `CUSTOMER.DISPUTE.CREATED`,
+  `CUSTOMER.DISPUTE.UPDATED` y `CUSTOMER.DISPUTE.RESOLVED`.
+- Pago de prueba de **1 USD ficticio**, aprobado por el usuario y capturado
+  con estado `COMPLETED`: orden `5Y118346C7856021V`, captura
+  `4TD91052PF072424A`. Fue una operación de prueba externa a las funciones
+  normales de ResolveAI; no se añadió una función de cobro al producto.
+- Evento genuino `WH-1YS32612YL8319623-7XB699471K872161N` recibido, verificado
+  y persistido con un trabajo `TRANSACTION_CAPTURED`. Reenvío confirmado por
+  PayPal con `SUCCESS`/HTTP 200; PostgreSQL conservó un evento y un trabajo.
+- La prueba detectó un rechazo inicial de firma por reordenamiento de campos
+  durante la validación. Se corrigió preservando el objeto original validado,
+  se añadió regresión y se desplegó la corrección (`34e908b`, PR #5).
+- Última validación de código: **89 pruebas unitarias/HTTP y 34 pruebas con
+  PostgreSQL aprobadas**, además de lint, formato, tipos, Prisma y build.
+  Las suites automatizadas usan PayPal/JWKS MOCK identificados; la prueba
+  publicada de pago, firma y reenvío sí utilizó PayPal Sandbox real.
+
+### Límites y siguiente paso
+
+- **M03–M09 siguen pendientes.** Los trabajos de M02 permanecen `QUEUED`;
+  todavía no hay consumidores de transacciones/disputas, expedientes,
+  Investigator, Verifier, presentación de evidencia ni auditoría completa.
+- Se registraron eventos de disputas, pero no se ha demostrado una entrega
+  genuina de disputa ni una llamada real a `provide-evidence`.
+- OpenAI, Supabase Storage y el frontend no están integrados en este backend.
+  No se instaló pg-boss; la cola actual es una outbox persistida en PostgreSQL.
+- Swagger está desactivado en Render. El servicio Free puede suspenderse por
+  inactividad. CORS sigue configurado para `http://localhost:3000`; al publicar
+  el frontend habrá que configurar su origen exacto.
+- El repositorio sigue **privado**; publicación, licencia y video de entrega
+  siguen pendientes. No cambiar su visibilidad sin autorización del equipo.
+- **Siguiente módulo recomendado: M03**, consumir de forma idempotente los
+  trabajos `TRANSACTION_CAPTURED` y crear la transacción/orden mediante los
+  contratos públicos, coordinando el expediente con el futuro M04.
+
+Detalles operativos y evidencia: [M01](docs/m01-merchants.md),
+[M02](docs/m02-event-ingestion.md), [despliegue](docs/deployment.md) y
+[validación](docs/validation.md). No incluir secretos, tokens ni contraseñas
+en este documento.
 
 ## 0. Instrucciones esenciales para Codex
 
@@ -104,37 +179,35 @@ La entrega requiere integración sustantiva con PayPal, uso sustantivo de IA, de
 
 ---
 
-## 4. Estructura objetivo del repositorio
+## 4. Estructura actual del repositorio backend
 
 ```text
-resolve-ai/
+paypal-mediator-backend/
 ├── apps/
-│   ├── web/                        # Next.js, frontend del comerciante
 │   └── api/                        # Backend NestJS único
+│       ├── prisma.config.ts
+│       ├── prisma/                 # Schema y tres migraciones
+│       ├── test/                   # unit/, http/, integration/, fixtures/
 │       └── src/
 │           ├── modules/
 │           │   ├── merchants/
 │           │   ├── event-ingestion/
-│           │   ├── transactions/
-│           │   ├── evidence/
-│           │   ├── investigator/
-│           │   ├── verifier/
-│           │   ├── disputes/
-│           │   ├── submissions/
-│           │   └── monitoring/
+│           │   └── health/
 │           ├── common/             # Auth, guards, errores, logging
 │           └── main.ts
 ├── packages/
 │   └── contracts/                  # Schemas Zod y tipos compartidos
-├── prisma/                         # Schema y migraciones; puede ubicarse en apps/api
 ├── docs/                           # Diagramas, decisiones, API y demo
+├── .github/workflows/              # CI con PostgreSQL real de pruebas
+├── render.yaml                     # Configuración de despliegue de la API
 ├── information.md                  # Este documento
 ├── .env.example                    # Solo placeholders, nunca secretos
 ├── pnpm-workspace.yaml
 └── README.md
 ```
 
-**Nota:** adaptar rutas al repositorio existente; no forzar cambios de estructura si ya hay una organización equivalente.
+El frontend vive en un repositorio separado. Las carpetas de M03–M09 se crearán
+cuando se implementen; no añadir carpetas vacías que aparenten trabajo terminado.
 
 ---
 
@@ -153,7 +226,10 @@ resolve-ai/
 | M09 | Monitoring & Audit | Actividad, métricas, eventos, errores, seguimiento | Timeline auditable |
 | M10 | Merchant Dashboard | UX e integración frontend de M01–M09 | Pantallas end-to-end |
 
-En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M10 vive en `apps/web`. Evitar que un módulo escriba las tablas privadas de otro sin una interfaz definida.
+En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M01 y M02
+están implementados; M03–M09 son el alcance futuro. M10 vive en el repositorio
+del frontend. Evitar que un módulo escriba las tablas privadas de otro sin una
+interfaz definida.
 
 ### Interfaces entre módulos
 
@@ -387,7 +463,21 @@ Barra lateral: `Overview`, `Transactions`, `Disputes`, `Agent Activity`, `Settin
 
 ---
 
-## 11. Contratos HTTP internos propuestos
+## 11. Contratos HTTP internos
+
+### Rutas implementadas de la base, M01 y M02
+
+| Método | Ruta | Protección / comportamiento |
+|---|---|---|
+| GET | `/api/health` | Liveness; no afirma conectividad a servicios externos |
+| GET | `/api/health/ready` | Readiness con consulta PostgreSQL |
+| GET | `/api/merchants/me` | JWT Supabase y membresía activa |
+| PATCH | `/api/merchants/me/settings` | JWT y rol ADMIN |
+| GET | `/api/settings/integrations` | JWT y membresía; sin secretos |
+| POST | `/api/settings/integrations/paypal/check` | JWT y rol ADMIN; OAuth/lectura real y resultado persistido |
+| POST | `/api/webhooks/paypal` | Sin JWT; exige firma PayPal válida antes de guardar/encolar |
+
+### Rutas objetivo del producto
 
 **Estos son endpoints de ResolveAI, NO URLs oficiales de PayPal.** Versionar/documentar con OpenAPI e implementar inicialmente contra fixtures si los otros módulos aún no están listos.
 
@@ -500,28 +590,34 @@ El repositorio tendrá un solo `main` estable; **no** mantener ramas largas perm
 
 ### Definición de terminado para el MVP
 
-- [ ] Un merchant Sandbox configurado y operativo.
-- [ ] Al menos una operación API PayPal realmente funcional, demostrable y documentada; idealmente consulta y presentación de evidencia en disputa elegible.
+- [x] Un merchant Sandbox configurado y operativo.
+- [x] Al menos una operación API PayPal realmente funcional, demostrable y documentada: OAuth, lectura de disputas y pago/webhook Sandbox. La presentación de evidencia sigue pendiente.
 - [ ] Expediente preventivo persistido y visualizado en Transactions.
 - [ ] Investigator recupera datos de orden y shipping (pueden ser MOCK etiquetados).
 - [ ] Verifier revisa evidencia de fuente, no solo una respuesta del investigador.
 - [ ] Guard impide envíos no autorizados/contradictorios.
 - [ ] Dispute Detail muestra progreso, evidencia, verificación y resultado.
 - [ ] Casos exitoso y bloqueado reproducibles con fixtures de demo.
-- [ ] README con setup local, variables de entorno, comandos y limitaciones Sandbox.
+- [x] README y guías con setup local, variables de entorno, comandos y limitaciones Sandbox de los módulos implementados.
 - [ ] Repositorio público, licencia visible y video funcional de menos de 3 minutos.
 
 ---
 
 ## 16. Despliegue
 
-- **Vercel:** `apps/web`, dominio web HTTPS público.
-- **Render:** `apps/api`, HTTPS, callbacks de PayPal, procesos de backend/worker; evitar suspensión durante evaluación.
-- **Supabase:** PostgreSQL y Storage privado.
-- **OpenAI:** se consume API externa (no hay que hospedar el modelo).
-- **PayPal Sandbox:** servicio externo de pagos y disputas.
+- **Render, operativo:** `apps/api`, servicio `resolve-ai-api`, HTTPS y webhook
+  público. `npm run start:render` aplica migraciones y arranca la API; readiness
+  es `/api/health/ready`. Secretos y CA se configuran fuera de Git.
+- **Supabase, operativo:** PostgreSQL y Auth. Storage privado queda pendiente.
+- **PayPal Sandbox, operativo:** OAuth, lectura de disputas, suscripción de
+  webhooks y prueba genuina de captura/entrega. No se habilitó Live.
+- **Frontend/Vercel:** repositorio separado; despliegue no verificado aquí.
+- **OpenAI y worker consumidor:** pendientes de sus módulos.
 
-**Variables estimadas:**
+**Variables estimadas para el producto completo:** los valores y variables
+actualmente soportados se documentan en `.env.example` y `docs/deployment.md`.
+OpenAI, Storage y los límites de agentes del ejemplo son para módulos futuros;
+la verificación JWT actual usa `SUPABASE_URL`/JWKS, sin service role.
 
 ```dotenv
 # Backend
@@ -549,9 +645,13 @@ No copiar valores reales al repo. Los nombres exactos deben alinearse con los m�
 
 ## 17. Plan de implementación por dependencias
 
-**Fase A — Base común:** workspace pnpm, Next.js, NestJS, contratos compartidos, Prisma, lint/tests, health y deployment inicial.
+**Fase A — Base común del backend, completada:** workspace pnpm, NestJS,
+contratos compartidos, Prisma, lint/tests, health y despliegue HTTPS. Next.js
+corresponde al otro repositorio.
 
-**Fase B — Core PayPal:** credenciales Sandbox, consultas reales de disputas, recepción/verificación de webhooks, pruebas de disponibilidad de `provide-evidence`.
+**Fase B — Core PayPal, parcial:** M01 y M02 implementados y verificados con
+pago/webhook genuino. Sigue pendiente una disputa elegible y comprobar
+`provide-evidence` en su estado real.
 
 **Fase C — Evidence readiness:** transactions, orders demo, evidence vault, checklist, overview y transaction detail.
 
@@ -594,10 +694,12 @@ Al finalizar, informa archivos modificados, comandos de prueba y resultados real
 
 ## 19. Decisiones pendientes (no inventarlas)
 
-- Estrategia de autenticación del merchant en el frontend (solo demo vs autenticación real).
+- Integración del frontend con la autenticación real ya elegida e implementada
+  en backend: Supabase Auth y JWT; no usar un Bearer fijo de demo.
 - Proveedor y modelo exacto de OpenAI; elegir según costo/latencia y capacidad.
 - Si PayPal Sandbox ofrece una disputa elegible para `provide-evidence` dentro del tiempo disponible.
-- Política por defecto de autoenvío: **para el MVP, aprobación humana por defecto**, salvo que el equipo configure explícitamente un modo automatizado seguro.
+- Implementación de M08: M01 ya exige aprobación humana y mantiene envíos
+  deshabilitados por defecto; no relajar esos controles desde la IA.
 - Fuente de órdenes y envíos simulada: fixtures JSON o DB seed.
 - Qué se expondrá al público en demo y qué requerirá login.
 - Necesidad real de separar el worker dentro de Render; inicialmente puede estar en el proceso del backend.
