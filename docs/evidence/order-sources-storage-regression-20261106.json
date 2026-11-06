@@ -1,0 +1,14 @@
+{
+  "verifiedAt": "2026-11-06T23:35:22.313Z",
+  "apiBase": "https://resolve-ai-api-ybmj.onrender.com/api",
+  "transactionId": "c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a",
+  "evidenceId": "9c04f004-93e7-404f-9a80-2747484919ed",
+  "fileName": "WhatsApp Image 2026-11-05 at 5.41.42 PM.jpeg",
+  "source": "EXISTING_USER_FILE_NOT_GENERATED",
+  "downloadHttp": 200,
+  "unauthenticatedHttp": 401,
+  "byteLength": 83183,
+  "sha256": "8d9dcb9bb03fb86b5479aa7a2bb517edb68fa81c927eab705761291936bb1a30",
+  "bytesIdenticalToUserOriginal": true,
+  "notice": "Read-only regression check of original previously stored in private Supabase Storage. Not shipment evidence and not attached to the new purchase."
+}

@@ -14,6 +14,11 @@ migración aplicada/repetida en PostgreSQL de pruebas, sin diferencia de schema,
 y aplicada en Supabase. Ver [fuentes](docs/order-information-sources.md) y
 [evidencia real](docs/evidence/order-sources-sandbox-20261106.json).
 
+Integrado por PR #15 en `main` (`728eb59`), CI aprobado y publicado en Render.
+Worker restaurado y proceso local detenido. Lectura/refresh/backfill reales
+desde Render verificados; descarga del archivo previo del usuario desde Storage
+con bytes idénticos. Issue #10 cerrado. Ver [validación publicada](docs/validation.md).
+
 > **Estado del documento:** contexto de producto, estado verificado del backend y especificación de los módulos pendientes. Los flujos futuros descritos abajo no implican que todo el MVP esté implementado.
 > **Versión:** 1.1 · **Actualizado:** 2026-11-06 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
 > **Alcance del repositorio:** únicamente backend. El frontend/M10 se desarrolla en otro repositorio.

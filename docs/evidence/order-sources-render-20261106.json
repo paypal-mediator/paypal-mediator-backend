@@ -1,0 +1,145 @@
+{
+  "verifiedAt": "2026-11-06T23:34:59.731Z",
+  "apiBase": "https://resolve-ai-api-ybmj.onrender.com/api",
+  "notice": "Published Render verification of the same genuine Sandbox purchase originally processed before commit by local new worker. Local worker stopped; published source refresh succeeded and preserved original revision. M01 prepare results refer to the initial local test with real services. No manual order or invented shipping/delivery.",
+  "orderId": "5AA87137A4512751T",
+  "captureId": "9L5781332K437132K",
+  "captureHttp": 201,
+  "amount": {
+    "currencyCode": "USD",
+    "value": "1"
+  },
+  "m01": {
+    "merchantHttp": 200,
+    "role": "ADMIN",
+    "integrationHttp": 201,
+    "connectionStatus": "CONNECTED"
+  },
+  "m02": {
+    "paypalEventId": "WH-21J09557NM515442T-05V02304MT7334107",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "receivedAt": "2026-11-06T23:25:27.780Z",
+    "job": {
+      "status": "COMPLETED",
+      "errorCode": null
+    }
+  },
+  "transactionId": "949523cc-d4f3-4fba-9c4d-e3aecaa4a687",
+  "manualOrderId": null,
+  "orderLink": {
+    "status": "LINKED",
+    "reason": null
+  },
+  "order": {
+    "sourceKind": "PAYPAL",
+    "items": [
+      {
+        "sku": "SANDBOX-A",
+        "description": "DEMO Sandbox item A",
+        "quantity": 2,
+        "unitAmount": "0.30",
+        "currencyCode": "USD"
+      },
+      {
+        "sku": "SANDBOX-B",
+        "description": "DEMO Sandbox item B",
+        "quantity": 1,
+        "unitAmount": "0.20",
+        "currencyCode": "USD"
+      }
+    ],
+    "totalAmount": "1.00",
+    "breakdown": {
+      "itemTotal": {
+        "currencyCode": "USD",
+        "value": "0.80"
+      },
+      "shipping": {
+        "currencyCode": "USD",
+        "value": "0.10"
+      },
+      "tax": {
+        "currencyCode": "USD",
+        "value": "0.10"
+      },
+      "handling": {
+        "currencyCode": "USD",
+        "value": "0.00"
+      },
+      "insurance": {
+        "currencyCode": "USD",
+        "value": "0.00"
+      },
+      "shippingDiscount": {
+        "currencyCode": "USD",
+        "value": "0.00"
+      },
+      "discount": {
+        "currencyCode": "USD",
+        "value": "0.00"
+      }
+    }
+  },
+  "enrichment": {
+    "status": "COMPLETE",
+    "missingFields": [],
+    "integrity": "VALID"
+  },
+  "m04": {
+    "revision": 3,
+    "items": [
+      {
+        "id": "29f5cb76-7668-48c2-9df2-d18cb3da418b",
+        "type": "ORDER_RECORD",
+        "sourceKind": "PAYPAL",
+        "integrity": "VALID",
+        "contentHash": "3cb2ee8c571d5ebfb88c0dbae39156b708b26a92a04cb6399f88d4e6d95d6436"
+      },
+      {
+        "id": "d3d96e87-4298-45b1-bf0d-53a87a0512f6",
+        "type": "ORDER_SOURCE_RECORD",
+        "sourceKind": "PAYPAL",
+        "integrity": "VALID",
+        "contentHash": "2e5f6232ba9d25970186da201d95d1c4d82fa46a3ec531371c11991e252b8fd3"
+      },
+      {
+        "id": "fde3d92d-85cc-4eb7-90e4-5119d5bcc508",
+        "type": "PAYMENT_RECORD",
+        "sourceKind": "PAYPAL",
+        "integrity": "VALID",
+        "contentHash": "11103a3c1ac9c5cc641e6fc7be1ea82cf9cc0a7ef9abbadc8f5b14f60503a209"
+      }
+    ]
+  },
+  "readiness": "INCOMPLETE",
+  "checks": [
+    {
+      "code": "PAYMENT_RECORD",
+      "status": "PRESENT",
+      "evidenceIds": ["fde3d92d-85cc-4eb7-90e4-5119d5bcc508"]
+    },
+    {
+      "code": "ORDER_REFERENCE",
+      "status": "PRESENT",
+      "evidenceIds": []
+    },
+    {
+      "code": "ORDER_RECORD",
+      "status": "PRESENT",
+      "evidenceIds": ["29f5cb76-7668-48c2-9df2-d18cb3da418b"]
+    },
+    {
+      "code": "TRACKING",
+      "status": "MISSING",
+      "evidenceIds": []
+    },
+    {
+      "code": "PROOF_OF_DELIVERY",
+      "status": "MISSING",
+      "evidenceIds": []
+    }
+  ],
+  "refreshHttp": 201,
+  "duplicateRefreshPreservedRevision": true,
+  "unauthenticatedHttp": 401
+}

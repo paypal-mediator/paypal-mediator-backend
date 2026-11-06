@@ -482,3 +482,23 @@ trabajo permanece en la outbox hasta implementar esos módulos.
 
 Evidencia técnica sanitizada: [JSON](evidence/order-sources-sandbox-20261106.json).
 Contrato y limitaciones: [fuentes](order-information-sources.md).
+
+### Confirmación publicada
+
+PR #15 integrado en `main` (`728eb59`), CI aprobado y Render `Live`.
+Se restauró `TRANSACTION_WORKER_ENABLED=true` y se detuvo el worker local.
+La misma transacción se leyó desde Render con sus dos artículos; refresh
+consultó PayPal y mantuvo revisión 3. Sin sesión HTTP 401.
+Ver [verificación publicada](evidence/order-sources-render-20261106.json).
+
+Backfill real de `8YN46316PH6397206`: PayPal no proporcionó artículos ni
+breakdowns, por lo que devuelve `PARTIAL`, `items: []` y envío `null`.
+El pedido DEMO anterior conserva su ID y procedencia; PayPal se agrega como fuente
+independiente. El `READY` de ese expediente anterior procede de su cobertura
+DEMO de tracking/entrega y no convierte esos datos en información verificada.
+Ver [backfill publicado](evidence/order-sources-backfill-20261106.json).
+
+Regresión Storage de solo lectura desde Render: el JPEG existente del usuario
+se descargó con HTTP 200, 83.183 bytes e idéntico SHA-256 al archivo original;
+sin sesión HTTP 401. No se generó sustituto ni se adjuntó esa foto como prueba
+de envío a la nueva compra. Ver [resultado](evidence/order-sources-storage-regression-20261106.json).
