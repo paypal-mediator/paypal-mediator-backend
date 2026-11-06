@@ -8,6 +8,30 @@ local y desde Render. Ver [resultados de Render](evidence/m04-real-storage-rende
 y [validación](validation.md). Los conectores comerciales y el análisis de
 documentos siguen pendientes.
 
+## Flujo de uso: automático, manual y pendiente
+
+- **Automático hoy:** M02 verifica el webhook de captura de PayPal; M03 persiste
+  el pago y vincula el pedido disponible. M04 guarda los registros estructurados
+  de pago/pedido y sus referencias mediante su interfaz pública. Captura de pago
+  significa confirmación del cobro, no captura de pantalla.
+- **Aportado hoy por el comerciante:** los documentos PDF/PNG/JPEG se cargan por
+  las rutas autorizadas de M04. Tracking y entrega se registran con procedencia
+  explícita. La prueba de Storage utilizó un archivo existente del usuario,
+  conservado sin cambios; no se obtuvo automáticamente desde PayPal o un carrier.
+- **Flujo completo previsto:** los conectores de tienda, facturación y paquetería
+  aportarán documentos y eventos a M04. M05 buscará lo que falte y M06 revisará
+  las fuentes. El usuario intervendrá para documentos faltantes, fuentes sin
+  conectar y contradicciones; no debería tener que cargar toda la evidencia.
+
+El almacenamiento privado ya funciona y está desplegado. La recolección
+automática de archivos desde esas fuentes comerciales todavía no está
+implementada. No se generan capturas, facturas o comprobantes ficticios para
+sustituir originales. El frontend que permitirá operar estas rutas vive aparte.
+
+La rama funcional del módulo es `feat/m04-evidence-vault`. El incremento de
+archivos se desarrolló en `feat/m04-private-evidence-files` y se integró por
+PR #11; la rama funcional conserva también la documentación de su verificación.
+
 ## Propiedad y contrato entre módulos
 
 M04 es propietario de `evidence_dossiers` y `evidence_items`. M03 es propietario
