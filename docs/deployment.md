@@ -31,14 +31,14 @@ y el alcance de la prueba en [validación](validation.md).
 
 ## Configuración
 
-El incremento local de archivos M04 requiere la sexta migración
+El incremento de archivos M04 está desplegado por PR #11 (`f49fd6c`). Requiere la sexta migración
 `20261106030000_evidence_documents` y la séptima
 `20261106040000_evidence_document_provenance`, `SUPABASE_SECRET_KEY` como secreto
 solo del backend y `EVIDENCE_BUCKET` apuntando a un bucket privado previamente
 aprovisionado. Ver [configuración y límites de archivos](m04-evidence.md#archivos-privados).
 El bucket y ambas migraciones ya se aprovisionaron en Supabase. Una foto existente
-del usuario recorrió carga y descarga por NestJS local/Storage real con SHA-256
-idéntico. Ver [validación](validation.md) para el estado del despliegue HTTP.
+del usuario recorrió carga y descarga por NestJS local y por Render con Storage
+real y SHA-256 idéntico. Ver [validación](validation.md) para los resultados HTTP.
 
 Render publica el backend NestJS como Web Service con HTTPS. `render.yaml`
 describe un servicio Free en Virginia; usa Node 24, el lockfile pnpm y el

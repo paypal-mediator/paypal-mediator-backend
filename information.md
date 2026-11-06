@@ -7,16 +7,19 @@
 
 ## Estado real al 6 de noviembre de 2026
 
-### Incremento local M04 — archivos originales privados
+### M04 — archivos originales privados, desplegados y verificados
 
 Se implementó carga ADMIN y descarga ADMIN/VIEWER de PDF/PNG/JPEG (hasta 512 KiB),
 procedencia explícita, versiones y hashes de originales en Supabase Storage
 privado. La sexta migración habilita `DOCUMENT` sin permitir origen PayPal.
 Los adjuntos no completan automáticamente tracking/entrega. Además de las pruebas
 automatizadas con Storage MOCK, una foto existente del usuario se cargó y descargó
-por NestJS local con Supabase Storage/PostgreSQL reales y hashes idénticos.
+por NestJS local y por Render con Supabase Storage/PostgreSQL reales y hashes idénticos.
 Se configuró un bucket privado y se aplicaron las migraciones sexta y séptima.
-El despliegue HTTP se registra por separado; conectores y agentes siguen pendientes.
+PR #11 integrado en `main` (`f49fd6c`) y desplegado en Render. Validación de código:
+148 pruebas unitarias/HTTP y 64 pruebas PostgreSQL aprobadas. Carga duplicada
+HTTP 201, descarga HTTP 200 y acceso sin sesión HTTP 401; archivo idéntico al
+original. Los conectores comerciales y agentes siguen pendientes.
 Ver [M04](docs/m04-evidence.md) y [validación](docs/validation.md).
 
 ### Ampliación M03 — órdenes y coordinación M04, integrada y desplegada

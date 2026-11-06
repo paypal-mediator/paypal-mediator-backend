@@ -29,13 +29,30 @@ no una prueba comercial de envío.
 
 Resultados técnicos sin credenciales ni bytes del usuario:
 [prueba real de Storage](evidence/m04-real-storage-20261106.json).
-La foto no se añade al repositorio. El estado del despliegue de las rutas en
-Render se documenta tras su verificación independiente.
+La foto no se añade al repositorio.
 
 Validación de código: `pnpm check` aprobado con **148 pruebas unitarias/HTTP**;
 `pnpm test:db` aprobado con **64 pruebas** en PostgreSQL desechable. Las siete
 migraciones se aplicaron desde cero y se repitieron sin pendientes. La clave y
 bucket se configuraron también en Render, guardando sin desplegar código antiguo.
+
+### Verificación posterior en Render
+
+PR [#11](https://github.com/paypal-mediator/paypal-mediator-backend/pull/11)
+integrado en `main` por `f49fd6c`. CI de rama, PR y main aprobado; la ejecución
+de main fue `42277495503`. Render publicó ese commit con estado Live y duración
+de despliegue de 1m 8s. La prueba HTTP terminó a las **2026-11-06T19:14:36.760Z**.
+
+Se volvió a cargar la misma foto mediante la API publicada: HTTP 201 con
+`DUPLICATE`, conservando el ID y la revisión 7. Descarga por Render HTTP 200;
+sin sesión HTTP 401. El original, el objeto de Supabase y la descarga desde
+Render mantuvieron el SHA-256 e igualdad byte a byte indicados arriba. URL
+pública de Storage HTTP 400. No intervino ningún backend local en esta fase.
+
+La respuesta binaria de Render se guardó en `Downloads/ResolveAI-M04-Render`
+con el nombre original. Se mostró además el objeto en la vista previa de
+Supabase Storage. No se muestra un documento generado como si fuera evidencia.
+Resultados: [verificación de Render/Storage real](evidence/m04-real-storage-render-20261106.json).
 
 ## Nuevo pago Sandbox aprobado en Opera GX — 6 de noviembre de 2026
 
