@@ -34,8 +34,8 @@ El operador debe proporcionar el UUID de una cuenta real del proyecto Auth.
 
 5. Configurar `PAYPAL_CLIENT_ID` y `PAYPAL_CLIENT_SECRET` de la misma app
    Sandbox asociada al merchant. Ambos son exclusivamente del servidor.
-   `PAYPAL_WEBHOOK_ID` solo indica si hay un ID configurado: M02 implementará
-   la recepción y validación. Reiniciar la API al cambiar el entorno.
+   `PAYPAL_WEBHOOK_ID` indica si hay un ID configurado: M02 realiza la recepción
+   y validación. Reiniciar la API al cambiar el entorno.
 
 Sin credenciales PayPal las consultas autenticadas funcionan y muestran
 `NOT_CONFIGURED`. Sin Auth configurado, M01 falla cerrado; health sigue

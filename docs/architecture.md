@@ -18,6 +18,7 @@ apps/api/
     modules/
       health/               # Liveness y readiness
       merchants/            # M01: usuarios, políticas e integración Sandbox
+      event-ingestion/      # M02: firma, persistencia y outbox de webhooks
     generated/prisma/       # Generado, ignorado en Git
   test/
     unit/
@@ -70,8 +71,8 @@ de dominio de `information.md` siguen siendo propuestas.
   demanda. Liveness no afirma conectividad; readiness consulta PostgreSQL.
 - Errores `{ code, message, requestId }`. Los errores internos se sanitizan y
   solo se registran código, estado y request ID, sin cuerpos ni secretos.
-- `rawBody` disponible para que M02 implemente firma de webhooks. No existe
-  todavía ningún endpoint de webhook.
+- M02 utiliza `rawBody` en `/api/webhooks/paypal`, conserva los bytes y verifica
+  la entrega con la API oficial de PayPal antes de persistir y encolar.
 - Helmet, límite de cuerpo de 1 MB y CORS exacto. M01 valida JWT asimétricos de
   Supabase y membresías activas antes de acceder al merchant. Roles ADMIN y
   VIEWER; las políticas exigen aprobación humana.
@@ -90,6 +91,11 @@ Revisar el override cuando NestJS actualice su dependencia.
 ESLint y typescript-eslint usan Minimatch 11.0.1 mediante override por
 [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 
-M02–M09, auditoría append-only, Storage, herramientas de IA,
+M03–M09, auditoría append-only, Storage, herramientas de IA,
 contratos de dominio, prueba real de disputas Sandbox, despliegue y licencia
 acordada por el equipo.
+
+M02 recibe webhooks mediante M01 (contexto del merchant y OAuth público de
+módulo), verifica firmas con PayPal y guarda eventos/trabajos de forma atómica.
+La outbox permanece `QUEUED` hasta implementar los consumidores de M03/M07.
+Ver [M02](m02-event-ingestion.md) para contratos y límites de la verificación.

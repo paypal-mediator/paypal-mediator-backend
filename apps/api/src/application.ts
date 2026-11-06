@@ -38,7 +38,7 @@ export async function createApp(
     const config = new DocumentBuilder()
       .setTitle('ResolveAI Backend')
       .setDescription(
-        'ResolveAI backend: health and merchant integrations. User JWTs are issued by Supabase Auth.',
+        'ResolveAI backend: health, merchant integrations and verified PayPal webhooks. User JWTs are issued by Supabase Auth.',
       )
       .setVersion('0.1.0')
       .addBearerAuth(
