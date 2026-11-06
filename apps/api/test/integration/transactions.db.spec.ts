@@ -90,7 +90,10 @@ describe('M03: verified M02 deliveries → captures → authorized HTTP (real Po
     vi.restoreAllMocks();
     if (prisma) {
       const where = { merchantId: { in: [merchantId, otherMerchantId] } };
+      await prisma.evidenceItem.deleteMany({ where: { dossier: where } });
+      await prisma.evidenceDossier.deleteMany({ where });
       await prisma.transaction.deleteMany({ where });
+      await prisma.merchantOrder.deleteMany({ where });
       await prisma.ingestionJob.deleteMany({ where: { event: where } });
       await prisma.webhookEvent.deleteMany({ where });
       await prisma.merchantMember.deleteMany({ where });
@@ -132,7 +135,7 @@ describe('M03: verified M02 deliveries → captures → authorized HTTP (real Po
     const detail = TransactionResponseSchema.parse(result.body);
     expect(detail.amount).toEqual({ value: '10.25', currencyCode: 'USD' });
     expect(detail.sourceEventId).toBe(receipt.eventId);
-    expect(detail.readiness).toEqual({
+    expect(detail.readiness).toMatchObject({
       status: 'INCOMPLETE',
       checks: [
         { code: 'PAYMENT_RECORD', status: 'PRESENT' },

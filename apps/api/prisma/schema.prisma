@@ -22,6 +22,8 @@ model Merchant {
   events                  MerchantEvent[]
   webhookEvents           WebhookEvent[]
   transactions            Transaction[]
+  orders                  MerchantOrder[]
+  dossiers                EvidenceDossier[]
 
   @@map("merchants")
 }
@@ -122,11 +124,82 @@ model Transaction {
   capturedAt             DateTime @map("captured_at") @db.Timestamptz(3)
   sourceEventId          String   @unique @map("source_event_id") @db.Uuid
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  merchantOrderId        String?  @unique @map("merchant_order_id") @db.Uuid
+  orderLinkError         String?  @map("order_link_error") @db.VarChar(64)
 
-  merchant    Merchant     @relation(fields: [merchantId], references: [id], onDelete: Restrict)
-  sourceEvent WebhookEvent @relation(fields: [sourceEventId], references: [id], onDelete: Restrict)
+  merchant      Merchant         @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  sourceEvent   WebhookEvent     @relation(fields: [sourceEventId], references: [id], onDelete: Restrict)
+  merchantOrder MerchantOrder?   @relation(fields: [merchantOrderId, merchantId], references: [id, merchantId], onDelete: Restrict)
+  dossier       EvidenceDossier?
 
   @@unique([merchantId, environment, paypalCaptureId])
+  @@unique([merchantOrderId, merchantId])
+  @@unique([id, merchantId])
   @@index([merchantId, createdAt, id])
   @@map("transactions")
+}
+
+model MerchantOrder {
+  id             String       @id @default(uuid()) @db.Uuid
+  merchantId     String       @map("merchant_id") @db.Uuid
+  environment    String       @default("sandbox")
+  externalId     String       @map("external_id") @db.VarChar(255)
+  paypalOrderId  String?      @map("paypal_order_id") @db.VarChar(255)
+  sourceKind     String       @map("source_kind")
+  sourceSystem   String       @map("source_system") @db.VarChar(255)
+  currencyCode   String       @map("currency_code") @db.VarChar(3)
+  totalAmount    Decimal      @map("total_amount") @db.Decimal(24, 8)
+  shippingAmount Decimal      @map("shipping_amount") @db.Decimal(24, 8)
+  taxAmount      Decimal      @map("tax_amount") @db.Decimal(24, 8)
+  discountAmount Decimal      @map("discount_amount") @db.Decimal(24, 8)
+  orderedAt      DateTime     @map("ordered_at") @db.Timestamptz(3)
+  items          Json
+  contentHash    String       @map("content_hash") @db.VarChar(64)
+  createdBy      String       @map("created_by") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  merchant       Merchant     @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  transaction    Transaction?
+
+  @@unique([merchantId, environment, externalId])
+  @@unique([id, merchantId])
+  @@unique([merchantId, environment, paypalOrderId])
+  @@index([merchantId, createdAt, id])
+  @@map("merchant_orders")
+}
+
+model EvidenceDossier {
+  id            String         @id @default(uuid()) @db.Uuid
+  merchantId    String         @map("merchant_id") @db.Uuid
+  transactionId String         @unique @map("transaction_id") @db.Uuid
+  revision      Int            @default(0)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  merchant      Merchant       @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  transaction   Transaction    @relation(fields: [transactionId, merchantId], references: [id, merchantId], onDelete: Restrict)
+  items         EvidenceItem[]
+
+  @@unique([transactionId, merchantId])
+  @@index([merchantId])
+  @@map("evidence_dossiers")
+}
+
+model EvidenceItem {
+  id                String          @id @default(uuid()) @db.Uuid
+  dossierId         String          @map("dossier_id") @db.Uuid
+  type              String
+  logicalKey        String          @map("logical_key") @db.VarChar(64)
+  version           Int
+  sourceKind        String          @map("source_kind")
+  sourceSystem      String          @map("source_system") @db.VarChar(255)
+  externalReference String          @map("external_reference") @db.VarChar(255)
+  retrievedAt       DateTime        @map("retrieved_at") @db.Timestamptz(3)
+  content           Json
+  contentHash       String          @map("content_hash") @db.VarChar(64)
+  actorUserId       String?         @map("actor_user_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  dossier           EvidenceDossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  @@unique([dossierId, version])
+  @@index([dossierId, logicalKey, version])
+  @@map("evidence_items")
 }

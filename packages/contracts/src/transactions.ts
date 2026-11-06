@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { OrderResponseSchema } from './orders.js';
+import { EvidenceReceiptSchema } from './evidence.js';
 
 export const TransactionQuerySchema = z.object({
   page: z.coerce.number().int().min(1).max(100000).default(1),
@@ -20,8 +22,18 @@ export const TransactionResponseSchema = z.object({
   capturedAt: z.iso.datetime(),
   sourceEventId: z.uuid(),
   createdAt: z.iso.datetime(),
+  order: OrderResponseSchema.nullable(),
+  orderLink: z.object({
+    status: z.enum(['UNLINKED', 'LINKED', 'CONFLICT']),
+    reason: z.string().nullable(),
+  }),
   readiness: z.object({
-    status: z.literal('INCOMPLETE'),
+    status: z.enum(['READY', 'INCOMPLETE', 'NEEDS_REVIEW']),
+    basis: z.literal('DOCUMENT_COVERAGE'),
+    containsDemo: z.boolean(),
+    dossierId: z.uuid().nullable(),
+    evidenceRevision: z.number().int(),
+    reasons: z.array(z.string()),
     checks: z.array(
       z.object({
         code: z.enum([
@@ -31,12 +43,16 @@ export const TransactionResponseSchema = z.object({
           'TRACKING',
           'PROOF_OF_DELIVERY',
         ]),
-        status: z.enum(['PRESENT', 'MISSING']),
+        status: z.enum(['PRESENT', 'MISSING', 'CONFLICT']),
+        evidenceIds: z.array(z.uuid()),
       }),
     ),
   }),
 });
 export type TransactionResponse = z.infer<typeof TransactionResponseSchema>;
+export const EvidenceRegistrationResponseSchema = EvidenceReceiptSchema.extend({
+  transaction: TransactionResponseSchema,
+});
 
 export const TransactionListResponseSchema = z.object({
   items: z.array(TransactionResponseSchema),

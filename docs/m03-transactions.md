@@ -1,15 +1,20 @@
-# M03 — Transaction Manager, primer incremento
+# M03 — Transaction Manager
 
-Capturas persistidas y consulta por merchant dentro del backend NestJS.
-No crea pagos, disputas ni documentos comerciales. No hace llamadas nuevas a
-PayPal: consume exclusivamente eventos que M02 ya verificó y persistió.
+Capturas, registro de órdenes comerciales, vinculación y preparación documental
+por merchant dentro del backend NestJS. No crea pagos ni disputas. No hace llamadas
+nuevas a PayPal: consume exclusivamente eventos que M02 ya verificó y persistió.
+
+El primer incremento de capturas/consultas está desplegado en Render. La ampliación
+de órdenes y expedientes estructurados M04 está implementada y probada localmente
+en `feat/m03-transaction-manager`; requiere la quinta migración antes de desplegarse.
 
 ## Consumo y persistencia
 
 `TransactionsService.processNextCapture(merchantId)` utiliza la interfaz pública
 `IngestionQueueService` de M02. M02 conserva la propiedad de sus eventos y trabajos;
 el consumidor escribe únicamente `transactions` usando la transacción recibida.
-La captura y el estado `COMPLETED` del trabajo se confirman juntos.
+La captura, sus registros base del expediente M04 y el estado `COMPLETED` del
+trabajo se confirman juntos. Si M04 falla, se revierten captura, expediente y job.
 
 El consumidor valida `PAYMENT.CAPTURE.COMPLETED`, `resource.status=COMPLETED`,
 importe positivo expresado como cadena decimal, moneda y fecha de captura.
@@ -47,15 +52,82 @@ El worker vive en el mismo proceso NestJS,
 consulta cada segundo cuando no hay trabajo y espera la operación activa al cerrar.
 Los trabajos `DISPUTE_CHANGED` permanecen pendientes para M07.
 
+## Órdenes y vinculación
+
+`POST /api/orders` registra un pedido comercial inmutable: referencia externa,
+referencia PayPal opcional, origen, fecha, artículos, cantidades, precios unitarios,
+envío, impuestos y descuento. El total debe coincidir exactamente con
+`sum(cantidad × precio) + envío + impuestos − descuento`. Los importes se calculan
+con decimales de precisión suficiente para `DECIMAL(24,8)`, sin punto flotante.
+
+El origen es explícito: `MERCHANT_INPUT` para datos aportados por el comerciante,
+o `DEMO` para simulaciones. No hay integración automática con Shopify o carriers.
+Los registros de prueba están en `apps/api/test/fixtures/commerce.ts` y están
+etiquetados DEMO / MOCK. No se insertan fixtures automáticamente en Supabase.
+
+La identidad del pedido es única por merchant/entorno y referencia externa; la
+referencia PayPal también es única cuando existe. Repetir el mismo pedido devuelve
+`DUPLICATE`; contenido distinto bajo una referencia existente devuelve 409.
+No se sobrescriben los artículos originales. El hash del contenido normalizado
+permite detectar cambios posteriores en el registro.
+
+Un lock transaccional por merchant coordina llegada de pedido y captura, incluso
+si ocurren simultáneamente. Se reevalúan tanto pagos anteriores como nuevos:
+
+- Se busca por `custom_id = externalId` o por ID de orden PayPal.
+- Si ambas referencias existen, deben ser consistentes e identificar un pedido.
+- Moneda e importe deben coincidir y el pedido no puede ser posterior al pago.
+- Alcance MVP: una captura completa por pedido y un paquete por expediente.
+  Capturas parciales, pagos múltiples o paquetes contradictorios requieren revisión;
+  no se concilian automáticamente.
+
+La transacción incluye `order` y `orderLink`: `LINKED`, `UNLINKED` o `CONFLICT`,
+con un código de motivo. Un conflicto comercial no elimina el pago real ni hace
+fallar su ingesta: conserva la captura y devuelve readiness `NEEDS_REVIEW`.
+
+Ejemplo de pedido DEMO para una captura de prueba de 10.25 USD cuyas referencias
+sean `MOCK-MERCHANT-ORDER` y `MOCK-ORDER`. Enviar a `POST /api/orders` con JWT ADMIN:
+
+```json
+{
+  "externalId": "MOCK-MERCHANT-ORDER",
+  "paypalOrderId": "MOCK-ORDER",
+  "sourceKind": "DEMO",
+  "sourceSystem": "DEMO / MOCK commerce",
+  "currencyCode": "USD",
+  "totalAmount": "10.25",
+  "orderedAt": "2026-11-05T00:00:00Z",
+  "items": [
+    {
+      "sku": "MOCK-SKU",
+      "description": "DEMO / MOCK physical item",
+      "quantity": 1,
+      "unitAmount": "10.25"
+    }
+  ]
+}
+```
+
+Envío, impuestos y descuento omitidos se interpretan como cero. Para datos propios,
+usar referencias/importes reales y `sourceKind=MERCHANT_INPUT`. Los ejemplos no
+generan un pago ni se ejecutan automáticamente contra capturas Sandbox genuinas.
+
 ## Contrato HTTP
 
-Ambas rutas exigen JWT Supabase y membresía activa; ADMIN y VIEWER pueden leer.
+Todas las rutas exigen JWT Supabase y membresía activa. ADMIN y VIEWER pueden
+leer; solo ADMIN puede registrar pedidos/evidencia o refrescar un expediente.
 El merchant siempre se obtiene de M01, no de parámetros del cliente.
 
-| Método | Ruta                    | Comportamiento                          |
-| ------ | ----------------------- | --------------------------------------- |
-| GET    | `/api/transactions`     | `{ items, page, pageSize, total }`      |
-| GET    | `/api/transactions/:id` | Detalle de una transacción del merchant |
+| Método | Ruta                                     | Comportamiento                                                           |
+| ------ | ---------------------------------------- | ------------------------------------------------------------------------ |
+| GET    | `/api/transactions`                      | `{ items, page, pageSize, total }`                                       |
+| GET    | `/api/transactions/:id`                  | Detalle de una transacción del merchant                                  |
+| POST   | `/api/orders`                            | Registrar pedido y reconciliar capturas; `{ outcome, order }`            |
+| GET    | `/api/orders`                            | Listado paginado; filtro exacto opcional `externalId`                    |
+| GET    | `/api/orders/:id`                        | Pedido comercial del merchant                                            |
+| POST   | `/api/transactions/:id/refresh-evidence` | Reconciliación y snapshot base de evidencia, síncronos                   |
+| GET    | `/api/transactions/:id/evidence`         | Expediente estructurado, origen, hashes e historial                      |
+| POST   | `/api/transactions/:id/evidence`         | Añadir tracking/entrega; `{ outcome, evidenceId, version, transaction }` |
 
 Filtros del listado: `page` (1–100000, defecto 1), `pageSize` (1–100, defecto 20),
 `paypalCaptureId` (coincidencia exacta). Orden descendente por creación e ID.
@@ -63,20 +135,35 @@ Listado y conteo usan una misma instantánea PostgreSQL. UUID o query inválidos
 devuelven 400; detalle inexistente o perteneciente a otro merchant devuelve 404.
 
 Los schemas Zod públicos están en `packages/contracts/src/transactions.ts`.
-La respuesta expone procedencia mediante `sourceEventId`, pero no el payload
-completo del webhook ni información de credenciales.
+La respuesta expone procedencia mediante `sourceEventId`, el pedido asociado y
+el snapshot documental; no expone el payload completo del webhook ni credenciales.
+Se ampliaron `TransactionResponseSchema` y su enum de readiness. Los consumidores
+de contratos deben recompilar y admitir los tres estados y los IDs de evidencia.
 
 ## Readiness y límites
 
 El checklist tiene `PAYMENT_RECORD`, `ORDER_REFERENCE`, `ORDER_RECORD`, `TRACKING`
-y `PROOF_OF_DELIVERY`. Solo los dos primeros pueden estar `PRESENT` en este
-incremento. El resto se marca `MISSING`; el estado global permanece `INCOMPLETE`.
-Esto describe cobertura documental, nunca probabilidad de ganar una disputa.
+y `PROOF_OF_DELIVERY`. M03 entrega su contexto autoritativo a la interfaz pública
+`EvidenceService` de M04; M04 guarda y consulta solo sus propias tablas. Cada check
+devuelve `PRESENT`, `MISSING` o `CONFLICT`, con los IDs que lo respaldan.
 
-Pendientes para completar M03 y su coordinación con M04: adaptador de pedidos
-comerciales, registro de órdenes, expediente/evidencia y actualización de readiness
-a partir de fuentes documentales reales o fixtures identificados. No se incluye
-`refresh-evidence` sin un consumidor implementado. M03 se desplegó a Render
+- `INCOMPLETE`: falta algún registro.
+- `READY`: todos están presentes, con referencias consistentes e integridad válida.
+- `NEEDS_REVIEW`: contradicción, vínculo comercial inválido o integridad alterada.
+
+El snapshot incluye `basis=DOCUMENT_COVERAGE`, `dossierId`, `evidenceRevision`,
+`containsDemo` y códigos explicativos. Se calcula desde la instantánea actual de
+PostgreSQL, también en el listado. Puede regresar de `READY` a incompleto/revisión
+cuando la fuente retracta una entrega o cancela el envío. Datos antiguos no pueden
+reemplazar una versión más reciente. El historial anterior se conserva.
+
+Esto describe cobertura documental, nunca probabilidad de ganar una disputa,
+autenticidad certificada del carrier ni autorización para enviar a PayPal.
+No produce imágenes o capturas de pantalla. El soporte de M04 aquí es una base
+de registros JSON estructurados; archivos binarios, Storage privado, conectores
+comerciales y Verifier siguen pendientes. Ver [M04](m04-evidence.md).
+
+El primer incremento de M03 se desplegó a Render
 desde `main` por PR #6 (`ff12287`); readiness, listado y detalle autenticados
 se comprobaron por HTTPS con HTTP 200 y acceso sin sesión HTTP 401.
 Sí se verificó el consumidor local con dos capturas genuinas que M02 había

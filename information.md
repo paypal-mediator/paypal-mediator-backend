@@ -7,6 +7,21 @@
 
 ## Estado real al 6 de noviembre de 2026
 
+### Ampliación local M03 — órdenes y coordinación M04
+
+En `feat/m03-transaction-manager` se implementaron órdenes comerciales con artículos,
+importes exactos, origen y vinculación antes/después de la captura. La base M04
+persiste expedientes JSON con hash e historial; el checklist cambia entre
+`INCOMPLETE`, `READY` y `NEEDS_REVIEW` según documentos, retractaciones y conflictos.
+Los datos DEMO se etiquetan explícitamente. `READY` es cobertura documental.
+
+Validación local: `pnpm check` con 124 pruebas y `pnpm test:db` con 63 pruebas en
+PostgreSQL desechable; quinta migración aplicada, repetida y sin diferencias de
+schema. No se aplicó esta ampliación en Supabase ni se desplegó todavía a Render.
+Storage privado/archivos binarios, conectores comerciales y M05–M09 siguen pendientes.
+Ver [M03](docs/m03-transactions.md) y [base M04](docs/m04-evidence.md).
+El estado publicado descrito abajo corresponde al primer incremento de M03.
+
 ### M03 — Primer incremento integrado y desplegado
 
 En `feat/m03-transaction-manager` se implementó el primer incremento de M03:

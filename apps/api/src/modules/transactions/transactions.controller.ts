@@ -6,6 +6,8 @@ import {
   Query,
   Req,
   UseGuards,
+  Body,
+  Post,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -14,6 +16,7 @@ import {
   ApiTags,
   ApiQuery,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
@@ -21,9 +24,14 @@ import {
   TransactionResponseSchema,
   TransactionListResponseSchema,
   type TransactionQuery,
+  RegisterEvidenceSchema,
+  EvidenceDossierResponseSchema,
+  EvidenceRegistrationResponseSchema,
+  type RegisterEvidence,
 } from '@resolve-ai/contracts';
 import {
   MerchantAccessGuard,
+  MerchantAdminOnly,
   type MerchantRequest,
 } from '../merchants/index.js';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -85,5 +93,50 @@ export class TransactionsController {
     @Param('id', new ZodValidationPipe(z.uuid())) id: string,
   ) {
     return this.transactions.detail(request.merchantActor.merchantId, id);
+  }
+
+  @Post(':id/refresh-evidence')
+  @MerchantAdminOnly()
+  @ApiOperation({
+    summary:
+      'Reconcile order and persist payment/order evidence in the dossier (ADMIN)',
+  })
+  @ApiResponse({ status: 201, schema: zodOpenApi(TransactionResponseSchema) })
+  refresh(
+    @Req() request: MerchantRequest,
+    @Param('id', new ZodValidationPipe(z.uuid())) id: string,
+  ) {
+    return this.transactions.refreshEvidence(request.merchantActor, id);
+  }
+
+  @Get(':id/evidence')
+  @ApiResponse({
+    status: 200,
+    schema: zodOpenApi(EvidenceDossierResponseSchema),
+  })
+  dossier(
+    @Req() request: MerchantRequest,
+    @Param('id', new ZodValidationPipe(z.uuid())) id: string,
+  ) {
+    return this.transactions.dossier(request.merchantActor.merchantId, id);
+  }
+
+  @Post(':id/evidence')
+  @MerchantAdminOnly()
+  @ApiOperation({
+    summary:
+      'Append a sourced tracking/delivery record; this does not verify delivery authenticity (ADMIN)',
+  })
+  @ApiBody({ schema: zodOpenApi(RegisterEvidenceSchema) })
+  @ApiResponse({
+    status: 201,
+    schema: zodOpenApi(EvidenceRegistrationResponseSchema),
+  })
+  evidence(
+    @Req() request: MerchantRequest,
+    @Param('id', new ZodValidationPipe(z.uuid())) id: string,
+    @Body(new ZodValidationPipe(RegisterEvidenceSchema)) body: RegisterEvidence,
+  ) {
+    return this.transactions.registerEvidence(request.merchantActor, id, body);
   }
 }

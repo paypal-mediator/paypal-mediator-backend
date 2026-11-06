@@ -1,5 +1,27 @@
 # Validaciones del backend
 
+## Ampliación local M03: órdenes y base M04 — 6 de noviembre de 2026
+
+- `pnpm check`: generación/validación Prisma, lint, formato, tipos, **124 pruebas
+  unitarias/HTTP** y build aprobados.
+- `pnpm test:db`: **63 pruebas PostgreSQL aprobadas**, incluidas 20 de órdenes y
+  expedientes; app NestJS/HTTP, persistencia y comunicación entre módulos reales.
+- Quinta migración `20261106020000_orders_evidence` aplicada en PostgreSQL 18.6
+  desechable en loopback. Segunda aplicación sin pendientes; `prisma migrate diff`
+  entre la base y el schema: sin diferencias.
+- Se verificaron pedidos anteriores/posteriores al pago y concurrentes,
+  idempotencia, validación decimal exacta, rechazo de conflictos y roles,
+  estado READY con datos persistidos, versiones/retractaciones, actualización
+  antigua rechazada, contradicciones de tracking/fechas, hashes alterados,
+  inicialización de capturas antiguas y rollback conjunto M02–M03–M04.
+- RLS comprobada con un rol no propietario y claves foráneas aisladas por merchant.
+- Los pedidos y envíos de prueba son DEMO / MOCK, identificados como tales;
+  JWT/JWKS son MOCK. No se consultaron carriers ni se utilizaron documentos reales.
+
+Esta fase no modifica Supabase/Render y no verifica Storage privado o archivos.
+La evidencia visual anterior conserva su fecha y alcance; no se presenta como
+evidencia producida automáticamente por M03 ni como prueba de esta ampliación.
+
 ## M03 publicado en Render — 6 de noviembre de 2026
 
 PR #6 integrado en `main` con merge `ff12287` (implementación `6c3302c`).
