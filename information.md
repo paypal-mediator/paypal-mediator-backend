@@ -7,6 +7,22 @@
 
 ## Estado real al 6 de noviembre de 2026
 
+### M05 — primer incremento local con NVIDIA Nemotron y adaptador OpenAI
+
+Se implementó investigación preventiva INR solicitada por ADMIN: prompts
+versionados, lectura de M03/M04, inspección de originales PNG/JPEG y borradores
+con citas. Octava migración para `investigation_runs`, idempotencia, RLS, límites
+de pasos/tiempo, hashes y detección de resultados obsoletos. El proveedor inicial
+es `nvidia/nemotron-3.5-super-vl-120b-a12b`; se puede cambiar a OpenAI Responses
+mediante configuración. La prueba local con NVIDIA y Supabase reales terminó
+en seis pasos y reconoció la foto de apuntes como irrelevante. OpenAI solo tiene
+pruebas MOCK, sin credenciales reales. No se desplegó M05 en Render.
+
+No hay fuente comercial conectada, extracción de PDF, Verifier M06 ni presentación
+M08. El resultado es un borrador que requiere verificación: se observaron errores
+semánticos del modelo aun con schema/citas válidos. Ver [M05](docs/m05-investigator.md)
+y [salida original de NVIDIA](docs/evidence/m05-nvidia-live-20261106.json).
+
 ### M04 — archivos originales privados, desplegados y verificados
 
 Se implementó carga ADMIN y descarga ADMIN/VIEWER de PDF/PNG/JPEG (hasta 512 KiB),

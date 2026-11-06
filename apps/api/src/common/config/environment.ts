@@ -83,6 +83,23 @@ export const EnvironmentSchema = z.object({
     .regex(/^[a-z0-9][a-z0-9-]{0,62}$/)
     .default('private-evidence'),
   MAX_INVESTIGATION_ROUNDS: z.coerce.number().int().min(1).max(5).default(2),
+  AI_PROVIDER: z.enum(['nvidia', 'openai']).default('nvidia'),
+  NVIDIA_API_KEY: optionalString(z.string().trim().min(1).max(2048)),
+  NVIDIA_MODEL: z
+    .string()
+    .trim()
+    .min(1)
+    .max(128)
+    .default('nvidia/nemotron-3.5-super-vl-120b-a12b'),
+  OPENAI_API_KEY: optionalString(z.string().trim().min(1).max(2048)),
+  OPENAI_MODEL: optionalString(z.string().trim().min(1).max(128)),
+  INVESTIGATOR_MAX_STEPS: z.coerce.number().int().min(2).max(12).default(8),
+  INVESTIGATOR_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(120000)
+    .default(60000),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

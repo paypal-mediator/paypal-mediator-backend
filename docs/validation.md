@@ -1,5 +1,35 @@
 # Validaciones del backend
 
+## M05 local: NVIDIA real y OpenAI intercambiable — 6 de noviembre de 2026
+
+- `pnpm check`: **157 pruebas unitarias/HTTP**, tipos, lint, formato, Prisma y
+  build aprobados. `pnpm test:db`: **79 pruebas PostgreSQL aprobadas**. Se
+  aplicaron ocho migraciones desde cero, se reaplicaron sin pendientes y
+  `prisma migrate diff` no detectó diferencias. La octava se aplicó también en
+  Supabase para la prueba externa del módulo local.
+- Una llamada de conectividad DEMO al endpoint NVIDIA respondió HTTP 200 con
+  `nvidia/nemotron-3.5-super-vl-120b-a12b`. No se hizo una llamada real a OpenAI;
+  su adaptador Responses, schema estricto y ausencia de fallback se probaron con MOCK.
+- Investigación local con Supabase Auth/PostgreSQL/Storage y NVIDIA reales:
+  `cdfe803a-acff-4a88-ab44-4fcca99fc4d3`, estado COMPLETED, prompt `m05-inr-v1.1`,
+  seis pasos, 27130 tokens de entrada y 1378 de salida. Leyó pago, pedido,
+  tracking, entrega y la foto original del usuario; clasificó esta última como
+  apuntes de matemáticas sin relevancia para una entrega.
+- La repetición con la misma clave devolvió el mismo resultado/uso sin otra
+  investigación; sin JWT HTTP 401. Se activó temporalmente el permiso de
+  investigación mediante M01 y se restauró después. No se habilitaron envíos.
+- El borrador conserva IDs citados y `requiresVerification=true`. Los registros
+  comerciales/envío son DEMO; no existe fuente comercial conectada. El resumen
+  del modelo todavía mezcla etiquetas de procedencia y marca READY/DEMO como
+  contradicción: son errores semánticos observados, no se corrigió la salida
+  para simular una respuesta perfecta. M06 sigue siendo necesario.
+- M05 aún no está desplegado en Render. El circuito de disputas M07 y la
+  presentación M08 no se ejecutaron. PDF se conserva, pero M05 declara que su
+  contenido no fue analizado; imágenes PNG/JPEG sí se pueden inspeccionar.
+
+Ver [contrato y límites M05](m05-investigator.md) y
+[salida original de la prueba real](evidence/m05-nvidia-live-20261106.json).
+
 ## M04: archivo existente del usuario y Storage real — 6 de noviembre de 2026
 
 Se eligió, con autorización del usuario, una foto de apuntes de matemáticas

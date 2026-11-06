@@ -33,6 +33,11 @@ en [docs/validation.md](docs/validation.md).
 
 ## Arranque
 
+Primer incremento local de [M05 Investigator](docs/m05-investigator.md): prompts
+versionados, herramientas de lectura y proveedor NVIDIA/OpenAI configurable.
+NVIDIA se probó con servicios reales; OpenAI usa MOCK en pruebas. M05 aún no está
+publicado en Render y sus borradores requieren verificación independiente.
+
 Requiere Node.js 24 LTS, pnpm 10.34.9 y PostgreSQL local o Supabase.
 Instalar pnpm con `npm install --global pnpm@10.34.9` o Corepack.
 En PowerShell, si la política bloquea scripts, usar `npm.cmd`/`pnpm.cmd`;

@@ -109,6 +109,8 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/transactions/{id}/evidence',
       '/api/orders',
       '/api/orders/{id}',
+      '/api/transactions/{transactionId}/investigations',
+      '/api/transactions/{transactionId}/investigations/{id}',
     ]);
     await request(context.app.getHttpServer()).get('/api/docs/').expect(200);
   });
