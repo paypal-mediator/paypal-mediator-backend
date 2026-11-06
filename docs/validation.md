@@ -1,5 +1,31 @@
 # Validaciones del backend
 
+## M03 publicado en Render — 6 de noviembre de 2026
+
+PR #6 integrado en `main` con merge `ff12287` (implementación `6c3302c`).
+Las dos ejecuciones CI del PR y la ejecución de `main` `42235679015` pasaron:
+`pnpm check` con **111 pruebas unitarias/HTTP**, build, generación/validación
+Prisma, lint, formato y tipos; **43 pruebas PostgreSQL**, migraciones y segunda
+aplicación sin pendientes. La configuración de producción habilita el worker
+por defecto; `TRANSACTION_WORKER_ENABLED=false` explícito lo desactiva.
+
+Verificación real HTTPS a las `2026-11-06T14:40:55.282Z`, después de detener el
+worker temporal local:
+
+- `GET /api/health/ready`: HTTP 200.
+- Login Supabase real y `GET /api/transactions?paypalCaptureId=7HV195624A539251X`:
+  HTTP 200, exactamente una transacción.
+- `GET /api/transactions/762e5e48-ed95-4093-ab83-29951fdff0d3` con JWT real:
+  HTTP 200, orden/captura/procedencia correctas, importe `1 USD` y checklist
+  `INCOMPLETE` con los documentos faltantes.
+- El mismo detalle sin sesión: HTTP 401.
+
+La captura original fue procesada por el worker local antes del despliegue;
+esta comprobación valida lectura, autorización y conectividad de M03 en Render.
+No se afirma que el worker remoto haya procesado un pago nuevo en esta fase.
+La imagen entregada es un informe generado desde los resultados API/DB guardados,
+no una captura histórica de la interfaz de PayPal. No contiene credenciales.
+
 ## M03 — Primer incremento, 6 de noviembre de 2026
 
 Validación local en `feat/m03-transaction-manager`, actualizada por avance directo

@@ -7,13 +7,15 @@
 
 ## Estado real al 6 de noviembre de 2026
 
-### Trabajo local posterior en M03
+### M03 — Primer incremento integrado y desplegado
 
 En `feat/m03-transaction-manager` se implementó el primer incremento de M03:
 consumo idempotente de capturas verificadas, persistencia, listado/detalle
 autorizados y checklist documental. Validación local: `pnpm check` (109 pruebas)
 y `pnpm test:db` (43 pruebas), con migraciones en PostgreSQL desechable.
-No integrado en `main` ni desplegado. Órdenes comerciales y coordinación con M04
+Integrado en `main` por PR #6 (`ff12287`) y desplegado en Render el 6 de noviembre.
+La validación posterior para despliegue pasó `pnpm check` con 111 pruebas y CI con
+las 43 pruebas PostgreSQL. Órdenes comerciales y coordinación con M04
 siguen pendientes. Ver [M03](docs/m03-transactions.md).
 Posteriormente se aplicó la migración de M03 en Supabase y el worker local
 consumió dos capturas genuinas pendientes; listado autenticado real: HTTP 200.
@@ -22,7 +24,9 @@ También se capturó la nueva orden Sandbox `8E96636933870233U` por 1 USD fictic
 Render, trabajo `COMPLETED` y una transacción M03 persistida. Listado y detalle
 locales con JWT real: HTTP 200; acceso sin sesión: HTTP 401.
 Ver [validación](docs/validation.md).
-El estado publicado de Render descrito abajo sigue correspondiendo a M01/M02.
+Render ya expone M03: readiness, listado y detalle HTTP 200; sin sesión HTTP 401.
+El worker local temporal se detuvo; el consumidor se habilita por defecto en
+producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito.
 
 ### Implementado e integrado en `main`
 
@@ -43,8 +47,11 @@ El estado publicado de Render descrito abajo sigue correspondiendo a M01/M02.
   detección de contenido conflictivo, rollback y RLS en sus tablas.
 - **Comunicación M01–M02:** M02 usa la interfaz pública de M01 para obtener
   contexto del merchant y OAuth. No accede a credenciales desde el frontend.
+- **M03 — Transaction Manager, parcial:** consumidor transaccional de capturas,
+  idempotencia, detección de conflictos, listado/detalle por merchant y checklist
+  documental. No implementa todavía órdenes comerciales ni expedientes M04.
 - **Infraestructura:** PostgreSQL y Auth de Supabase configurados, tres
-  migraciones aplicadas y conexión TLS con CA oficial. Backend publicado en
+  migraciones iniciales y la cuarta de M03 aplicadas, con conexión TLS y CA oficial. Backend publicado en
   Render Free, Virginia, con despliegue desde `main` después de pasar CI.
 
 ### Verificado con servicios externos reales
@@ -68,15 +75,15 @@ El estado publicado de Render descrito abajo sigue correspondiendo a M01/M02.
 - La prueba detectó un rechazo inicial de firma por reordenamiento de campos
   durante la validación. Se corrigió preservando el objeto original validado,
   se añadió regresión y se desplegó la corrección (`34e908b`, PR #5).
-- Última validación de código: **89 pruebas unitarias/HTTP y 34 pruebas con
+- Última validación de código: **111 pruebas unitarias/HTTP y 43 pruebas con
   PostgreSQL aprobadas**, además de lint, formato, tipos, Prisma y build.
   Las suites automatizadas usan PayPal/JWKS MOCK identificados; la prueba
   publicada de pago, firma y reenvío sí utilizó PayPal Sandbox real.
 
 ### Límites y siguiente paso
 
-- **M03–M09 siguen pendientes.** Los trabajos de M02 permanecen `QUEUED`;
-  todavía no hay consumidores de transacciones/disputas, expedientes,
+- **M03 es parcial; M04–M09 siguen pendientes.** M03 consume capturas verificadas;
+  los trabajos de disputas permanecen `QUEUED`. No hay consumidores de disputas, expedientes,
   Investigator, Verifier, presentación de evidencia ni auditoría completa.
 - Se registraron eventos de disputas, pero no se ha demostrado una entrega
   genuina de disputa ni una llamada real a `provide-evidence`.
@@ -87,9 +94,8 @@ El estado publicado de Render descrito abajo sigue correspondiendo a M01/M02.
   el frontend habrá que configurar su origen exacto.
 - El repositorio sigue **privado**; publicación, licencia y video de entrega
   siguen pendientes. No cambiar su visibilidad sin autorización del equipo.
-- **Siguiente módulo recomendado: M03**, consumir de forma idempotente los
-  trabajos `TRANSACTION_CAPTURED` y crear la transacción/orden mediante los
-  contratos públicos, coordinando el expediente con el futuro M04.
+- **Siguiente paso recomendado:** completar órdenes comerciales de M03 y
+  coordinar el expediente con M04 mediante contratos públicos.
 
 Detalles operativos y evidencia: [M01](docs/m01-merchants.md),
 [M02](docs/m02-event-ingestion.md), [despliegue](docs/deployment.md) y
