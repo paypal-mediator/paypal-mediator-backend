@@ -26,6 +26,9 @@ No se afirma que el worker remoto haya procesado un pago nuevo en esta fase.
 La imagen entregada es un informe generado desde los resultados API/DB guardados,
 no una captura histórica de la interfaz de PayPal. No contiene credenciales.
 
+Archivos de evidencia: [informe visual PNG](evidence/m03-render-evidence.png) y
+[resultados registrados JSON](evidence/m03-render-evidence.json).
+
 ## M03 — Primer incremento, 6 de noviembre de 2026
 
 Validación local en `feat/m03-transaction-manager`, actualizada por avance directo
