@@ -47,6 +47,11 @@ describe('M05 provider adapters (explicit MOCK HTTP)', () => {
     expect(body.model).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
     expect(body.chat_template_kwargs).toEqual({ enable_thinking: false });
     expect(body.stream).toBe(false);
+    expect(body.response_format.type).toBe('json_schema');
+    expect(body.response_format.json_schema.strict).toBe(true);
+    expect(body.response_format.json_schema.schema.additionalProperties).toBe(
+      false,
+    );
     expect(JSON.stringify(result)).not.toContain('hidden reasoning');
   });
   it('switches to OpenAI Responses with store=false and the same strict result schema', async () => {

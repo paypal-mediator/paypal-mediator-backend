@@ -51,8 +51,8 @@ caracteres y hasta dos imágenes de M04 por investigación.
 
 Un bucle del backend interpreta un protocolo JSON compartido por ambos
 proveedores: `READ_EVIDENCE` o `FINISH`. No se utiliza tool calling nativo del
-proveedor. NVIDIA genera JSON solicitado por el prompt; se valida siempre con
-Zod antes de ejecutar una acción. OpenAI añade el schema estricto de Responses.
+proveedor. NVIDIA usa response_format json_schema estricto y OpenAI el schema
+estricto de Responses; ambos se validan con Zod antes de ejecutar una acción.
 Respuestas truncadas, inválidas o con comandos fuera de la allowlist fallan.
 
 - `READ_EVIDENCE` solo admite un ID vigente del expediente autorizado. JSON se
@@ -116,6 +116,11 @@ reinvestigación de M06/M07 son posteriores; `MAX_INVESTIGATION_ROUNDS` no contr
 el número de pasos del agente.
 
 ## Validación y límites medidos
+
+Actualización del 7 de noviembre: [M01–M06](evidence/m01-m06-sandbox-20261107.json)
+verifica otro pago Sandbox y la investigación con NVIDIA real tras activar schema
+estricto. M05 COMPLETED y M06 INCOMPLETE por falta de tracking/entrega.
+Las cifras y el diagnóstico semántico de abajo conservan el historial previo.
 
 Pruebas automatizadas: NVIDIA/OpenAI MOCK identificados, errores/JSON truncado,
 permisos y opt-in, revocación, idempotencia/concurrencia, acceso por expediente,

@@ -1,9 +1,11 @@
-> **Incremento local M05/M06 (2026-11-07):** Verifier independiente implementado
-> y conectado a investigaciones M05 por interfaz p?blica. Persistencia y contratos
-> propios, bloqueos deterministas y rutas por investigaci?n. Pendiente ejecutar
-> pruebas y aplicar migraci?n por indicaci?n del usuario; sin despliegue ni validaci?n
-> externa de M06. Ver [M06](docs/m06-verifier.md). El historial inferior conserva
-> el estado verificado previo y no acredita este nuevo incremento.
+> **M05/M06 verificados localmente (2026-11-07):** pago nuevo PayPal Sandbox de
+> 1 USD ficticio, webhook genuino, pedido enriquecido y originales íntegros.
+> Investigator y Verifier ejecutados con NVIDIA real: M05 COMPLETED y M06
+> INCOMPLETE por falta de tracking/entrega; sin autorización de envío.
+> Migración M06 aplicada en Supabase; 189 pruebas unitarias/HTTP y 88 PostgreSQL
+> aprobadas. M05/M06 no están desplegados en Render. Aprobación del checkout
+> realizada por el usuario porque el control de Opera GX no estaba disponible.
+> Ver [evidencia y límites](docs/evidence/m01-m06-sandbox-20261107.json).
 
 # ResolveAI — Contexto de proyecto para Codex CLI
 

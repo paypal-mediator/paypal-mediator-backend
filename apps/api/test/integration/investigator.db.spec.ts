@@ -13,6 +13,7 @@ import {
 import request from 'supertest';
 import {
   InvestigationResponseSchema,
+  VerificationResultSchema,
   type InvestigationDraft,
 } from '@resolve-ai/contracts';
 import { createApp } from '../../src/application.js';
@@ -29,6 +30,7 @@ import {
   AgentProvider,
   AgentError,
 } from '../../src/modules/investigator/agent-provider.js';
+import { VerifierEngine } from '../../src/modules/verifier/verifier.engine.js';
 import { contentHash } from '../../src/common/data/content-hash.js';
 import { captureEvent } from '../fixtures/capture.js';
 import { demoOrder, demoTracking } from '../fixtures/commerce.js';
@@ -123,6 +125,7 @@ describe('M05 read-only investigator (real PostgreSQL/HTTP, explicit MOCK model/
     step?.mockRestore();
     if (db) {
       const where = { merchantId: { in: [merchantId, otherMerchantId] } };
+      await db.verificationRun.deleteMany({ where });
       await db.investigationRun.deleteMany({ where });
       await db.evidenceItem.deleteMany({ where: { dossier: where } });
       await db.evidenceDossier.deleteMany({ where });
@@ -479,5 +482,115 @@ describe('M05 read-only investigator (real PostgreSQL/HTTP, explicit MOCK model/
       Array<{ enabled: boolean }>
     >`SELECT relrowsecurity AS enabled FROM pg_class WHERE oid='investigation_runs'::regclass`;
     expect(rls[0]?.enabled).toBe(true);
+  });
+  it('requires audited ADMIN review after rejection, across keys and investigations (MOCK verifier)', async () => {
+    await merchants.updateSettings(actor, { allowInvestigations: true });
+    const { row, payment } = await paired();
+    step.mockResolvedValue(finish(draft()));
+    const inv = (await start(row.id).expect(201)).body;
+    const vpath = endpoint(row.id) + '/' + inv.id + '/verifications';
+    const check = {
+      status: 'FAIL',
+      explanation: 'Explicit MOCK rejection',
+      evidenceIds: [payment.id],
+    };
+    const rejected = VerificationResultSchema.parse({
+      verdict: 'REJECTED',
+      verifiedEvidenceIds: [payment.id],
+      missingRequirements: [],
+      contradictions: ['MOCK_CONFLICT'],
+      reasons: [
+        {
+          code: 'MOCK_CONFLICT',
+          explanation: 'MOCK',
+          evidenceIds: [payment.id],
+        },
+      ],
+      checklist: Object.fromEntries(
+        [
+          'PROVENANCE',
+          'INTEGRITY',
+          'IDENTITY',
+          'CONSISTENCY',
+          'RELEVANCE',
+          'COVERAGE',
+          'EXPLAINABILITY',
+          'CURRENTNESS',
+        ].map((k) => [k, check]),
+      ),
+      claims: [],
+    });
+    const engine = vi
+      .spyOn(context.app.get(VerifierEngine), 'execute')
+      .mockResolvedValue(rejected);
+    const post = (path: string, body: object) =>
+      http().post(path).auth(adminToken, { type: 'bearer' }).send(body);
+    try {
+      await http()
+        .post(vpath)
+        .send({ idempotencyKey: randomUUID() })
+        .expect(401);
+      await http()
+        .post(vpath)
+        .auth(viewerToken, { type: 'bearer' })
+        .send({ idempotencyKey: randomUUID() })
+        .expect(403);
+      const key = randomUUID();
+      const first = (await post(vpath, { idempotencyKey: key }).expect(201))
+        .body;
+      expect(first.result.verdict).toBe('REJECTED');
+      expect(
+        (await post(vpath, { idempotencyKey: key }).expect(201)).body.id,
+      ).toBe(first.id);
+      expect(engine).toHaveBeenCalledTimes(1);
+      const blocked = await post(vpath, {
+        idempotencyKey: randomUUID(),
+      }).expect(409);
+      expect(blocked.body.code).toBe('VERIFICATION_REJECTION_REVIEW_REQUIRED');
+      const secondInv = (await start(row.id).expect(201)).body;
+      await post(endpoint(row.id) + '/' + secondInv.id + '/verifications', {
+        idempotencyKey: randomUUID(),
+      }).expect(409);
+      await post(vpath, {
+        idempotencyKey: randomUUID(),
+        rejectionReview: {
+          verificationId: randomUUID(),
+          justification: 'Explicit MOCK administrator review',
+        },
+      }).expect(409);
+      await post(vpath, {
+        idempotencyKey: randomUUID(),
+        rejectionReview: { verificationId: first.id, justification: 'short' },
+      }).expect(400);
+      const reviewed = (
+        await post(vpath, {
+          idempotencyKey: randomUUID(),
+          rejectionReview: {
+            verificationId: first.id,
+            justification:
+              'Explicit MOCK administrator review of rejected case',
+          },
+        }).expect(201)
+      ).body;
+      expect(reviewed.rejectionReview).toMatchObject({
+        verificationId: first.id,
+        actorUserId: adminId,
+      });
+      expect(reviewed.result.verdict).toBe('REJECTED');
+      const stored = await db.verificationRun.findUniqueOrThrow({
+        where: { id: reviewed.id },
+      });
+      expect(contentHash(stored.snapshot)).toBe(stored.snapshotHash);
+      expect(engine).toHaveBeenCalledTimes(2);
+      await post(vpath, {
+        idempotencyKey: randomUUID(),
+        rejectionReview: {
+          verificationId: first.id,
+          justification: 'Explicit MOCK outdated rejection review',
+        },
+      }).expect(409);
+    } finally {
+      engine.mockRestore();
+    }
   });
 });

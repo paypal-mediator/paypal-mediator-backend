@@ -1,0 +1,394 @@
+{
+  "verifiedAt": "2026-11-07T07:22:52.727Z",
+  "environment": "PAYPAL_SANDBOX",
+  "funds": "fictional USD 1.00",
+  "browser": {
+    "requested": "Opera GX",
+    "automation": "unavailable native pipe; browser connector inventory empty",
+    "buyerApproval": "performed by user in Opera GX, explicitly confirmed in conversation"
+  },
+  "runtime": {
+    "webhook": "published Render M02",
+    "apiAndAgents": "current local branch, ephemeral API 127.0.0.1:3106",
+    "database": "real Supabase PostgreSQL",
+    "storage": "real Supabase private Storage",
+    "ai": "real NVIDIA, same configured model, independent contexts",
+    "deployment": "M05/M06 not deployed to Render"
+  },
+  "orderId": "41C54140SD9188621",
+  "captureId": "9MX67512MD686194C",
+  "initialCaptureHttpStatus": 201,
+  "transactionId": "b62b4f9e-2f1b-4daf-a1f4-63e9e6cf6b9a",
+  "steps": {
+    "orderCreated": {
+      "http": 200,
+      "orderId": "41C54140SD9188621",
+      "status": "PAYER_ACTION_REQUIRED",
+      "amount": "1.00",
+      "currency": "USD",
+      "verifiedAt": "2026-11-07T07:13:26.163Z"
+    },
+    "m01Auth": {
+      "http": 200,
+      "role": "ADMIN",
+      "policy": {
+        "allowInvestigations": false,
+        "allowSubmissions": false,
+        "requireMerchantApproval": true
+      },
+      "verifiedAt": "2026-11-07T07:13:40.026Z"
+    },
+    "m01Unauthorized": {
+      "http": 401,
+      "verifiedAt": "2026-11-07T07:13:40.041Z"
+    },
+    "m01PayPal": {
+      "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+      "paypal": {
+        "provider": "PAYPAL",
+        "environment": "sandbox",
+        "credentialsConfigured": true,
+        "webhookConfigured": true,
+        "connectionStatus": "CONNECTED",
+        "disputesReadStatus": "AVAILABLE",
+        "lastCheckedAt": "2026-11-07T07:13:41.091Z",
+        "paypalHttpStatus": 200,
+        "paypalDebugId": "f2331526b6b31",
+        "source": "PAYPAL_SANDBOX"
+      },
+      "verifiedAt": "2026-11-07T07:13:41.602Z"
+    },
+    "localReadiness": {
+      "http": 200,
+      "status": "ready",
+      "verifiedAt": "2026-11-07T07:13:41.719Z"
+    },
+    "remoteReadiness": {
+      "http": 200,
+      "verifiedAt": "2026-11-07T07:14:24.216Z"
+    },
+    "database": {
+      "appliedMigrations": [
+        "20261105000000_foundation",
+        "20261105010000_merchant_integrations",
+        "20261106000000_event_ingestion",
+        "20261106010000_transactions",
+        "20261106020000_orders_evidence",
+        "20261106030000_evidence_documents",
+        "20261106030000_evidence_integrity",
+        "20261106040000_evidence_document_provenance",
+        "20261106050000_investigator_runs",
+        "20261106060000_order_information_sources",
+        "20261107010000_verification_runs"
+      ],
+      "verifiedAt": "2026-11-07T07:14:24.907Z"
+    },
+    "capture": {
+      "http": 200,
+      "orderId": "41C54140SD9188621",
+      "captureId": "9MX67512MD686194C",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "USD",
+        "value": "1.00"
+      },
+      "verifiedAt": "2026-11-07T07:17:45.084Z"
+    },
+    "m02": {
+      "eventId": "59444584-e044-4d91-8e14-f60186d33550",
+      "paypalEventId": "WH-5GK32453EX0443533-1P325080EG777670J",
+      "eventType": "PAYMENT.CAPTURE.COMPLETED",
+      "verifiedTransactionSource": true,
+      "jobs": [
+        {
+          "kind": "TRANSACTION_CAPTURED",
+          "status": "COMPLETED"
+        }
+      ],
+      "verifiedAt": "2026-11-07T07:17:47.896Z"
+    },
+    "m03": {
+      "http": 201,
+      "transactionId": "b62b4f9e-2f1b-4daf-a1f4-63e9e6cf6b9a",
+      "orderLink": {
+        "status": "LINKED",
+        "reason": null
+      },
+      "sourceStatus": "FETCHING",
+      "itemCount": 2,
+      "readiness": "INCOMPLETE",
+      "containsDemo": false,
+      "verifiedAt": "2026-11-07T07:17:50.122Z"
+    },
+    "m04": {
+      "revision": 3,
+      "stableOnRefresh": true,
+      "items": [
+        {
+          "id": "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+          "type": "ORDER_RECORD",
+          "sourceKind": "PAYPAL",
+          "integrity": "VALID",
+          "contentHash": "8d1ccd1e131f947c1fa6a76b6fdb71ac1e437a4e80a9f94ee48c8e043cbfbc22"
+        },
+        {
+          "id": "244624b5-9bfc-4af0-9a4a-a81f49692128",
+          "type": "ORDER_SOURCE_RECORD",
+          "sourceKind": "PAYPAL",
+          "integrity": "VALID",
+          "contentHash": "d1f565b3877ac17e70e1cdf87c5e6d001ab6ade5884b344f3fd284f0723b16d8"
+        },
+        {
+          "id": "16e64046-fb6a-4446-ac10-c76d36899db2",
+          "type": "PAYMENT_RECORD",
+          "sourceKind": "PAYPAL",
+          "integrity": "VALID",
+          "contentHash": "15ae8635fc879cb92e3477bed11830e0b9eaa808bce5bf863f4060e74eef915b"
+        }
+      ],
+      "verifiedAt": "2026-11-07T07:17:53.966Z"
+    },
+    "m03Unauthorized": {
+      "http": 401,
+      "verifiedAt": "2026-11-07T07:17:53.981Z"
+    },
+    "m05": {
+      "id": "2bdc12cc-b18f-4a8a-a995-fef98ac65f3b",
+      "status": "COMPLETED",
+      "errorCode": null,
+      "stale": false,
+      "requiresVerification": true,
+      "commercialSource": "AVAILABLE",
+      "promptVersion": "m05-inr-v1.2",
+      "readIds": [
+        "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+        "244624b5-9bfc-4af0-9a4a-a81f49692128"
+      ],
+      "usage": {
+        "inputTokens": 12809,
+        "outputTokens": 702
+      },
+      "verifiedAt": "2026-11-07T07:21:15.027Z"
+    },
+    "policyRestored": {
+      "allowInvestigations": false,
+      "allowSubmissions": false,
+      "requireMerchantApproval": true,
+      "verifiedAt": "2026-11-07T07:21:56.795Z"
+    },
+    "m05Replay": {
+      "sameId": true,
+      "verifiedAt": "2026-11-07T07:21:16.684Z"
+    },
+    "m06": {
+      "id": "2c9ffba2-359b-4dce-b38d-54e33c415fb5",
+      "status": "COMPLETED",
+      "errorCode": null,
+      "promptVersion": "m06-inr-v2.1",
+      "stale": false,
+      "scope": "PREVENTIVE_INR",
+      "submissionAuthorized": false,
+      "verdict": "INCOMPLETE",
+      "readIds": [
+        "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+        "244624b5-9bfc-4af0-9a4a-a81f49692128",
+        "16e64046-fb6a-4446-ac10-c76d36899db2"
+      ],
+      "checklist": {
+        "PROVENANCE": {
+          "status": "PASS",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        },
+        "INTEGRITY": {
+          "status": "PASS",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        },
+        "IDENTITY": {
+          "status": "PASS",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        "CONSISTENCY": {
+          "status": "PASS",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        },
+        "RELEVANCE": {
+          "status": "PASS",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        "COVERAGE": {
+          "status": "FAIL",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        "EXPLAINABILITY": {
+          "status": "PASS",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        },
+        "CURRENTNESS": {
+          "status": "PASS",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        }
+      },
+      "claims": [
+        {
+          "unitId": "summary.0",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        },
+        {
+          "unitId": "summary.1",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        {
+          "unitId": "summary.2",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        {
+          "unitId": "summary.3",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        {
+          "unitId": "summary.4",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        {
+          "unitId": "findings.0.0",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        },
+        {
+          "unitId": "suggestedResponse.0",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128"
+          ]
+        },
+        {
+          "unitId": "suggestedResponse.1",
+          "status": "SUPPORTED",
+          "evidenceIds": [
+            "b8d2874b-7635-4b8b-bbdc-e56eb576b123",
+            "244624b5-9bfc-4af0-9a4a-a81f49692128",
+            "16e64046-fb6a-4446-ac10-c76d36899db2"
+          ]
+        },
+        {
+          "unitId": "suggestedResponse.2",
+          "status": "NON_FACTUAL",
+          "evidenceIds": []
+        }
+      ],
+      "reasonCodes": [
+        "DEMO_SANDBOX_EVIDENCE",
+        "COVERAGE_INCOMPLETE",
+        "INVOICE_ABSENT",
+        "FAILED_COVERAGE",
+        "MISSING_TRACKING",
+        "MISSING_PROOF_OF_DELIVERY"
+      ],
+      "usage": {
+        "inputTokens": 22482,
+        "outputTokens": 3991
+      },
+      "verifiedAt": "2026-11-07T07:21:52.438Z"
+    },
+    "m06Replay": {
+      "sameId": true,
+      "verifiedAt": "2026-11-07T07:21:56.298Z"
+    },
+    "m06RejectionGuard": {
+      "http": 409,
+      "code": "VERIFICATION_REJECTION_REVIEW_REQUIRED",
+      "verifiedAt": "2026-11-07T07:18:43.081Z"
+    },
+    "m04ExistingStorageRead": {
+      "http": 200,
+      "unauthenticatedHttp": 401,
+      "byteLength": 83183,
+      "sha256": "8d9dcb9bb03fb86b5479aa7a2bb517edb68fa81c927eab705761291936bb1a30",
+      "hashMatchesOriginal": true,
+      "source": "existing user document, read-only; not attached to new checkout or sent to AI",
+      "verifiedAt": "2026-11-07T07:22:15.244Z"
+    }
+  },
+  "review": {
+    "previousVerificationIds": ["90adba11-f639-4121-9acb-d3f87a67049a"],
+    "authorization": "explicit user confirmation before retry",
+    "justification": "User explicitly authorized review and retry after correcting erroneous commercial reference vs PayPal order ID comparison; real tracking and delivery gaps remain."
+  },
+  "failuresPreserved": {
+    "initialM05Run": "53b706e5-e390-4445-ad14-047a20ceaa1b",
+    "initialM05Error": "AI_INVALID_RESPONSE: NVIDIA placed evidenceIds at the wrong level",
+    "firstM06Run": "90adba11-f639-4121-9acb-d3f87a67049a",
+    "firstM06Verdict": "REJECTED",
+    "deterministicBug": "compared merchantOrderReference/custom_id against a PayPal order externalId; fixed to apply this comparison only to shipping/delivery records"
+  },
+  "automated": {
+    "unitAndHttp": 189,
+    "postgresql": 88,
+    "migrationsAppliedAndRepeated": 10,
+    "migrationDiff": "no differences",
+    "check": "blocked at format:check only by pre-existing untracked Implementation.md",
+    "otherChecks": "Prisma generate/validate, types, ESLint, tracked-file formatting and build passed"
+  },
+  "limits": [
+    "Real evidence does not include tracking or delivery; real APPROVED flow not demonstrated",
+    "No dispute submission or provide-evidence call",
+    "No new document uploaded; Storage verification reads a prior existing original only",
+    "Automated PayPal/JWKS/model responses are explicitly MOCK; separate checkout/auth/webhook/AI/Storage validation used actual services",
+    "Model relevance and factual entailment remain probabilistic; original outputs retained in private run tables"
+  ]
+}

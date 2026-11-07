@@ -155,6 +155,7 @@ export function enforceVerification(
         'IDENTITY',
       );
     if (
+      (item.type === 'TRACKING' || item.type === 'PROOF_OF_DELIVERY') &&
       typeof content.merchantOrderReference === 'string' &&
       transaction.order &&
       content.merchantOrderReference !== transaction.order.externalId

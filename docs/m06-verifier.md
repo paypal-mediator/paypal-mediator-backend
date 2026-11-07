@@ -1,149 +1,141 @@
-# M06 ? Verificaci?n independiente INR
+# M06 — Verificación independiente INR
 
-Implementaci?n local integrada con M05. Sin pruebas ejecutadas ni migraci?n aplicada
-para este incremento, por indicaci?n del usuario. No desplegado ni verificado con servicios externos.
+Implementado y conectado a M05. Verificado localmente el 7 de noviembre de 2026
+con PayPal Sandbox, Supabase y NVIDIA reales. Migración aplicada en Supabase.
+M05/M06 todavía no están desplegados en Render. El expediente de la compra real
+de prueba quedó INCOMPLETE por ausencia de tracking y entrega.
+Ver [validación](validation.md) y [evidencia sanitizada](evidence/m01-m06-sandbox-20261107.json).
 
-## Flujo p?blico
+## Interfaz y permisos
 
-1. ADMIN solicita `POST /api/transactions/:transactionId/investigations` (M05).
-2. Comprueba `status=COMPLETED`, `stale=false` y conserva `id`.
-3. ADMIN solicita `POST /api/transactions/:transactionId/investigations/:investigationId/verifications`
-   con `{ "idempotencyKey": "UUID" }` y permiso `allowInvestigations=true`.
-4. Consulta la misma ruta por GET (?ltimas 20) o `GET .../verifications/:id`.
-   ADMIN/VIEWER pueden leer. POST devuelve 201 con recurso RUNNING/COMPLETED/FAILED:
-   comprobar status/errorCode, no interpretar el HTTP como aprobaci?n.
+- POST /api/transactions/:transactionId/investigations/:investigationId/verifications:
+  ADMIN con allowInvestigations=true; body con idempotencyKey UUID.
+- GET en la misma ruta: últimas 20 verificaciones, ADMIN/VIEWER.
+- GET .../verifications/:id: detalle por merchant/transacción/investigación.
+- Interfaz pública: VerifierService.verify(actor, transactionId, investigationId, input).
 
-Interfaz p?blica para futuros consumidores: `VerifierService.verify(actor,
-transactionId, investigationId, { idempotencyKey })`, exportada por `VerifierModule`.
-M06 consulta M05 por `InvestigatorService.detail`, y originales por el contrato
-p?blico de M03/M04. Nunca escribe resultados en tablas privadas de M05.
+Requiere una investigación M05 COMPLETED y vigente. POST devuelve HTTP 201 con
+RUNNING/COMPLETED/FAILED: comprobar status/errorCode, no interpretar HTTP como
+aprobación. La idempotencia evita otra inferencia sobre la misma clave.
 
-## Independencia y bloqueos
+## Revisión independiente
 
-Prompt versionado `m06-inr-v1`, conversaci?n nueva, trace, presupuesto y lecturas
-propias. Comparte solamente el transporte NVIDIA/OpenAI con M05, no su conversaci?n,
-razonamiento ni conjunto de documentos le?dos. El borrador se entrega como dato no
-confiable; la revisi?n exige volver a inspeccionar originales y citar IDs vigentes.
-El prompt audita resumen y respuesta sugerida, procedencia, identidad, fechas,
-importes, relevancia, cobertura y afirmaciones sin soporte.
+Prompt versionado m06-inr-v2.1, conversación, presupuesto, trace y lecturas propios.
+M06 consume InvestigatorService.detail y recupera originales por la interfaz
+pública de M03/M04; nunca escribe resultados en tablas privadas de M05.
+Comparte únicamente el transporte NVIDIA/OpenAI, no la conversación ni el
+razonamiento del investigador. Todo borrador/documento es dato no confiable.
 
-El modelo propone APPROVED/INCOMPLETE/REJECTED. TypeScript impide aprobaci?n con
-faltantes, fuentes no inspeccionadas, cobertura sin evidencia verificada, DEMO,
-identidades incompatibles, procedencia inv?lida, conflictos o borrador sin soporte.
-REJECTED conserva prioridad sobre INCOMPLETE. READY de M04 no implica aprobaci?n.
-El control sem?ntico de afirmaciones depende del modelo; las citas y el schema
-por s? solos no prueban verdad. Los bloqueos deterministas no los reemplaza el modelo.
+El servidor construye requiredClaimUnits a partir del resumen, hallazgos,
+contradicciones y respuesta sugerida completos, divididos en frases/líneas.
+Cada unidad tiene ID estable y texto exacto: se exige una evaluación por unidad,
+sin omisiones, duplicados, texto alterado ni unidades inventadas. Máximo 256;
+no se trunca silenciosamente un borrador mayor.
 
-?mbito expl?cito `PREVENTIVE_INR`, `submissionAuthorized=false` siempre. APPROVED
-es preparaci?n interna: M07/M08 deben aportar contexto de disputa real, acciones
-PayPal, vigencia y autorizaci?n antes de cualquier presentaci?n. No hay herramientas
-de env?o, SQL, navegaci?n ni escritura accesibles al modelo.
+Cada evaluación conserva statement, status, explanation y evidenceIds.
+SUPPORTED exige citas inspeccionadas incluidas en verifiedEvidenceIds.
+UNSUPPORTED/CONTRADICTED producen REJECTED; NOT_VERIFIABLE produce INCOMPLETE.
+NON_FACTUAL requiere justificar que no hay hechos. Una frase con varios hechos
+debe evaluarse completa. Omitir una unidad impide APPROVED.
+La clasificación y la relación semántica texto/fuente dependen del modelo:
+la evaluación es obligatoria y auditable, pero el LLM no es infalible.
 
-## Persistencia y l?mites
+## Checklist y bloqueos
 
-Migraci?n `20261107010000_verification_runs`: tabla propia con RLS sin pol?ticas
-p?blicas, FK compuesta a investigaci?n/transacci?n/merchant, hashes de snapshot y
-resultado, idempotencia por merchant/investigaci?n/clave y un RUNNING por transacci?n.
-El snapshot conserva borrador y originales JSON, nunca bytes de im?genes ni secretos.
-No mantiene transacci?n de DB durante inferencia. Timeout/fallo deja FAILED sin
-veredicto; lease vencido se muestra expired y se recupera en la siguiente solicitud.
+El resultado exige estas ocho dimensiones, con status PASS/FAIL/NOT_EVALUATED,
+explanation y evidenceIds:
 
-Requiere investigaci?n COMPLETED vigente. Si cambia la revisi?n durante inferencia,
-registra FAILED/VERIFICATION_STALE; los resultados hist?ricos exponen stale al leer.
-Un consumidor nunca debe utilizar una aprobaci?n stale ni un recurso FAILED.
-Las im?genes se descargan de M04 con hash verificado, m?ximo dos por revisi?n.
-PDF no analizado no cuenta como fuente inspeccionada. L?mite de snapshot 256 KiB,
-contexto textual 128000 caracteres, respuesta del proveedor 512 KiB.
+| Dimensión      | Qué revisa                                                     |
+| -------------- | -------------------------------------------------------------- |
+| PROVENANCE     | Fuente, referencia, fecha y acceso autorizado                  |
+| INTEGRITY      | Contenido y hashes de originales                               |
+| IDENTITY       | Captura, pedido, tracking y comprador según campos disponibles |
+| CONSISTENCY    | Importes, fechas, tracking, estados y dirección                |
+| RELEVANCE      | Pertinencia para preparación preventiva INR                    |
+| COVERAGE       | Originales suficientes de pago, pedido, tracking y entrega     |
+| EXPLAINABILITY | Todas las unidades evaluadas y hechos sustentados              |
+| CURRENTNESS    | Vigencia del snapshot respecto a verificationAsOf del servidor |
 
-Configuraci?n: mismo AI_PROVIDER y credenciales del proveedor seleccionado que M05,
-sin fallback silencioso. `VERIFIER_MAX_STEPS=12`, `VERIFIER_TIMEOUT_MS=90000`.
-OpenAI conserva Responses con schema estricto y store=false seg?n la
-[documentaci?n oficial de Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
-No se realizaron llamadas de inferencia durante esta implementaci?n.
+PASS sin citas y cualquier NOT_EVALUATED impiden aprobación. FAIL de cobertura
+o vigencia produce INCOMPLETE; los demás FAIL producen REJECTED.
+TypeScript prevalece ante conflictos: actualiza también la dimensión afectada.
+DEMO y fuentes no inspeccionadas bloquean APPROVED; READY documental no aprueba.
+carrier se compara con toUpperCase como M04, conservando tracking exacto.
+custom_id comercial y externalId de PayPal son identificadores distintos:
+la comparación con la referencia del pedido solo aplica a tracking/entrega.
+La ausencia de envío no convierte automáticamente en obsoletos los originales de pago.
 
-No hay reinvestigaci?n autom?tica: INCOMPLETE informa faltantes para corregir fuentes
-y solicitar otra investigaci?n/verificaci?n expl?cita. M07 debe coordinar el l?mite
-MAX_INVESTIGATION_ROUNDS; ese valor no equivale al n?mero de pasos de cada agente.
+scope=PREVENTIVE_INR y submissionAuthorized=false siempre. No existe herramienta
+de SQL, navegación, escritura ni envío a PayPal. M07/M08 deben aportar contexto de
+disputa concreta, acciones PayPal, vigencia y autorización antes de una presentación.
+No se ha demostrado APPROVED con entrega real ni provide-evidence.
 
-## Integraci?n de M05
+## Rechazos y revisión humana
 
-Prompt M05 v1.2 reconoce las fuentes persistidas de orderEnrichment, sin afirmar
-consulta comercial en vivo. commercialSource=AVAILABLE requiere un registro MATCHED
-con integridad VALID; NOT_CONNECTED se conserva para snapshots anteriores o sin
-fuentes disponibles. No indica por s? solo conexi?n ERP. M05 tambi?n falla si el
-expediente cambia durante inferencia. requiresVerification=true se conserva: el
-resultado de M06 se consulta como recurso independiente, no autocertificaci?n.
-
-## Validaci?n pendiente
-
-Ejecutar posteriormente pnpm check, migraciones y pnpm test:db sobre PostgreSQL de
-pruebas; cubrir permisos, aislamiento por merchant, idempotencia/concurrencia,
-leases, stale, FK/RLS, bloqueos, citas, im?genes y prompt injection. La integraci?n
-real con NVIDIA/OpenAI/Storage requiere servicios y configuraci?n externos.
-
-Comprobaciones est?ticas ejecutadas: generaci?n local del cliente Prisma (ignorado
-en Git), validaci?n de schema Prisma, typecheck de contratos/API y ESLint aprobados.
-No se ejecutaron pnpm check, suites de pruebas, migraciones ni llamadas de inferencia.
-
-## Correcci?n de los cuatro hallazgos (prompt v2)
-
-El servidor construye requiredClaimUnits desde TODO el resumen, cada hallazgo,
-cada contradicci?n y suggestedResponse. Divide en frases/l?neas conservando el
-texto y asigna IDs estables por campo e ?ndice. M06 debe devolver una evaluaci?n
-por unidad con texto exacto, conclusi?n, explicaci?n y citas. Unidades omitidas
-impiden APPROVED; IDs inventados, texto alterado o duplicados producen REJECTED.
-SUPPORTED exige fuentes le?das e incluidas en verifiedEvidenceIds. UNSUPPORTED o
-CONTRADICTED rechazan, NOT_VERIFIABLE deja INCOMPLETE. NON_FACTUAL requiere
-justificaci?n y solo corresponde a texto sin hechos. Una frase con varios hechos
-se eval?a completa: un solo hecho falso impide SUPPORTED. La clasificaci?n y la
-relaci?n sem?ntica entre texto/fuente siguen dependiendo del modelo; estos controles
-hacen obligatoria y auditable la evaluaci?n, sin garantizar infalibilidad del LLM.
-M?ximo 256 unidades; no se trunca silenciosamente un borrador mayor.
-
-checklist es un objeto obligatorio con PROVENANCE, INTEGRITY, IDENTITY, CONSISTENCY,
-RELEVANCE, COVERAGE, EXPLAINABILITY y CURRENTNESS. Cada dimensi?n incluye status
-PASS/FAIL/NOT_EVALUATED, explanation y evidenceIds. PASS sin citas impide aprobaci?n;
-NOT_EVALUATED permanece expl?cito e impide aprobaci?n. FAIL de cobertura/vigencia
-implica INCOMPLETE; los dem?s FAIL implican REJECTED. Los bloqueos deterministas
-actualizan tambi?n la dimensi?n afectada y prevalecen sobre el modelo.
-
-La comparaci?n de carrier usa toUpperCase(), como M04; el tracking conserva su
-comparaci?n exacta. DHL y dhl ya no son una contradicci?n por capitalizaci?n.
-
-Despu?s de cualquier REJECTED de esa transacci?n, una clave nueva o investigaci?n
-nueva devuelve 409 VERIFICATION_REJECTION_REVIEW_REQUIRED salvo revisi?n expl?cita
-del ADMIN. Se exige referenciar el rechazo m?s reciente del mismo merchant y
-transacci?n, con justificaci?n de al menos 20 caracteres:
+Después de REJECTED, una clave o investigación nueva sobre la misma transacción
+requiere revisar el rechazo más reciente. Un ADMIN debe enviar:
 
 ```json
 {
   "idempotencyKey": "UUID-nuevo",
   "rejectionReview": {
-    "verificationId": "UUID-del-rechazo-mas-reciente",
-    "justification": "Revis? el rechazo y document? la correcci?n o el motivo para reconsiderarlo."
+    "verificationId": "UUID-del-ultimo-rechazo",
+    "justification": "Revisé el rechazo y documenté por qué corresponde otra evaluación."
   }
 }
 ```
 
-La revisi?n permite otra evaluaci?n independiente; nunca convierte un resultado
-en APPROVED. No hay desbloqueo autom?tico por un simple cambio de revision. Se
-persiste rejectionReview con actorUserId y reviewedAt generados en servidor dentro
-del snapshot protegido por hash, y se expone en la respuesta. El control corre
-bajo el mismo lock de adquisici?n, antes de inferencia. Repetir la clave original
-recupera el recurso existente sin cambiar el rechazo ni registrar otra revisi?n.
-Un rechazo posterior exige revisar ese nuevo rechazo. No existe autorizaci?n de
-reintento impl?cita ni autom?tica por corregir datos.
+Sin revisión válida devuelve 409 VERIFICATION_REJECTION_REVIEW_REQUIRED.
+Justificación mínima de 20 caracteres. No hay desbloqueo automático por cambiar
+la revisión del expediente. El control corre bajo el mismo lock de adquisición.
+La revisión permite evaluar otra vez; nunca convierte el resultado en APPROVED.
+Se guarda en el snapshot protegido por hash con actorUserId/reviewedAt del servidor
+y se expone en respuesta. Repetir una clave existente conserva el recurso original.
+Un rechazo posterior exige una nueva revisión; no se borra el historial.
 
-Cambio de contrato: claims y checklist son obligatorios en resultados v2;
-rejectionReview es opcional en POST y nullable en respuesta. El almacenamiento
-utiliza las columnas JSON existentes: no se agrega migraci?n. Los consumidores
-HTTP deben adoptar estos campos; un resultado v1 no acredita los controles v2.
+No hay reinvestigación automática. M07 debe coordinar MAX_INVESTIGATION_ROUNDS;
+ese valor no equivale a los pasos internos de cada agente.
 
-Estas correcciones a?n no tienen validaci?n funcional: por indicaci?n del usuario
-no se ejecutaron pruebas ni llamadas externas. Se revisan tipos y ESLint.
+## Persistencia, límites y proveedor
 
-El presupuesto de salida de M06 pasa a 8192 tokens por paso para el resultado
-con checklist y afirmaciones; M05 conserva 3072. El l?mite de tiempo/pasos y la
-validaci?n de truncamiento siguen activos. Resultados hist?ricos incompatibles
-con el contrato actual devuelven 409 VERIFICATION_RESULT_REVIEW_REQUIRED; no se
-completan autom?ticamente campos de auditor?a ni se presentan como aprobaciones v2.
+VerificationRun es propiedad de M06. RLS sin políticas públicas, FK compuesta
+a investigación/transacción/merchant, snapshot y resultado con hashes, idempotencia
+y un RUNNING por transacción. No se mantiene transacción DB durante inferencia.
+Timeout o fallo persisten FAILED sin resultado. Lease vencido se muestra expired;
+la siguiente solicitud lo recupera. Un cambio de revisión durante inferencia falla
+con VERIFICATION_STALE; los históricos exponen stale. Nunca reutilizar una
+aprobación stale. Resultados v1 incompatibles devuelven
+VERIFICATION_RESULT_REVIEW_REQUIRED, sin inventar los campos de auditoría v2.
+
+Mismo AI_PROVIDER/configuración de M05; sin fallback silencioso.
+VERIFIER_MAX_STEPS=12, VERIFIER_TIMEOUT_MS=90000 por defecto; la prueba externa
+usó timeout explícito de 120000 ms. Máximo 8192 tokens de salida por paso M06;
+M05 conserva 3072. Snapshot máximo 256 KiB, contexto textual 128000 caracteres,
+respuesta del proveedor 512 KiB, hasta dos imágenes originales con hash comprobado.
+Los PDF no analizados no cuentan como fuentes inspeccionadas.
+No se persisten bytes de imágenes, secretos ni razonamiento interno del modelo.
+
+NVIDIA usa response_format json_schema estricto, según la
+[referencia oficial del modelo](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3_5-super-vl-120b-a12b-infer).
+OpenAI conserva Responses, schema estricto y store=false, según
+[Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
+OpenAI solo tiene validación MOCK; no se probó externamente por falta de clave.
+
+## Evidencia y comprobaciones
+
+Compra de 1 USD ficticio aprobada por el usuario: captura 9MX67512MD686194C.
+M05 COMPLETED; M06 COMPLETED/INCOMPLETE, con nueve unidades evaluadas y
+ocho dimensiones presentes. Siete PASS y COVERAGE FAIL. Ambos recuperados
+por idempotencia sin más inferencia. El rechazo inicial por un error de comparación
+se conservó y el usuario autorizó expresamente la revisión antes del reintento.
+Los permisos originales se restauraron; envíos permanecieron deshabilitados.
+
+189 pruebas unitarias/HTTP y 88 PostgreSQL aprobadas. Las pruebas M06 incluyen
+inventario completo del borrador, citas, checklist, transportistas, namespaces de
+identificadores, bloqueo entre claves/investigaciones y auditoría de revisión ADMIN.
+Los proveedores/JWKS/comercio de las suites son MOCK; PostgreSQL es desechable real.
+Diez migraciones aplicadas y repetidas, diff sin cambios. La prueba externa utilizó
+servicios reales separados y no sustituyó el flujo por fixtures.
+Tipos, ESLint, build y formato versionado aprobados. pnpm check se detuvo en
+format:check por Implementation.md preexistente sin seguimiento; se ejecutaron
+las suites por separado sin modificar ese archivo.

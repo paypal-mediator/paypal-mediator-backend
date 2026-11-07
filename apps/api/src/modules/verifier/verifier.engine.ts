@@ -58,6 +58,7 @@ export class VerifierEngine {
         role: 'user',
         text: JSON.stringify({
           task: 'Revision independiente de preparacion preventiva INR.',
+          verificationAsOf: new Date().toISOString(),
           untrustedInvestigatorDraft: draft,
           requiredClaimUnits: units,
           transaction,

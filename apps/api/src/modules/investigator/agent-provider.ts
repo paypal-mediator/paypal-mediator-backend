@@ -65,6 +65,10 @@ export class AgentProvider {
           max_tokens: maxOutputTokens,
           temperature: 0.6,
           chat_template_kwargs: { enable_thinking: false },
+          response_format: {
+            type: 'json_schema',
+            json_schema: { name: 'agent_step', strict: true, schema },
+          },
           messages: messages.map((m) => ({
             role: m.role,
             content: m.image
