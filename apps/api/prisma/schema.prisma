@@ -157,7 +157,6 @@ model Transaction {
   merchantOrderId        String?  @unique @map("merchant_order_id") @db.Uuid
   orderLinkError         String?  @map("order_link_error") @db.VarChar(64)
 
-<<<<<<< HEAD
   merchant       Merchant           @relation(fields: [merchantId], references: [id], onDelete: Restrict)
   sourceEvent    WebhookEvent       @relation(fields: [sourceEventId], references: [id], onDelete: Restrict)
   merchantOrder  MerchantOrder?     @relation(fields: [merchantOrderId, merchantId], references: [id, merchantId], onDelete: Restrict)
@@ -239,7 +238,6 @@ model EvidenceItem {
   @@map("evidence_items")
 }
 
-<<<<<<< HEAD
 // M05 owns investigations; evidence originals remain owned by M04.
 model InvestigationRun {
   id               String            @id @default(uuid()) @db.Uuid

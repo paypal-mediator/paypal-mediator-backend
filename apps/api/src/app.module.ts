@@ -5,7 +5,6 @@ import { HealthModule } from './modules/health/health.module.js';
 import { MerchantsModule } from './modules/merchants/index.js';
 import { EventIngestionModule } from './modules/event-ingestion/index.js';
 import { TransactionsModule } from './modules/transactions/index.js';
-<<<<<<< HEAD
 import { VerifierModule } from './modules/verifier/index.js';
 import { InvestigatorModule } from './modules/investigator/index.js';
 import { MonitoringModule } from './modules/monitoring/monitoring.module.js';
