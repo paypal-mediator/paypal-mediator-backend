@@ -51,7 +51,8 @@ un `TRANSACTION_WORKER_ENABLED=false` explícito lo desactiva también en produc
 El arranque de Render aplica migraciones antes de iniciar la API y el consumidor.
 El worker vive en el mismo proceso NestJS,
 consulta cada segundo cuando no hay trabajo y espera la operación activa al cerrar.
-Los trabajos `DISPUTE_CHANGED` permanecen pendientes para M07.
+Los trabajos `DISPUTE_CHANGED` los consume M07 con la misma interfaz; ver
+[M07](m07-disputes.md).
 
 ## Órdenes y vinculación
 

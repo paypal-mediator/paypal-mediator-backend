@@ -13,7 +13,13 @@ export interface IngestionDelivery {
 // Public M02 transaction boundary: consumers write only their own tables.
 // Expected invalid data is terminal; unexpected exceptions roll back the job.
 export class IngestionRejection extends Error {
-  constructor(readonly code: 'INVALID_CAPTURE' | 'CAPTURE_CONFLICT') {
+  constructor(
+    readonly code:
+      | 'INVALID_CAPTURE'
+      | 'CAPTURE_CONFLICT'
+      | 'INVALID_DISPUTE'
+      | 'DISPUTE_CONFLICT',
+  ) {
     super(code);
   }
 }

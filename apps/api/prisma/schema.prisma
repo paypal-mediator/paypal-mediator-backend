@@ -24,6 +24,7 @@ model Merchant {
   transactions            Transaction[]
   orders                  MerchantOrder[]
   dossiers                EvidenceDossier[]
+  disputes                Dispute[]
 
   @@map("merchants")
 }
@@ -89,6 +90,8 @@ model WebhookEvent {
   merchant       Merchant      @relation(fields: [merchantId], references: [id], onDelete: Restrict)
   job            IngestionJob?
   transaction    Transaction?
+  disputeSource  Dispute?       @relation("DisputeSourceEvent")
+  disputeEvents  DisputeEvent[]
 
   @@unique([merchantId, environment, paypalEventId])
   @@index([merchantId, receivedAt])
@@ -131,6 +134,7 @@ model Transaction {
   sourceEvent   WebhookEvent     @relation(fields: [sourceEventId], references: [id], onDelete: Restrict)
   merchantOrder MerchantOrder?   @relation(fields: [merchantOrderId, merchantId], references: [id, merchantId], onDelete: Restrict)
   dossier       EvidenceDossier?
+  disputes      Dispute[]
 
   @@unique([merchantId, environment, paypalCaptureId])
   @@unique([merchantOrderId, merchantId])
@@ -202,4 +206,58 @@ model EvidenceItem {
   @@unique([dossierId, version])
   @@index([dossierId, logicalKey, version])
   @@map("evidence_items")
+}
+
+// M07 owns dispute orchestration. PayPal status/stage are stored verbatim and
+// never mixed with the local workflow state.
+model Dispute {
+  id              String   @id @default(uuid()) @db.Uuid
+  merchantId      String   @map("merchant_id") @db.Uuid
+  environment     String   @default("sandbox")
+  paypalDisputeId String   @map("paypal_dispute_id") @db.VarChar(255)
+  paypalStatus    String   @map("paypal_status") @db.VarChar(64)
+  paypalStage     String   @map("paypal_stage") @db.VarChar(64)
+  paypalReason    String   @map("paypal_reason") @db.VarChar(128)
+  paypalOutcome   String?  @map("paypal_outcome") @db.VarChar(64)
+  reasonCategory  String   @map("reason_category") @db.VarChar(32)
+  internalState   String   @default("DETECTED") @map("internal_state") @db.VarChar(32)
+  currencyCode    String?  @map("currency_code") @db.VarChar(3)
+  amount          Decimal? @db.Decimal(24, 8)
+  disputedAt      DateTime @map("disputed_at") @db.Timestamptz(3)
+  deadlineAt      DateTime? @map("deadline_at") @db.Timestamptz(3)
+  lastEventAt     DateTime @map("last_event_at") @db.Timestamptz(3)
+  transactionId   String?  @map("transaction_id") @db.Uuid
+  linkStatus      String   @default("UNLINKED") @map("link_status") @db.VarChar(16)
+  linkReason      String?  @map("link_reason") @db.VarChar(64)
+  sourceEventId   String   @unique @map("source_event_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  merchant    Merchant      @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  transaction Transaction?  @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  sourceEvent WebhookEvent  @relation("DisputeSourceEvent", fields: [sourceEventId], references: [id], onDelete: Restrict)
+  events      DisputeEvent[]
+
+  @@unique([merchantId, environment, paypalDisputeId])
+  @@index([merchantId, disputedAt, id])
+  @@index([merchantId, internalState, disputedAt])
+  @@map("disputes")
+}
+
+model DisputeEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  disputeId     String   @map("dispute_id") @db.Uuid
+  eventId       String   @unique @map("event_id") @db.Uuid
+  eventType     String   @map("event_type") @db.VarChar(128)
+  paypalEventId String   @map("paypal_event_id") @db.VarChar(255)
+  outcome       String   @default("APPLIED") @db.VarChar(32)
+  reason        String?  @db.VarChar(64)
+  occurredAt    DateTime @map("occurred_at") @db.Timestamptz(3)
+  receivedAt    DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+
+  dispute Dispute      @relation(fields: [disputeId], references: [id], onDelete: Restrict)
+  event   WebhookEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+
+  @@index([disputeId, occurredAt, id])
+  @@map("dispute_events")
 }

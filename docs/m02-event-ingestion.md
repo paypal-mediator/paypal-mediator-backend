@@ -82,8 +82,9 @@ La cola es una outbox persistida en PostgreSQL, sin Redis ni proceso en memoria.
 La interfaz pública `IngestionQueueService` permite consumir trabajos con locks
 y una transacción compartida. M03 consume `TRANSACTION_CAPTURED` y confirma el
 trabajo junto con la captura; registra rechazos terminales como `FAILED` y revierte
-errores inesperados para permitir reintentos. Los trabajos `DISPUTE_CHANGED`
-permanecen `QUEUED` hasta implementar M07. Ver [M03](m03-transactions.md).
+errores inesperados para permitir reintentos. M07 consume `DISPUTE_CHANGED`
+con la misma interfaz, escribe solo sus tablas y no presenta evidencia. Ver
+[M03](m03-transactions.md) y [M07](m07-disputes.md).
 
 ## Configuración y límites de prueba
 

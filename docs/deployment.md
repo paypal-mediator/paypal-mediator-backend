@@ -61,8 +61,10 @@ Las variables secretas del Blueprint usan `sync: false`.
   `http://localhost:3000`, aunque la API esté publicada.
 - `TRANSACTION_WORKER_ENABLED=true`: consumidor M03 de capturas verificadas.
   El código lo habilita por defecto en producción cuando la variable no está
-  definida; un `false` explícito lo desactiva. Requiere `MERCHANT_ID` y las cinco
-  migraciones aplicadas. Las disputas permanecen en cola para M07.
+  definida; un `false` explícito lo desactiva. Requiere `MERCHANT_ID` y las
+  migraciones aplicadas. M07 hereda este flag salvo que se defina
+  `DISPUTE_WORKER_ENABLED`; su migración `20261106070000_disputes` solo debe
+  aplicarse cuando las migraciones de M05/M06 estén integradas en la misma rama.
 
 Agregar en Environment → Secret Files el certificado oficial de Supabase con
 nombre `supabase-ca.crt`. En las URLs de PostgreSQL reemplazar la ruta local
