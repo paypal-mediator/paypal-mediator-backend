@@ -1,0 +1,1532 @@
+{
+  "startedAt": "2026-11-07T20:31:47.701Z",
+  "checks": {
+    "m01": {
+      "http": 201,
+      "connection": "CONNECTED",
+      "disputesRead": "AVAILABLE",
+      "supabaseAuth": "REAL"
+    },
+    "payment": {
+      "http": 201,
+      "orderId": "4P679551HB887882T",
+      "captureId": "7NG16302DE1762820",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "USD",
+        "value": "1.00"
+      },
+      "verifiedAt": "2026-11-07T20:34:53.564Z"
+    },
+    "m02": {
+      "webhookAuditIds": ["02f7d07a-cb15-434a-836e-0c3f52bda3f0"],
+      "sourceEventId": "37e9e7fe-acef-41ee-a7f6-30fa5f2ec4b9",
+      "genuinePayPalSignatureVerified": true
+    },
+    "m03": {
+      "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+      "source": "PAYPAL",
+      "items": [
+        {
+          "sku": "M09-A",
+          "quantity": 2,
+          "unitAmount": "0.30"
+        },
+        {
+          "sku": "M09-B",
+          "quantity": 1,
+          "unitAmount": "0.20"
+        }
+      ],
+      "readiness": "INCOMPLETE",
+      "refreshDeduplicated": true
+    },
+    "m04": {
+      "dossierId": "31f7d188-5f31-44f1-bee2-477dd50a4fec",
+      "revision": 3,
+      "originalIntegrity": "VALID",
+      "allHashesValid": true,
+      "binary": {
+        "uploadHttp": 201,
+        "downloadHttp": 200,
+        "duplicateOutcome": "DUPLICATE",
+        "evidenceId": "bc556e9f-0ec7-4df4-ba13-6056db2fb53e",
+        "byteLength": 4023,
+        "sha256": "473bda467af36d6e55cbeb857dc0dba33625108e7fb9ea888cca25ecadb0f19f",
+        "bytesIdentical": true,
+        "source": "GENERATED_DEMO_PNG_NOT_SHIPPING_EVIDENCE"
+      },
+      "previousBinaryFixtures": [
+        {
+          "uploadHttp": 201,
+          "downloadHttp": 200,
+          "duplicateOutcome": "DUPLICATE",
+          "evidenceId": "a3be5e7e-f676-47e5-8731-73083aa8f82d",
+          "byteLength": 68,
+          "sha256": "a7888f2ee38611b92af5d97811c57a952e995d276979aa21b3590f1806cb1b23",
+          "bytesIdentical": true,
+          "source": "GENERATED_DEMO_1PX_PNG_NOT_SHIPPING_EVIDENCE"
+        }
+      ]
+    },
+    "realIncomplete": {
+      "investigationId": "7e720bd9-16ee-46f1-93db-6c761a590918",
+      "m05": {
+        "id": "7e720bd9-16ee-46f1-93db-6c761a590918",
+        "status": "COMPLETED",
+        "errorCode": null,
+        "steps": 3,
+        "usage": {
+          "inputTokens": 12188,
+          "outputTokens": 589
+        },
+        "provider": "NVIDIA",
+        "model": "nvidia/nemotron-3.5-super-vl-120b-a12b"
+      },
+      "verificationId": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+      "m06": {
+        "id": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+        "status": "COMPLETED",
+        "errorCode": null,
+        "verdict": "REJECTED",
+        "reasons": [
+          "ORDER_RECORD_SUPPORTED",
+          "PAYMENT_RECORD_SUPPORTED",
+          "COVERAGE_INCOMPLETE",
+          "DEMO_ENVIRONMENT_NOTED",
+          "FAILED_COVERAGE",
+          "CLAIM_WITHOUT_VERIFIED_SUPPORT:summary.2",
+          "MISSING_TRACKING",
+          "MISSING_PROOF_OF_DELIVERY"
+        ],
+        "steps": 4,
+        "usage": {
+          "inputTokens": 21097,
+          "outputTokens": 3353
+        },
+        "submissionAuthorized": false
+      },
+      "replay": {
+        "m05": true,
+        "m06": true,
+        "auditLifecycleNotDuplicated": true
+      }
+    },
+    "demo": {
+      "fixtureOnly": true,
+      "commercialOrderId": "6686e5b0-ba68-469c-8fdd-8969be3e55b8",
+      "orderDuplicate": "DUPLICATE",
+      "ready": "READY",
+      "contradiction": "NEEDS_REVIEW",
+      "evidenceId": "ac2f5422-78a7-4ff1-b487-d631327d8b33",
+      "investigator": {
+        "id": "329880dc-ca0e-44b7-80cb-5b44817972ef",
+        "status": "FAILED",
+        "errorCode": "AI_UNSUPPORTED_CITATION",
+        "steps": 4,
+        "usage": {
+          "inputTokens": 22803,
+          "outputTokens": 1310
+        }
+      },
+      "previousInvestigatorFailures": [
+        {
+          "id": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "status": "FAILED",
+          "errorCode": "AI_PROVIDER_REJECTED",
+          "steps": 6,
+          "usage": {
+            "inputTokens": 29609,
+            "outputTokens": 327
+          }
+        }
+      ],
+      "guards": {
+        "staleHttp": 409,
+        "staleCode": "INVESTIGATION_NOT_VERIFIABLE",
+        "rejectionGuardLive": "NOT_REACHED_NO_CURRENT_COMPLETED_INVESTIGATION",
+        "noVerifierRetry": true,
+        "humanReviewGuardAutomated": "COVERED_BY_POSTGRESQL_SUITE"
+      }
+    },
+    "m09": {
+      "timelineHttp": 200,
+      "metricsHttp": 200,
+      "modules": ["M01", "M05", "M06", "M04", "M03", "M02"],
+      "paginationDistinct": true,
+      "unauthenticatedHttp": 401,
+      "invalidModuleHttp": 400,
+      "metrics": {
+        "generatedAt": "2026-11-07T20:39:35.047Z",
+        "since": "2026-11-06T20:39:35.047Z",
+        "scope": "AUDITED_EVENTS_SINCE_M09",
+        "verdicts": [
+          {
+            "verdict": "APPROVED",
+            "count": 0
+          },
+          {
+            "verdict": "INCOMPLETE",
+            "count": 0
+          },
+          {
+            "verdict": "REJECTED",
+            "count": 1
+          }
+        ],
+        "groups": [
+          {
+            "module": "M01",
+            "action": "PAYPAL_CONNECTION_CHECKED",
+            "outcome": "SUCCEEDED",
+            "count": 1,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M01",
+            "action": "SETTINGS_UPDATED",
+            "outcome": "SUCCEEDED",
+            "count": 6,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M02",
+            "action": "INGESTION_FINISHED",
+            "outcome": "SUCCEEDED",
+            "count": 1,
+            "durationSamples": 1,
+            "averageDurationMs": 574,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M02",
+            "action": "WEBHOOK_RECEIVED",
+            "outcome": "SUCCEEDED",
+            "count": 1,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M03",
+            "action": "ORDER_CREATED",
+            "outcome": "SUCCEEDED",
+            "count": 1,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M03",
+            "action": "ORDER_SOURCE_FINISHED",
+            "outcome": "SUCCEEDED",
+            "count": 2,
+            "durationSamples": 2,
+            "averageDurationMs": 826,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M03",
+            "action": "ORDER_SOURCE_STARTED",
+            "outcome": "STARTED",
+            "count": 2,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M03",
+            "action": "TRANSACTION_CAPTURED",
+            "outcome": "SUCCEEDED",
+            "count": 1,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M04",
+            "action": "EVIDENCE_APPENDED",
+            "outcome": "SUCCEEDED",
+            "count": 9,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M04",
+            "action": "EVIDENCE_DOWNLOADED",
+            "outcome": "SUCCEEDED",
+            "count": 3,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M05",
+            "action": "INVESTIGATION_FINISHED",
+            "outcome": "FAILED",
+            "count": 2,
+            "durationSamples": 2,
+            "averageDurationMs": 9386,
+            "inputTokens": 52412,
+            "outputTokens": 1637
+          },
+          {
+            "module": "M05",
+            "action": "INVESTIGATION_FINISHED",
+            "outcome": "SUCCEEDED",
+            "count": 1,
+            "durationSamples": 1,
+            "averageDurationMs": 6995,
+            "inputTokens": 12188,
+            "outputTokens": 589
+          },
+          {
+            "module": "M05",
+            "action": "INVESTIGATION_STARTED",
+            "outcome": "STARTED",
+            "count": 3,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M05",
+            "action": "INVESTIGATION_STEP",
+            "outcome": "SUCCEEDED",
+            "count": 13,
+            "durationSamples": 13,
+            "averageDurationMs": 1368.4615384615386,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M06",
+            "action": "VERIFICATION_ACTION_FAILED",
+            "outcome": "BLOCKED",
+            "count": 2,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M06",
+            "action": "VERIFICATION_FINISHED",
+            "outcome": "SUCCEEDED",
+            "count": 1,
+            "durationSamples": 1,
+            "averageDurationMs": 24413,
+            "inputTokens": 21097,
+            "outputTokens": 3353
+          },
+          {
+            "module": "M06",
+            "action": "VERIFICATION_STARTED",
+            "outcome": "STARTED",
+            "count": 1,
+            "durationSamples": 0,
+            "averageDurationMs": null,
+            "inputTokens": 0,
+            "outputTokens": 0
+          },
+          {
+            "module": "M06",
+            "action": "VERIFICATION_STEP",
+            "outcome": "SUCCEEDED",
+            "count": 4,
+            "durationSamples": 4,
+            "averageDurationMs": 6054.25,
+            "inputTokens": 0,
+            "outputTokens": 0
+          }
+        ],
+        "current": {
+          "ingestion": [
+            {
+              "status": "COMPLETED",
+              "count": 8
+            },
+            {
+              "status": "QUEUED",
+              "count": 3
+            }
+          ],
+          "orderSources": [
+            {
+              "status": "COMPLETE",
+              "count": 2
+            },
+            {
+              "status": "PARTIAL",
+              "count": 2
+            }
+          ],
+          "investigations": [
+            {
+              "status": "COMPLETED",
+              "count": 4
+            },
+            {
+              "status": "FAILED",
+              "count": 4
+            }
+          ],
+          "verifications": [
+            {
+              "status": "COMPLETED",
+              "count": 3
+            }
+          ]
+        }
+      },
+      "transactionEvents": [
+        {
+          "id": "0bf22001-4e80-4c9b-9cf1-712d0a055fc9",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_FINISHED",
+          "outcome": "FAILED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "329880dc-ca0e-44b7-80cb-5b44817972ef",
+          "durationMs": 12592,
+          "inputTokens": 22803,
+          "outputTokens": 1310,
+          "record": {
+            "action": "INVESTIGATION_FINISHED",
+            "details": {
+              "errorCode": "AI_UNSUPPORTED_CITATION",
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:27.058Z"
+        },
+        {
+          "id": "d0cea07d-9f76-47b3-a4cb-251ad2940923",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "329880dc-ca0e-44b7-80cb-5b44817972ef",
+          "durationMs": 713,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 4,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "1fafbe96-d060-437f-ba29-2c4245e1c07d",
+              "observedAt": "2026-11-07T20:38:19.982Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:27.054Z"
+        },
+        {
+          "id": "c701414e-79d7-478a-9bcf-458e8d3fdd97",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "329880dc-ca0e-44b7-80cb-5b44817972ef",
+          "durationMs": 1261,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 3,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "2af8d8d0-ca5c-4f31-837f-67b2478c596c",
+              "observedAt": "2026-11-07T20:38:19.269Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:27.050Z"
+        },
+        {
+          "id": "a127f418-c23d-49df-97f7-ac6dec2542da",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "329880dc-ca0e-44b7-80cb-5b44817972ef",
+          "durationMs": 1273,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 2,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "ac2f5422-78a7-4ff1-b487-d631327d8b33",
+              "observedAt": "2026-11-07T20:38:18.008Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:27.045Z"
+        },
+        {
+          "id": "4d00fce9-61f8-4411-a917-d0d616faacbb",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "329880dc-ca0e-44b7-80cb-5b44817972ef",
+          "durationMs": 2252,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 1,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "71c7180f-f994-4a87-971b-f5c3091db0b1",
+              "observedAt": "2026-11-07T20:38:16.735Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:27.041Z"
+        },
+        {
+          "id": "d777caed-d2d2-4677-a27f-c329f1449fc7",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M05",
+          "action": "INVESTIGATION_STARTED",
+          "outcome": "STARTED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "329880dc-ca0e-44b7-80cb-5b44817972ef",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STARTED",
+            "details": {
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:14.474Z"
+        },
+        {
+          "id": "e2435164-0bdc-40ac-a9c2-0acfe5ede50f",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M06",
+          "action": "VERIFICATION_ACTION_FAILED",
+          "outcome": "BLOCKED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": null,
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "VERIFICATION_ACTION_FAILED",
+            "details": {
+              "errorCode": "INVESTIGATION_NOT_VERIFIABLE",
+              "httpStatus": 409
+            }
+          },
+          "createdAt": "2026-11-07T20:38:14.248Z"
+        },
+        {
+          "id": "32a69842-88a4-4d65-9bd7-3f1ad01e4db3",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_DOWNLOADED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "bc556e9f-0ec7-4df4-ba13-6056db2fb53e",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_DOWNLOADED",
+            "details": {
+              "evidenceType": "DOCUMENT"
+            }
+          },
+          "createdAt": "2026-11-07T20:38:12.725Z"
+        },
+        {
+          "id": "481598fc-6118-4516-b677-c3d75265ad46",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "bc556e9f-0ec7-4df4-ba13-6056db2fb53e",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "DEMO",
+              "evidenceType": "DOCUMENT",
+              "version": 9
+            }
+          },
+          "createdAt": "2026-11-07T20:38:11.537Z"
+        },
+        {
+          "id": "6f16bf27-1327-4c0e-8b30-4bc42fc6945d",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_FINISHED",
+          "outcome": "FAILED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": 6180,
+          "inputTokens": 29609,
+          "outputTokens": 327,
+          "record": {
+            "action": "INVESTIGATION_FINISHED",
+            "details": {
+              "errorCode": "AI_PROVIDER_REJECTED",
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:28.115Z"
+        },
+        {
+          "id": "c2c0237c-6d10-45ac-b429-a0af697dffae",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": 965,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 6,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "IMAGE_ORIGINAL",
+              "evidenceId": "a3be5e7e-f676-47e5-8731-73083aa8f82d",
+              "observedAt": "2026-11-07T20:37:27.642Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:28.110Z"
+        },
+        {
+          "id": "866c5707-9199-4f51-a227-9b4aa171ff82",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": 579,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 5,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "ac2f5422-78a7-4ff1-b487-d631327d8b33",
+              "observedAt": "2026-11-07T20:37:26.677Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:28.106Z"
+        },
+        {
+          "id": "7991f13a-dd51-4f34-9cf9-2f021e8f3b18",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": 591,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 4,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "71c7180f-f994-4a87-971b-f5c3091db0b1",
+              "observedAt": "2026-11-07T20:37:26.098Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:28.101Z"
+        },
+        {
+          "id": "7869e01b-a0d8-4b2e-af79-baaa329bb4a4",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": 1057,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 3,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "1fafbe96-d060-437f-ba29-2c4245e1c07d",
+              "observedAt": "2026-11-07T20:37:25.507Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:28.097Z"
+        },
+        {
+          "id": "23ddca7f-bf2f-49c3-81cd-d364945d4f25",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": 1113,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 2,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "2af8d8d0-ca5c-4f31-837f-67b2478c596c",
+              "observedAt": "2026-11-07T20:37:24.450Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:28.093Z"
+        },
+        {
+          "id": "d4eafdf3-6aed-41ec-8c20-7c3bae7c4774",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": 1381,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 1,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "ccf9d811-1470-45c4-ad29-d35c1cabf665",
+              "observedAt": "2026-11-07T20:37:23.337Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:28.089Z"
+        },
+        {
+          "id": "332ad60f-8d44-4489-9022-e3b17a5a6dad",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M04",
+          "action": "EVIDENCE_DOWNLOADED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "a3be5e7e-f676-47e5-8731-73083aa8f82d",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_DOWNLOADED",
+            "details": {
+              "evidenceType": "DOCUMENT"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:27.633Z"
+        },
+        {
+          "id": "34038a35-dfa8-43a4-8c3b-9e5f734fbdec",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M05",
+          "action": "INVESTIGATION_STARTED",
+          "outcome": "STARTED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "c3af91c1-02de-42f8-9da9-1bbed743d773",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STARTED",
+            "details": {
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:37:21.944Z"
+        },
+        {
+          "id": "87a35657-0a51-4c94-ad1a-34f7a62d9872",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M06",
+          "action": "VERIFICATION_ACTION_FAILED",
+          "outcome": "BLOCKED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": null,
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "VERIFICATION_ACTION_FAILED",
+            "details": {
+              "errorCode": "INVESTIGATION_NOT_VERIFIABLE",
+              "httpStatus": 409
+            }
+          },
+          "createdAt": "2026-11-07T20:37:21.634Z"
+        },
+        {
+          "id": "0de72a0a-9147-40bb-bda1-c164312e8e5f",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "ac2f5422-78a7-4ff1-b487-d631327d8b33",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "DEMO",
+              "evidenceType": "PROOF_OF_DELIVERY",
+              "version": 8
+            }
+          },
+          "createdAt": "2026-11-07T20:36:40.992Z"
+        },
+        {
+          "id": "a280bb0e-7c78-4f5a-8bab-98f2835439ad",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "d44c2372-b575-433e-a210-69751fc5596f",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "DEMO",
+              "evidenceType": "PROOF_OF_DELIVERY",
+              "version": 7
+            }
+          },
+          "createdAt": "2026-11-07T20:36:40.718Z"
+        },
+        {
+          "id": "d3a169e3-2f06-4d8a-804c-decffa1c1c14",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "71c7180f-f994-4a87-971b-f5c3091db0b1",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "DEMO",
+              "evidenceType": "TRACKING",
+              "version": 6
+            }
+          },
+          "createdAt": "2026-11-07T20:36:40.164Z"
+        },
+        {
+          "id": "4c6f86d2-ee93-4255-bd79-02d6c18b01da",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "1fafbe96-d060-437f-ba29-2c4245e1c07d",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "DEMO",
+              "evidenceType": "ORDER_RECORD",
+              "version": 5
+            }
+          },
+          "createdAt": "2026-11-07T20:36:38.783Z"
+        },
+        {
+          "id": "041f8a83-3499-4b44-8f00-193c59a81919",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_DOWNLOADED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "a3be5e7e-f676-47e5-8731-73083aa8f82d",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_DOWNLOADED",
+            "details": {
+              "evidenceType": "DOCUMENT"
+            }
+          },
+          "createdAt": "2026-11-07T20:36:37.163Z"
+        },
+        {
+          "id": "3777424c-2a84-43e4-8b40-2ba67e37f3d0",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "a3be5e7e-f676-47e5-8731-73083aa8f82d",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "DEMO",
+              "evidenceType": "DOCUMENT",
+              "version": 4
+            }
+          },
+          "createdAt": "2026-11-07T20:36:36.188Z"
+        },
+        {
+          "id": "64b67743-a7f3-4260-9a79-4ad26c7881ef",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M06",
+          "action": "VERIFICATION_FINISHED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+          "durationMs": 24413,
+          "inputTokens": 21097,
+          "outputTokens": 3353,
+          "record": {
+            "action": "VERIFICATION_FINISHED",
+            "details": {
+              "verdict": "REJECTED",
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:36:03.246Z"
+        },
+        {
+          "id": "3f0e0fec-3474-48c9-96af-c6e17877c49a",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M06",
+          "action": "VERIFICATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+          "durationMs": 20419,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "VERIFICATION_STEP",
+            "details": {
+              "step": 4,
+              "tool": "FINISH",
+              "toolResult": "INDEPENDENT_REVIEW",
+              "observedAt": "2026-11-07T20:36:03.072Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:36:03.241Z"
+        },
+        {
+          "id": "638906d5-6062-4cea-b456-7ff99cb54e36",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M06",
+          "action": "VERIFICATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+          "durationMs": 1062,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "VERIFICATION_STEP",
+            "details": {
+              "step": 3,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "3bedeef9-be3e-4af1-8dd5-979266699b83",
+              "observedAt": "2026-11-07T20:35:42.653Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:36:03.237Z"
+        },
+        {
+          "id": "884c4344-b16a-4078-8dfa-4fb063140d16",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M06",
+          "action": "VERIFICATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+          "durationMs": 1557,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "VERIFICATION_STEP",
+            "details": {
+              "step": 2,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "ccf9d811-1470-45c4-ad29-d35c1cabf665",
+              "observedAt": "2026-11-07T20:35:41.591Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:36:03.233Z"
+        },
+        {
+          "id": "9af95150-e614-4a0f-8ab2-86160c37e0df",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M06",
+          "action": "VERIFICATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+          "durationMs": 1179,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "VERIFICATION_STEP",
+            "details": {
+              "step": 1,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "2af8d8d0-ca5c-4f31-837f-67b2478c596c",
+              "observedAt": "2026-11-07T20:35:40.034Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:36:03.159Z"
+        },
+        {
+          "id": "5c656028-1fe2-43f7-8e0c-bb5c4ad4b2c9",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M06",
+          "action": "VERIFICATION_STARTED",
+          "outcome": "STARTED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "VERIFICATION",
+          "resourceId": "f830a5e1-8043-4870-9e3b-d0227acc9072",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "VERIFICATION_STARTED",
+            "details": {
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:38.846Z"
+        },
+        {
+          "id": "3a4317e9-7a4a-4a66-a21e-432f3f0823eb",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_FINISHED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "7e720bd9-16ee-46f1-93db-6c761a590918",
+          "durationMs": 6995,
+          "inputTokens": 12188,
+          "outputTokens": 589,
+          "record": {
+            "action": "INVESTIGATION_FINISHED",
+            "details": {
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:37.941Z"
+        },
+        {
+          "id": "7b0174af-bfcc-415b-b8e9-ffbad3efb390",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "7e720bd9-16ee-46f1-93db-6c761a590918",
+          "durationMs": 3664,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 3,
+              "tool": "FINISH",
+              "toolResult": "DRAFT_REQUIRES_VERIFICATION",
+              "observedAt": "2026-11-07T20:35:37.738Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:37.855Z"
+        },
+        {
+          "id": "a56a3bd0-7115-45b9-b8d5-49f8bf5d6e7d",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "7e720bd9-16ee-46f1-93db-6c761a590918",
+          "durationMs": 1085,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 2,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "ccf9d811-1470-45c4-ad29-d35c1cabf665",
+              "observedAt": "2026-11-07T20:35:34.074Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:37.851Z"
+        },
+        {
+          "id": "81735da5-ed24-4c56-bfb0-5ee510cd988c",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "AGENT",
+          "module": "M05",
+          "action": "INVESTIGATION_STEP",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "7e720bd9-16ee-46f1-93db-6c761a590918",
+          "durationMs": 1856,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STEP",
+            "details": {
+              "step": 1,
+              "tool": "READ_EVIDENCE",
+              "toolResult": "JSON_ORIGINAL",
+              "evidenceId": "2af8d8d0-ca5c-4f31-837f-67b2478c596c",
+              "observedAt": "2026-11-07T20:35:32.989Z"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:37.847Z"
+        },
+        {
+          "id": "e5a2e8f8-a860-4ab1-848e-8783e6a06a67",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": "0f368cc7-ff93-4815-a2d5-816180e8eecd",
+          "actorKind": "USER",
+          "module": "M05",
+          "action": "INVESTIGATION_STARTED",
+          "outcome": "STARTED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INVESTIGATION",
+          "resourceId": "7e720bd9-16ee-46f1-93db-6c761a590918",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INVESTIGATION_STARTED",
+            "details": {
+              "provider": "NVIDIA"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:31.034Z"
+        },
+        {
+          "id": "5f069174-d6bd-4e05-8250-4df85550c5fd",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M03",
+          "action": "ORDER_SOURCE_FINISHED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "ORDER_SOURCE",
+          "resourceId": "c4f38edb-f219-457c-a7e5-750bae694c8c",
+          "durationMs": 840,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "ORDER_SOURCE_FINISHED",
+            "details": {
+              "httpStatus": 200,
+              "state": "COMPLETE"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:26.189Z"
+        },
+        {
+          "id": "7eb758c9-7607-471d-bbde-31e89252be68",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M03",
+          "action": "ORDER_SOURCE_STARTED",
+          "outcome": "STARTED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "ORDER_SOURCE",
+          "resourceId": "c4f38edb-f219-457c-a7e5-750bae694c8c",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "ORDER_SOURCE_STARTED",
+            "details": {}
+          },
+          "createdAt": "2026-11-07T20:35:25.451Z"
+        },
+        {
+          "id": "4cabc550-0e45-4827-bf2f-6f32c13a357e",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "2af8d8d0-ca5c-4f31-837f-67b2478c596c",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "PAYPAL",
+              "evidenceType": "ORDER_RECORD",
+              "version": 3
+            }
+          },
+          "createdAt": "2026-11-07T20:35:09.465Z"
+        },
+        {
+          "id": "e5721d36-7216-4528-97c2-8eed74ed3e54",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M03",
+          "action": "ORDER_SOURCE_FINISHED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "ORDER_SOURCE",
+          "resourceId": "c4f38edb-f219-457c-a7e5-750bae694c8c",
+          "durationMs": 812,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "ORDER_SOURCE_FINISHED",
+            "details": {
+              "httpStatus": 200,
+              "state": "COMPLETE"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:09.344Z"
+        },
+        {
+          "id": "c02e8a01-05a5-4f00-ad67-9c612ff0b17a",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "3bedeef9-be3e-4af1-8dd5-979266699b83",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "PAYPAL",
+              "evidenceType": "ORDER_SOURCE_RECORD",
+              "version": 2
+            }
+          },
+          "createdAt": "2026-11-07T20:35:09.332Z"
+        },
+        {
+          "id": "6def28b1-3ec9-4c03-8763-afacb8672957",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M03",
+          "action": "ORDER_SOURCE_STARTED",
+          "outcome": "STARTED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "ORDER_SOURCE",
+          "resourceId": "c4f38edb-f219-457c-a7e5-750bae694c8c",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "ORDER_SOURCE_STARTED",
+            "details": {}
+          },
+          "createdAt": "2026-11-07T20:35:08.636Z"
+        },
+        {
+          "id": "4b1e1fd4-9456-43ee-ab17-18c3006e0e27",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M02",
+          "action": "INGESTION_FINISHED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "INGESTION_JOB",
+          "resourceId": "864dabd1-14a1-45a6-a505-8442923815d9",
+          "durationMs": 574,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "INGESTION_FINISHED",
+            "details": {
+              "state": "COMPLETED"
+            }
+          },
+          "createdAt": "2026-11-07T20:35:08.439Z"
+        },
+        {
+          "id": "559b4716-a0b5-4eb8-be80-303f00f1a521",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M04",
+          "action": "EVIDENCE_APPENDED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "EVIDENCE",
+          "resourceId": "ccf9d811-1470-45c4-ad29-d35c1cabf665",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "EVIDENCE_APPENDED",
+            "details": {
+              "sourceKind": "PAYPAL",
+              "evidenceType": "PAYMENT_RECORD",
+              "version": 1
+            }
+          },
+          "createdAt": "2026-11-07T20:35:08.333Z"
+        },
+        {
+          "id": "611b90f7-e789-49bf-a529-7bc21405bec2",
+          "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+          "actorUserId": null,
+          "actorKind": "SYSTEM",
+          "module": "M03",
+          "action": "TRANSACTION_CAPTURED",
+          "outcome": "SUCCEEDED",
+          "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "resourceType": "TRANSACTION",
+          "resourceId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+          "durationMs": null,
+          "inputTokens": null,
+          "outputTokens": null,
+          "record": {
+            "action": "TRANSACTION_CAPTURED",
+            "details": {}
+          },
+          "createdAt": "2026-11-07T20:35:08.053Z"
+        }
+      ]
+    },
+    "finalPolicy": {
+      "allowInvestigations": false,
+      "allowSubmissions": false,
+      "requireMerchantApproval": true
+    }
+  },
+  "limits": [
+    "PayPal Sandbox fictitious funds only",
+    "M07 and M08 excluded; no provide-evidence or dispute actions",
+    "Shipping/delivery and binary fixture are DEMO, not real fulfillment",
+    "Initial real M06 verdict REJECTED: missing shipment/delivery and unsupported draft summary claim",
+    "DEMO investigation with 1px PNG failed AI_PROVIDER_REJECTED; preserved",
+    "DEMO investigation after replacement with 512x128 PNG failed AI_UNSUPPORTED_CITATION; preserved; no further paid retries",
+    "M06 guard requiring review of a previous rejection is verified by automated PostgreSQL tests; live new verification was stopped earlier because no new valid current investigation existed"
+  ],
+  "lastFailure": {
+    "action": "guard",
+    "message": "DEMO investigation AI_UNSUPPORTED_CITATION\n+ actual - expected\n\n+ 'FAILED'\n- 'COMPLETED'\n",
+    "time": "2026-11-07T20:38:27.504Z"
+  },
+  "policy": {
+    "allowInvestigations": false,
+    "allowSubmissions": false,
+    "requireMerchantApproval": true
+  },
+  "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+  "orderId": "4P679551HB887882T",
+  "captureId": "7NG16302DE1762820",
+  "transactionId": "8f4abd36-2565-4a71-ae0f-0e8b0f195e41",
+  "policyRestoredAt": "2026-11-07T20:38:27.503Z",
+  "fixtureEvidenceId": "bc556e9f-0ec7-4df4-ba13-6056db2fb53e",
+  "verifiedAt": "2026-11-07T20:39:36.620Z",
+  "execution": "RENDER_PAYPAL_SANDBOX_SUPABASE_NVIDIA_REAL",
+  "automated": {
+    "check": 191,
+    "postgresql": 95,
+    "migrations": 12,
+    "migrationDiff": "NO_DIFFERENCES"
+  },
+  "deployment": {
+    "pullRequest": "https://github.com/paypal-mediator/paypal-mediator-backend/pull/16",
+    "mainCommit": "65bd4989a3d360039249687baa25004e447afff3",
+    "api": "https://resolve-ai-api-ybmj.onrender.com/api",
+    "mainCi": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/42411459204",
+    "liveRoutesConfirmed": true
+  },
+  "buyerApproval": {
+    "method": "OPERA_GX_CDP",
+    "port": 9223,
+    "sandboxHostname": "www.sandbox.paypal.com",
+    "userLoggedInManually": true,
+    "assistantApprovedCheckout": true,
+    "captureAfterApprovedStatus": true,
+    "fictitiousFundsOnly": true
+  },
+  "notice": "Real Render, Supabase Auth/PostgreSQL/private Storage, PayPal Sandbox webhook and NVIDIA. New payment is 1 USD fictitious. Commerce/shipping/delivery and generated PNG fixtures are explicitly DEMO. M06 rejected an unsupported draft; later DEMO M05 failures retained. No M07/M08, submission, refund or real-money operation."
+}

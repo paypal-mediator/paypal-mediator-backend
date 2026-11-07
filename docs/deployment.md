@@ -1,5 +1,17 @@
 # Backend público y webhook PayPal
 
+## M09 publicado y verificado — 7 de noviembre de 2026
+
+PR #16 integrado en `main` (`65bd498`); CI aprobó check (191 pruebas) y
+PostgreSQL (95). Render publicó las rutas autenticadas `/api/activity` y
+`/api/activity/metrics`, ambas HTTP 200. Las migraciones de auditoría y métricas
+están aplicadas en Supabase. Nuevo pago Sandbox de 1 USD ficticio aprobado por
+el asistente en Opera GX/CDP 9223, webhook genuino y flujo remoto M01–M06/M09.
+M06 terminó REJECTED; los fallos posteriores M05 permanecen registrados. No
+hubo envíos ni se utilizaron M07/M08. Política original restaurada.
+Ver [alcance M09](m09-monitoring.md) y
+[evidencia live](evidence/m09-m01-m06-sandbox-20261107.json).
+
 ## M05/M06 publicados — 7 de noviembre de 2026
 
 PR #14 integrado en main, commit f4be534. CI aprobó pnpm check con 189 pruebas
