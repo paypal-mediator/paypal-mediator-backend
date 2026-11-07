@@ -3,11 +3,19 @@
   "pullRequest": "https://github.com/paypal-mediator/paypal-mediator-backend/pull/14",
   "ci": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/42352200326",
   "ciResult": "success",
-  "deployment": "Render automatic deployment after main CI; new routes returned 401 unauthenticated and 200 authenticated after returning 404 before deployment",
-  "configuration": "NVIDIA_API_KEY missing in Render; new agent POST requests fail closed with HTTP 503 INVESTIGATOR_NOT_CONFIGURED",
-  "originalPermissionsRestored": true,
+  "serviceId": "srv-dbmo0e6c6qcc73e1u8r0",
+  "renderDeployId": "dep-dbndf99srm7s7394j3dg",
+  "renderDeployStatus": "Live",
+  "renderDeployUrl": "https://dashboard.render.com/web/srv-dbmo0e6c6qcc73e1u8r0/deploys/dep-dbndf99srm7s7394j3dg",
+  "deployment": "Render deployment from main confirmed in Opera GX and public API",
+  "configuration": {
+    "AI_PROVIDER": "nvidia",
+    "NVIDIA_MODEL": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+    "NVIDIA_API_KEY": "configured from existing local .env through authorized Opera GX CDP; secret value omitted"
+  },
+  "verificationScope": "Read and idempotent replay of existing real M05/M06 runs, no new model inference or charge; original merchant policies restored",
   "verification": {
-    "checkedAt": "2026-11-07T07:43:09.383Z",
+    "checkedAt": "2026-11-07T07:48:47.456Z",
     "api": "https://resolve-ai-api-ybmj.onrender.com/api",
     "transactionId": "b62b4f9e-2f1b-4daf-a1f4-63e9e6cf6b9a",
     "steps": {
@@ -48,14 +56,14 @@
         "code": "UNAUTHENTICATED"
       },
       "m05IdempotentRuntime": {
-        "http": 503,
-        "code": "INVESTIGATOR_NOT_CONFIGURED",
-        "sameId": false
+        "http": 201,
+        "sameId": true,
+        "status": "COMPLETED"
       },
       "m06IdempotentRuntime": {
-        "http": 503,
-        "code": "INVESTIGATOR_NOT_CONFIGURED",
-        "sameId": false
+        "http": 201,
+        "sameId": true,
+        "status": "COMPLETED"
       },
       "policyRestored": {
         "http": 200,
@@ -66,5 +74,6 @@
         }
       }
     }
-  }
+  },
+  "previousFailure": "Before environment configuration both POST routes returned HTTP 503 INVESTIGATOR_NOT_CONFIGURED; after Save and deploy both returned 201 with the original run IDs"
 }

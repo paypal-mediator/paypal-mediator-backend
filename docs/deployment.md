@@ -11,17 +11,19 @@ Readiness, merchant, transacción y resultados M05/M06 autenticados devuelven HT
 con ocho dimensiones y submissionAuthorized=false. Los GET publicados sustituyen
 los 404 observados antes del despliegue.
 
-**Configuración pendiente:** NVIDIA_API_KEY no está configurada en Render. Los POST
-M05/M06 responden 503 INVESTIGATOR_NOT_CONFIGURED; no se ha demostrado inferencia
-desde el servicio publicado. Configurar el secreto del proveedor en Environment,
-fuera de Git, con AI_PROVIDER=nvidia y NVIDIA_MODEL=nvidia/nemotron-3.5-super-vl-120b-a12b.
-El modelo NVIDIA ya tiene ese valor por defecto. Alternativa OpenAI: configurar
+**Configuración completada:** NVIDIA_API_KEY se configuró desde el .env local en
+Render mediante Opera GX/CDP expresamente autorizado, sin mostrar el secreto ni
+guardarlo en Git. AI_PROVIDER=nvidia y NVIDIA_MODEL=nvidia/nemotron-3.5-super-vl-120b-a12b.
+Save and deploy terminó Live, despliegue dep-dbndf99srm7s7394j3dg del commit f4be534.
+Los POST M05/M06 pasaron de 503 a 201 y devolvieron los IDs originales por
+idempotencia. No se hizo otra inferencia ni se generó otro cobro de PayPal.
+La inferencia NVIDIA real está verificada localmente; la comprobación publicada
+recuperó resultados existentes. Alternativa OpenAI: configurar
 AI_PROVIDER=openai, OPENAI_API_KEY y OPENAI_MODEL, sin fallback automático.
 
 La migración M06 ya está aplicada en Supabase. La prueba de lectura/idempotencia
 restauró allowInvestigations=false; envíos deshabilitados y aprobación humana
-obligatoria. Para ajustar secretos desde Codex falta conectar el plugin Render;
-también pueden configurarse en su panel y volver a verificar.
+obligatoria. La API publicada y el panel Live de Render confirmaron el despliegue.
 
 Evidencia: [verificación publicada](evidence/m05-m06-render-20261107.json).
 
