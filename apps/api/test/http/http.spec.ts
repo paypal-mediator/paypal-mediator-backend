@@ -41,7 +41,7 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
 
   it('returns a uniform 404 correlated with the response header', async () => {
     const response = await request(context.app.getHttpServer())
-      .get('/api/disputes')
+      .get('/api/not-implemented')
       .expect(404);
     expect(ApiErrorSchema.parse(response.body).requestId).toBe(
       response.headers['x-request-id'],
@@ -116,6 +116,8 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/transactions/{transactionId}/investigations/{investigationId}/verifications/{id}',
       '/api/activity/metrics',
       '/api/activity',
+      '/api/disputes',
+      '/api/disputes/{id}',
     ]);
     await request(context.app.getHttpServer()).get('/api/docs/').expect(200);
   });

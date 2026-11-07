@@ -24,6 +24,7 @@ apps/api/
       investigator/         # M05: prompts, proveedores y borradores citados (incremento local)
       verifier/             # M06: revisión independiente de fuentes
       monitoring/           # M09: auditoría transaccional, timeline y métricas
+      disputes/             # M07: ingesta, vinculación y estado interno de disputas
     generated/prisma/       # Generado, ignorado en Git
   test/
     unit/
@@ -103,9 +104,9 @@ Revisar el override cuando NestJS actualice su dependencia.
 ESLint y typescript-eslint usan Minimatch 11.0.1 mediante override por
 [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 
-Completar conectores M04, M05–M09, auditoría append-only, herramientas de IA,
-contratos de dominio, prueba real de disputas Sandbox y licencia
-acordada por el equipo.
+Completar conectores M04, M05–M06 y M08–M09, auditoría append-only, herramientas
+de IA, contratos de dominio, presentación real de evidencia, prueba real de
+disputas Sandbox y licencia acordada por el equipo.
 
 M05 cuenta con un primer incremento local de investigación preventiva solicitada
 por ADMIN, con proveedor NVIDIA/OpenAI intercambiable, prompts versionados y
@@ -120,8 +121,10 @@ M02 recibe webhooks mediante M01 (contexto del merchant y OAuth público de
 módulo), verifica firmas con PayPal y guarda eventos/trabajos de forma atómica.
 M03 consume capturas mediante la interfaz pública `IngestionQueueService` de M02,
 que controla los locks y la transacción compartida; cada consumidor escribe solo
-sus tablas. El worker de M03 se activa por configuración. Las disputas permanecen
-`QUEUED` hasta implementar M07. Ver [M03](m03-transactions.md).
+sus tablas. El worker de M03 se activa por configuración. M07 consume
+`DISPUTE_CHANGED` con la misma interfaz, mantiene estados PayPal y locales
+separados y solo vincula capturas de M03 por `seller_transaction_id`; no presenta
+evidencia. Ver [M03](m03-transactions.md) y [M07](m07-disputes.md).
 Ver [M02](m02-event-ingestion.md) para contratos y límites de la verificación.
 
 La ampliación de M03 agrega órdenes comerciales y utiliza el contrato público

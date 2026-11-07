@@ -57,6 +57,7 @@ export const EnvironmentSchema = z.object({
   SWAGGER_ENABLED: booleanFlag.optional(),
   PAYPAL_ENV: z.literal('sandbox').default('sandbox'),
   TRANSACTION_WORKER_ENABLED: booleanFlag.default(false),
+  DISPUTE_WORKER_ENABLED: booleanFlag.default(false),
   PAYPAL_CLIENT_ID: optionalString(z.string().trim().min(1).max(512)),
   PAYPAL_CLIENT_SECRET: optionalString(z.string().min(1).max(512)),
   PAYPAL_WEBHOOK_ID: optionalString(z.string().trim().min(1).max(512)),
@@ -116,6 +117,10 @@ export function parseEnvironment(input: Record<string, unknown>): Environment {
   const result = EnvironmentSchema.safeParse({
     ...input,
     TRANSACTION_WORKER_ENABLED:
+      input.TRANSACTION_WORKER_ENABLED ??
+      (input.NODE_ENV === 'production' ? 'true' : 'false'),
+    DISPUTE_WORKER_ENABLED:
+      input.DISPUTE_WORKER_ENABLED ??
       input.TRANSACTION_WORKER_ENABLED ??
       (input.NODE_ENV === 'production' ? 'true' : 'false'),
   });

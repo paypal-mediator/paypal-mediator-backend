@@ -6,6 +6,7 @@ export * from './orders.js';
 export * from './order-sources.js';
 export * from './evidence.js';
 export * from './investigations.js';
+export * from './disputes.js';
 
 export const HealthResponseSchema = z.object({
   status: z.literal('ok'),
