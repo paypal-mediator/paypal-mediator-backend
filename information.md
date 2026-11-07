@@ -1,3 +1,12 @@
+> **M05/M06 verificados localmente (2026-11-07):** pago nuevo PayPal Sandbox de
+> 1 USD ficticio, webhook genuino, pedido enriquecido y originales íntegros.
+> Investigator y Verifier ejecutados con NVIDIA real: M05 COMPLETED y M06
+> INCOMPLETE por falta de tracking/entrega; sin autorización de envío.
+> Migración M06 aplicada en Supabase; 189 pruebas unitarias/HTTP y 88 PostgreSQL
+> aprobadas. M05/M06 no están desplegados en Render. Aprobación del checkout
+> realizada por el usuario porque el control de Opera GX no estaba disponible.
+> Ver [evidencia y límites](docs/evidence/m01-m06-sandbox-20261107.json).
+
 # ResolveAI — Contexto de proyecto para Codex CLI
 
 ## Incremento M03/M04: fuentes de pedidos
@@ -25,6 +34,22 @@ con bytes idénticos. Issue #10 cerrado. Ver [validación publicada](docs/valida
 > **Objetivo de uso:** leer este documento y `AGENTS.md` al comenzar una sesión; contrastar las propuestas con el código y las pruebas existentes.
 
 ## Estado real al 6 de noviembre de 2026
+
+### M05 — primer incremento local con NVIDIA Nemotron y adaptador OpenAI
+
+Se implementó investigación preventiva INR solicitada por ADMIN: prompts
+versionados, lectura de M03/M04, inspección de originales PNG/JPEG y borradores
+con citas. Octava migración para `investigation_runs`, idempotencia, RLS, límites
+de pasos/tiempo, hashes y detección de resultados obsoletos. El proveedor inicial
+es `nvidia/nemotron-3.5-super-vl-120b-a12b`; se puede cambiar a OpenAI Responses
+mediante configuración. La prueba local con NVIDIA y Supabase reales terminó
+en seis pasos y reconoció la foto de apuntes como irrelevante. OpenAI solo tiene
+pruebas MOCK, sin credenciales reales. No se desplegó M05 en Render.
+
+No hay fuente comercial conectada, extracción de PDF, Verifier M06 ni presentación
+M08. El resultado es un borrador que requiere verificación: se observaron errores
+semánticos del modelo aun con schema/citas válidos. Ver [M05](docs/m05-investigator.md)
+y [salida original de NVIDIA](docs/evidence/m05-nvidia-live-20261106.json).
 
 ### M04 — archivos originales privados, desplegados y verificados
 

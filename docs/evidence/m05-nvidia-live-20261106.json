@@ -1,0 +1,124 @@
+{
+  "verifiedAt": "2026-11-06T19:46:45.307Z",
+  "apiExecution": "LOCAL_NESTJS_REAL_NVIDIA_SUPABASE",
+  "requestedModel": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+  "transactionId": "c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a",
+  "captureId": "0R443662EP786444T",
+  "idempotentReplay": true,
+  "unauthenticatedHttp": 401,
+  "openaiRealTested": false,
+  "commercialSourceConnected": false,
+  "notice": "NVIDIA and Supabase Auth/PostgreSQL/Storage are real. Payment is genuine PayPal Sandbox; commerce/shipping records are DEMO. This is an unverified draft, not approval or a submission. No external commercial source was queried.",
+  "investigation": {
+    "id": "cdfe803a-acff-4a88-ab44-4fcca99fc4d3",
+    "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+    "transactionId": "c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a",
+    "idempotencyKey": "6c0234d5-60d4-4484-ad36-431fbb742016",
+    "status": "COMPLETED",
+    "provider": "NVIDIA",
+    "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+    "promptVersion": "m05-inr-v1.1",
+    "evidenceRevision": 7,
+    "containsDemo": true,
+    "commercialSource": "NOT_CONNECTED",
+    "requiresVerification": true,
+    "errorCode": null,
+    "createdAt": "2026-11-06T19:46:18.237Z",
+    "finishedAt": "2026-11-06T19:46:42.708Z",
+    "expiresAt": "2026-11-06T19:47:18.234Z",
+    "expired": false,
+    "stale": false,
+    "result": {
+      "summary": "Expediente en entorno sandbox DEMO. Se leyó el índice y los cinco documentos originales. La orden, el pago, el tracking y el POD están vinculados al mismo capture y referencia de comerciante, pero todos son de origen DEMO/MOCK. La foto de WhatsApp aportada por el comerciante es una actividad escolar de matemáticas y no tiene relación con la transacción. No existe fuente comercial conectada. No se puede considerar evidencia comercial de entrega ni de producto real.",
+      "findings": [
+        {
+          "statement": "Pago capturado en PayPal sandbox por 1 USD, capture 0R443662EP786444T, orden 8YN46316PH6397206, capturado 2026-11-06T18:50:36Z.",
+          "evidenceIds": ["31b25cc8-2a58-43a3-b001-50d0a3f65d18"]
+        },
+        {
+          "statement": "Orden DEMO por 1 USD, artículo 'DEMO / MOCK test item - no real goods', referencia M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46, ordenada 2026-11-06T18:43:51Z.",
+          "evidenceIds": ["6c797f87-61b5-4e2a-bbd5-325052368ae9"]
+        },
+        {
+          "statement": "Tracking DEMO con estado DELIVERED, número M04-DEMO-52481e8f-652b-437a-9e8e-74d076b4bc46-TRACK, enviado 2026-11-06T18:50:36Z.",
+          "evidenceIds": ["c3848b13-775b-4280-9cbb-45b6225f63da"]
+        },
+        {
+          "statement": "POD DEMO con estado DELIVERED, entregado 2026-11-06T18:51:08.303Z, mismo número de tracking y referencia de comerciante.",
+          "evidenceIds": ["85325b3d-2a4b-488a-b4d0-e37679dd3e34"]
+        },
+        {
+          "statement": "Documento MERCHANT_INPUT 9c04f004 es una foto de apuntes de matemáticas (Actividad 5, 3er. Parcial), no evidencia comercial de entrega ni del pedido.",
+          "evidenceIds": ["9c04f004-93e7-404f-9a80-2747484919ed"]
+        }
+      ],
+      "missing": [
+        {
+          "code": "COMMERCIAL_SOURCE_NOT_CONNECTED",
+          "explanation": "No hay tienda ni carrier real conectados; todas las fuentes de envío y pedido son DEMO/MOCK."
+        },
+        {
+          "code": "REAL_DELIVERY_EVIDENCE_MISSING",
+          "explanation": "No se dispone de comprobante de entrega de un carrier real ni de evidencia de envío de producto físico."
+        }
+      ],
+      "contradictions": [
+        {
+          "statement": "READINESS indica DOCUMENT_COVERAGE READY, pero la cobertura es exclusivamente de documentos DEMO y un archivo irrelevante; no constituye cobertura comercial válida.",
+          "evidenceIds": [
+            "9c04f004-93e7-404f-9a80-2747484919ed",
+            "c3848b13-775b-4280-9cbb-45b6225f63da",
+            "85325b3d-2a4b-488a-b4d0-e37679dd3e34",
+            "6c797f87-61b5-4e2a-bbd5-325052368ae9",
+            "31b25cc8-2a58-43a3-b001-50d0a3f65d18"
+          ]
+        }
+      ],
+      "irrelevantEvidenceIds": ["9c04f004-93e7-404f-9a80-2747484919ed"],
+      "suggestedResponse": "No se cuenta con evidencia comercial suficiente para responder una disputa INR. El pago existe en sandbox, pero el pedido, tracking y POD son DEMO/MOCK y el documento del comerciante es irrelevante. Se recomienda no presentar este expediente como prueba de entrega real y obtener evidencia de carrier y entrega reales antes de responder."
+    },
+    "deterministicIssues": ["COMMERCIAL_SOURCE_NOT_CONNECTED"],
+    "trace": [
+      {
+        "step": 1,
+        "action": "READ_EVIDENCE",
+        "evidenceId": "9c04f004-93e7-404f-9a80-2747484919ed",
+        "outcome": "IMAGE_ORIGINAL"
+      },
+      {
+        "step": 2,
+        "action": "READ_EVIDENCE",
+        "evidenceId": "c3848b13-775b-4280-9cbb-45b6225f63da",
+        "outcome": "JSON_ORIGINAL"
+      },
+      {
+        "step": 3,
+        "action": "READ_EVIDENCE",
+        "evidenceId": "85325b3d-2a4b-488a-b4d0-e37679dd3e34",
+        "outcome": "JSON_ORIGINAL"
+      },
+      {
+        "step": 4,
+        "action": "READ_EVIDENCE",
+        "evidenceId": "6c797f87-61b5-4e2a-bbd5-325052368ae9",
+        "outcome": "JSON_ORIGINAL"
+      },
+      {
+        "step": 5,
+        "action": "READ_EVIDENCE",
+        "evidenceId": "31b25cc8-2a58-43a3-b001-50d0a3f65d18",
+        "outcome": "JSON_ORIGINAL"
+      },
+      {
+        "step": 6,
+        "action": "FINISH",
+        "evidenceId": null,
+        "outcome": "DRAFT_REQUIRES_VERIFICATION"
+      }
+    ],
+    "usage": {
+      "inputTokens": 27130,
+      "outputTokens": 1378
+    }
+  }
+}

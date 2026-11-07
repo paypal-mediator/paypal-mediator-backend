@@ -1,5 +1,35 @@
 # Validaciones del backend
 
+## M05 local: NVIDIA real y OpenAI intercambiable — 6 de noviembre de 2026
+
+- `pnpm check`: **157 pruebas unitarias/HTTP**, tipos, lint, formato, Prisma y
+  build aprobados. `pnpm test:db`: **79 pruebas PostgreSQL aprobadas**. Se
+  aplicaron ocho migraciones desde cero, se reaplicaron sin pendientes y
+  `prisma migrate diff` no detectó diferencias. La octava se aplicó también en
+  Supabase para la prueba externa del módulo local.
+- Una llamada de conectividad DEMO al endpoint NVIDIA respondió HTTP 200 con
+  `nvidia/nemotron-3.5-super-vl-120b-a12b`. No se hizo una llamada real a OpenAI;
+  su adaptador Responses, schema estricto y ausencia de fallback se probaron con MOCK.
+- Investigación local con Supabase Auth/PostgreSQL/Storage y NVIDIA reales:
+  `cdfe803a-acff-4a88-ab44-4fcca99fc4d3`, estado COMPLETED, prompt `m05-inr-v1.1`,
+  seis pasos, 27130 tokens de entrada y 1378 de salida. Leyó pago, pedido,
+  tracking, entrega y la foto original del usuario; clasificó esta última como
+  apuntes de matemáticas sin relevancia para una entrega.
+- La repetición con la misma clave devolvió el mismo resultado/uso sin otra
+  investigación; sin JWT HTTP 401. Se activó temporalmente el permiso de
+  investigación mediante M01 y se restauró después. No se habilitaron envíos.
+- El borrador conserva IDs citados y `requiresVerification=true`. Los registros
+  comerciales/envío son DEMO; no existe fuente comercial conectada. El resumen
+  del modelo todavía mezcla etiquetas de procedencia y marca READY/DEMO como
+  contradicción: son errores semánticos observados, no se corrigió la salida
+  para simular una respuesta perfecta. M06 sigue siendo necesario.
+- M05 aún no está desplegado en Render. El circuito de disputas M07 y la
+  presentación M08 no se ejecutaron. PDF se conserva, pero M05 declara que su
+  contenido no fue analizado; imágenes PNG/JPEG sí se pueden inspeccionar.
+
+Ver [contrato y límites M05](m05-investigator.md) y
+[salida original de la prueba real](evidence/m05-nvidia-live-20261106.json).
+
 ## M04: archivo existente del usuario y Storage real — 6 de noviembre de 2026
 
 Se eligió, con autorización del usuario, una foto de apuntes de matemáticas
@@ -502,3 +532,49 @@ Regresión Storage de solo lectura desde Render: el JPEG existente del usuario
 se descargó con HTTP 200, 83.183 bytes e idéntico SHA-256 al archivo original;
 sin sesión HTTP 401. No se generó sustituto ni se adjuntó esa foto como prueba
 de envío a la nueva compra. Ver [resultado](evidence/order-sources-storage-regression-20261106.json).
+
+## Recorrido real M01–M06 — 7 de noviembre de 2026
+
+Orden `41C54140SD9188621`, captura `9MX67512MD686194C`, 1 USD ficticio. El usuario
+aprobó el checkout Sandbox en Opera GX: el controlador de ventanas no estuvo
+disponible y no hubo navegador conectado. La captura devolvió HTTP 201/COMPLETED.
+No se utilizó Live ni se presentó evidencia de disputa.
+
+- M01: login Supabase real, ADMIN HTTP 200, sin sesión 401; OAuth CONNECTED y
+  lectura de disputas AVAILABLE. Readiness local y Render HTTP 200.
+- M02: webhook genuino `WH-5GK32453EX0443533-1P325080EG777670J`, verificado en
+  Render y persistido; trabajo TRANSACTION_CAPTURED COMPLETED.
+- M03: transacción `b62b4f9e-2f1b-4daf-a1f4-63e9e6cf6b9a`, pedido LINKED y dos
+  artículos recuperados de PayPal; sin pedido manual ni tracking DEMO.
+- M04: originales PAYMENT_RECORD, ORDER_SOURCE_RECORD y ORDER_RECORD con
+  integridad VALID; revisión 3 estable tras refresh. Descarga de un JPEG previo
+  de Storage privado: HTTP 200, 83.183 bytes y SHA-256 idéntico; sin sesión 401.
+  Ese archivo no se adjuntó a la compra nueva ni se compartió con los agentes.
+- M05: NVIDIA real, COMPLETED, sources AVAILABLE, requiresVerification=true;
+  repetición de clave devolvió el mismo ID sin otra inferencia.
+- M06: NVIDIA real con contexto y lecturas propios, nueve unidades del borrador
+  evaluadas y ocho dimensiones presentes. Resultado final INCOMPLETE: cobertura
+  FAIL por faltantes de tracking/entrega; las otras siete dimensiones PASS.
+  submissionAuthorized=false. Repetir la clave conserva el resultado.
+
+La prueba descubrió y corrigió dos fallos: NVIDIA devolvía evidenceIds fuera de
+los hallazgos (se activó response_format json_schema estricto) y M06 comparaba
+custom_id comercial con el ID de orden PayPal (se limitó esa comparación a
+tracking/entrega). Los FAILED y el primer REJECTED permanecen en el historial.
+Un reintento sin revisión tras REJECTED devolvió 409. Antes de repetir M06 el
+usuario autorizó explícitamente una revisión, registrada con actor, fecha y motivo.
+El prompt v2.1 recibe verificationAsOf y distingue vigencia de cobertura.
+
+M05/M06 se ejecutaron en el backend local actual contra Supabase real; el webhook
+público sigue en Render. No implica despliegue de esos módulos. Se restauró
+allowInvestigations=false; allowSubmissions=false y aprobación humana obligatoria.
+No se demostró APPROVED con entrega real: esos escenarios siguen siendo MOCK.
+
+Validación automatizada: 189 pruebas unitarias/HTTP y 88 PostgreSQL aprobadas;
+diez migraciones aplicadas y repetidas en PostgreSQL desechable, diff sin cambios.
+La migración M06 también se aplicó en Supabase. Tipos, ESLint, build y formato de
+archivos versionados aprobados. pnpm check se detuvo en format:check por el
+Implementation.md preexistente sin seguimiento; no se modificó ese archivo.
+Los mocks de las suites se distinguen del recorrido externo real anterior.
+
+Evidencia sanitizada: [M01–M06](evidence/m01-m06-sandbox-20261107.json).

@@ -273,4 +273,18 @@ export class TransactionsService {
       { timeout: 15000 },
     );
   }
+
+  // Public read interface for M05: payment/order and dossier share one snapshot.
+  async investigationSnapshot(merchantId: string, id: string) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const row = await this.row(tx, merchantId, id);
+        return {
+          transaction: (await this.responses(tx, [row]))[0]!,
+          dossier: await this.evidence.dossier(tx, evidenceContext(row)),
+        };
+      },
+      { isolationLevel: 'RepeatableRead' },
+    );
+  }
 }

@@ -21,6 +21,7 @@ apps/api/
       event-ingestion/      # M02: firma, persistencia y outbox de webhooks
       transactions/         # M03: capturas, consultas y checklist documental
       evidence/             # M04: registros, archivos privados, versiones y cobertura
+      investigator/         # M05: prompts, proveedores y borradores citados (incremento local)
     generated/prisma/       # Generado, ignorado en Git
   test/
     unit/
@@ -98,6 +99,12 @@ Completar conectores M04, M05–M09, auditoría append-only, herramientas de IA,
 contratos de dominio, prueba real de disputas Sandbox y licencia
 acordada por el equipo.
 
+M05 cuenta con un primer incremento local de investigación preventiva solicitada
+por ADMIN, con proveedor NVIDIA/OpenAI intercambiable, prompts versionados y
+tabla propia `investigation_runs`. Consume la interfaz pública de M03/M04 y
+políticas de M01; no escribe evidencia ni presenta a PayPal. NVIDIA se verificó
+con servicios reales; OpenAI solo con MOCK. Ver [M05](m05-investigator.md).
+
 El backend está publicado en Render; ver [despliegue](deployment.md) para la URL,
 configuración y límites de la validación externa.
 
@@ -115,3 +122,11 @@ La unidad de trabajo Prisma se comparte por parámetro; cada servicio escribe so
 sus tablas. M04 recibe contexto autorizado de M03 y no importa su módulo. Los GET
 leen snapshots; POST de pedido/evidencia/refresh reconcilian y persisten. Ver
 [contrato M04](m04-evidence.md) y los límites de una captura/un paquete por pedido.
+
+## Integraci?n local M05/M06 pendiente de pruebas
+
+M06 (`verifier`) consume la interfaz p?blica M05 y recupera originales de M03/M04
+con contexto independiente. Es propietario de VerificationRun; no escribe resultados
+en InvestigationRun. Comparte solo el transporte AI exportado por InvestigatorModule.
+Ver [contrato y l?mites M06](m06-verifier.md). Este incremento no est? validado con
+pruebas ni aplicado a PostgreSQL; no implica implementaci?n de M07/M08.
