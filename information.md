@@ -3,7 +3,9 @@
 > Investigator y Verifier ejecutados con NVIDIA real: M05 COMPLETED y M06
 > INCOMPLETE por falta de tracking/entrega; sin autorización de envío.
 > Migración M06 aplicada en Supabase; 189 pruebas unitarias/HTTP y 88 PostgreSQL
-> aprobadas. M05/M06 no están desplegados en Render. Aprobación del checkout
+> aprobadas. M05/M06 ya están desplegados en Render con GET verificados; falta
+> configurar NVIDIA_API_KEY allí para habilitar inferencia (POST devuelve 503).
+> Aprobación del checkout
 > realizada por el usuario porque el control de Opera GX no estaba disponible.
 > Ver [evidencia y límites](docs/evidence/m01-m06-sandbox-20261107.json).
 

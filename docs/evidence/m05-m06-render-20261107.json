@@ -1,0 +1,70 @@
+{
+  "sourceCommit": "f4be53458be9a8de4594036521b868a73d81580f",
+  "pullRequest": "https://github.com/paypal-mediator/paypal-mediator-backend/pull/14",
+  "ci": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/42352200326",
+  "ciResult": "success",
+  "deployment": "Render automatic deployment after main CI; new routes returned 401 unauthenticated and 200 authenticated after returning 404 before deployment",
+  "configuration": "NVIDIA_API_KEY missing in Render; new agent POST requests fail closed with HTTP 503 INVESTIGATOR_NOT_CONFIGURED",
+  "originalPermissionsRestored": true,
+  "verification": {
+    "checkedAt": "2026-11-07T07:43:09.383Z",
+    "api": "https://resolve-ai-api-ybmj.onrender.com/api",
+    "transactionId": "b62b4f9e-2f1b-4daf-a1f4-63e9e6cf6b9a",
+    "steps": {
+      "m01": {
+        "http": 200,
+        "role": "ADMIN",
+        "policy": {
+          "allowInvestigations": false,
+          "allowSubmissions": false,
+          "requireMerchantApproval": true
+        }
+      },
+      "readiness": {
+        "http": 200,
+        "status": "ready"
+      },
+      "m03": {
+        "http": 200,
+        "captureId": "9MX67512MD686194C",
+        "readiness": "INCOMPLETE"
+      },
+      "m05Read": {
+        "http": 200,
+        "status": "COMPLETED",
+        "promptVersion": "m05-inr-v1.2"
+      },
+      "m06Read": {
+        "http": 200,
+        "status": "COMPLETED",
+        "verdict": "INCOMPLETE",
+        "promptVersion": "m06-inr-v2.1",
+        "stale": false,
+        "submissionAuthorized": false,
+        "dimensions": 8
+      },
+      "m06Unauthorized": {
+        "http": 401,
+        "code": "UNAUTHENTICATED"
+      },
+      "m05IdempotentRuntime": {
+        "http": 503,
+        "code": "INVESTIGATOR_NOT_CONFIGURED",
+        "sameId": false
+      },
+      "m06IdempotentRuntime": {
+        "http": 503,
+        "code": "INVESTIGATOR_NOT_CONFIGURED",
+        "sameId": false
+      },
+      "policyRestored": {
+        "http": 200,
+        "policy": {
+          "allowInvestigations": false,
+          "allowSubmissions": false,
+          "requireMerchantApproval": true
+        }
+      }
+    }
+  }
+}

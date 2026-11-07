@@ -2,7 +2,8 @@
 
 Implementado y conectado a M05. Verificado localmente el 7 de noviembre de 2026
 con PayPal Sandbox, Supabase y NVIDIA reales. Migración aplicada en Supabase.
-M05/M06 todavía no están desplegados en Render. El expediente de la compra real
+M05/M06 están desplegados en Render; falta configurar NVIDIA_API_KEY para inferencia
+remota. Los GET de resultados están verificados. El expediente de la compra real
 de prueba quedó INCOMPLETE por ausencia de tracking y entrega.
 Ver [validación](validation.md) y [evidencia sanitizada](evidence/m01-m06-sandbox-20261107.json).
 

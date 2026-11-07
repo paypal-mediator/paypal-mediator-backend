@@ -1,5 +1,30 @@
 # Backend público y webhook PayPal
 
+## M05/M06 publicados — 7 de noviembre de 2026
+
+PR #14 integrado en main, commit f4be534. CI aprobó pnpm check con 189 pruebas
+unitarias/HTTP, migraciones y 88 pruebas PostgreSQL. Implementation.md está
+versionado. Render publicó automáticamente después de CI.
+
+Readiness, merchant, transacción y resultados M05/M06 autenticados devuelven HTTP
+200; M06 sin sesión devuelve 401. El resultado real permanece INCOMPLETE, vigente,
+con ocho dimensiones y submissionAuthorized=false. Los GET publicados sustituyen
+los 404 observados antes del despliegue.
+
+**Configuración pendiente:** NVIDIA_API_KEY no está configurada en Render. Los POST
+M05/M06 responden 503 INVESTIGATOR_NOT_CONFIGURED; no se ha demostrado inferencia
+desde el servicio publicado. Configurar el secreto del proveedor en Environment,
+fuera de Git, con AI_PROVIDER=nvidia y NVIDIA_MODEL=nvidia/nemotron-3.5-super-vl-120b-a12b.
+El modelo NVIDIA ya tiene ese valor por defecto. Alternativa OpenAI: configurar
+AI_PROVIDER=openai, OPENAI_API_KEY y OPENAI_MODEL, sin fallback automático.
+
+La migración M06 ya está aplicada en Supabase. La prueba de lectura/idempotencia
+restauró allowInvestigations=false; envíos deshabilitados y aprobación humana
+obligatoria. Para ajustar secretos desde Codex falta conectar el plugin Render;
+también pueden configurarse en su panel y volver a verificar.
+
+Evidencia: [verificación publicada](evidence/m05-m06-render-20261107.json).
+
 ## Servicio del proyecto
 
 - API: <https://resolve-ai-api-ybmj.onrender.com/api>.
