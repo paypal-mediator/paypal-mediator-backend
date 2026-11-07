@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-11-06T23:35:01.982Z",
+  "apiBase": "https://resolve-ai-api-ybmj.onrender.com/api",
+  "transactionId": "c749a5d6-bd30-42e6-bfc0-f81c4c38cf6a",
+  "paypalOrderId": "8YN46316PH6397206",
+  "manualSourceUnchanged": "DEMO",
+  "manualIdUnchanged": true,
+  "paypalSourceStatus": "PARTIAL",
+  "paypalSourceIntegrity": "VALID",
+  "actualMissingFields": [
+    "breakdown.item_total",
+    "breakdown.shipping",
+    "breakdown.tax_total",
+    "breakdown.handling",
+    "breakdown.insurance",
+    "breakdown.shipping_discount",
+    "breakdown.discount",
+    "items"
+  ],
+  "items": [],
+  "shippingAmount": null,
+  "orderLink": {
+    "status": "LINKED",
+    "reason": null
+  },
+  "readiness": "READY",
+  "provenanceKinds": ["PAYPAL", "MERCHANT_INPUT", "DEMO"]
+}

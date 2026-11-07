@@ -16,7 +16,7 @@ import { EvidenceService } from '../evidence/index.js';
 import { lockMerchantOrders, reconcileOrder } from './order-linking.js';
 import {
   evidenceContext,
-  orderResponse,
+  sourceEnrichment,
   type TransactionWithOrder,
 } from './order-mapping.js';
 import {
@@ -24,6 +24,7 @@ import {
   IngestionRejection,
 } from '../event-ingestion/index.js';
 import { parseCapture } from './capture.js';
+import { OrderSourcesService } from './sources/order-sources.service.js';
 
 function response(
   row: TransactionWithOrder,
@@ -34,16 +35,17 @@ function response(
     amount: { currencyCode: row.currencyCode, value: row.amount.toFixed() },
     capturedAt: row.capturedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
-    order: row.merchantOrder ? orderResponse(row.merchantOrder) : null,
+    order: evidenceContext(row).order,
+    orderEnrichment: sourceEnrichment(row),
     orderLink: {
       status: evidenceContext(row).orderLinkError
         ? 'CONFLICT'
-        : row.merchantOrderId
+        : evidenceContext(row).order
           ? 'LINKED'
           : 'UNLINKED',
       reason:
         evidenceContext(row).orderLinkError ??
-        (row.merchantOrderId ? null : 'ORDER_NOT_FOUND'),
+        (evidenceContext(row).order ? null : 'ORDER_NOT_FOUND'),
     },
     readiness,
   });
@@ -56,6 +58,7 @@ export class TransactionsService {
     @Inject(IngestionQueueService)
     private readonly queue: IngestionQueueService,
     @Inject(EvidenceService) private readonly evidence: EvidenceService,
+    @Inject(OrderSourcesService) private readonly sources: OrderSourcesService,
   ) {}
 
   async processNextCapture(merchantId: string) {
@@ -92,6 +95,7 @@ export class TransactionsService {
             throw new IngestionRejection('CAPTURE_CONFLICT');
           const linked = await reconcileOrder(tx, existing);
           await this.evidence.syncBase(tx, evidenceContext(linked));
+          await this.sources.schedule(tx, linked);
           return;
         }
         const created = await tx.transaction.create({
@@ -104,6 +108,7 @@ export class TransactionsService {
         });
         const linked = await reconcileOrder(tx, created);
         await this.evidence.syncBase(tx, evidenceContext(linked));
+        await this.sources.schedule(tx, linked);
       },
     );
   }
@@ -119,7 +124,7 @@ export class TransactionsService {
       async (tx) => {
         const items = await tx.transaction.findMany({
           where,
-          include: { merchantOrder: true },
+          include: { merchantOrder: true, orderSources: true },
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
           skip: (query.page - 1) * query.pageSize,
           take: query.pageSize,
@@ -153,7 +158,7 @@ export class TransactionsService {
   ) {
     const row = await tx.transaction.findFirst({
       where: { id, merchantId },
-      include: { merchantOrder: true },
+      include: { merchantOrder: true, orderSources: true },
     });
     if (!row)
       throw new ApiException(
@@ -188,6 +193,14 @@ export class TransactionsService {
       },
       { timeout: 15000 },
     );
+  }
+
+  processNextOrderSource(merchantId: string) {
+    return this.sources.processNext(merchantId);
+  }
+  async refreshOrderSources(actor: MerchantActor, id: string) {
+    await this.sources.refresh(actor.merchantId, id);
+    return this.detail(actor.merchantId, id);
   }
 
   async registerEvidence(

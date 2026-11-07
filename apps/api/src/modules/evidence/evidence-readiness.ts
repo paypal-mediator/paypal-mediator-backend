@@ -57,6 +57,11 @@ export function evaluateEvidence(
     data: ReturnType<typeof DeliveryContentSchema.parse>;
   }> = [];
   for (const item of current) {
+    if (item.type === 'ORDER_SOURCE_RECORD') {
+      if (item.contentHash !== contentHash(item.content))
+        conflict('ORDER_RECORD', 'EVIDENCE_INTEGRITY_MISMATCH');
+      continue;
+    }
     if (item.type === 'DOCUMENT') {
       if (
         item.contentHash !== contentHash(item.content) ||
@@ -81,9 +86,18 @@ export function evaluateEvidence(
       continue;
     }
     if (item.type === 'ORDER_RECORD') {
-      if (!context.order || item.contentHash !== contentHash(context.order))
+      if (
+        !(context.orders ?? (context.order ? [context.order] : [])).some(
+          (order) => item.contentHash === contentHash(order),
+        )
+      )
         conflict(code, 'ORDER_RECORD_MISMATCH');
-      else if (!context.orderLinkError && target.status !== 'CONFLICT')
+      else if (
+        context.order &&
+        context.orderRecordComplete !== false &&
+        !context.orderLinkError &&
+        target.status !== 'CONFLICT'
+      )
         target.status = 'PRESENT';
       continue;
     }
@@ -110,7 +124,10 @@ export function evaluateEvidence(
         conflict(code, 'SHIPMENT_CANCELLED');
         continue;
       }
-      if (Date.parse(data.shippedAt) < Date.parse(context.order.orderedAt)) {
+      if (
+        context.order.orderedAt &&
+        Date.parse(data.shippedAt) < Date.parse(context.order.orderedAt)
+      ) {
         conflict(code, 'SHIPMENT_BEFORE_ORDER');
         continue;
       }
@@ -121,7 +138,10 @@ export function evaluateEvidence(
         reasons.push('DELIVERY_RETRACTED');
         continue;
       }
-      if (Date.parse(data.deliveredAt) < Date.parse(context.order.orderedAt)) {
+      if (
+        context.order.orderedAt &&
+        Date.parse(data.deliveredAt) < Date.parse(context.order.orderedAt)
+      ) {
         conflict(code, 'DELIVERY_BEFORE_ORDER');
         continue;
       }

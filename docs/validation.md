@@ -484,3 +484,51 @@ y las 34 pruebas PostgreSQL aprobaron CI.
 Esto verifica el flujo de captura entre M01, M02, PayPal, Render y Supabase.
 No verifica eventos genuinos de disputas ni consumidores de M03/M07; el
 trabajo permanece en la outbox hasta implementar esos módulos.
+
+# Fuentes de pedidos: prueba real Sandbox, 6 de noviembre de 2026
+
+- Orden `5AA87137A4512751T`, captura `9L5781332K437132K`: HTTP 201,
+  `COMPLETED`, 1 USD ficticio, aprobada por el usuario en Opera GX controlado por CDP local.
+- M01: Auth Supabase real, ADMIN HTTP 200; OAuth PayPal conectado HTTP 201.
+- M02 en Render: evento genuino `WH-21J09557NM515442T-05V02304MT7334107`,
+  firma verificada, trabajo `COMPLETED`.
+- M03/M04 nuevos ejecutados localmente contra Supabase real **antes del commit**;
+  worker publicado temporalmente pausado para evitar competencia.
+  Transacción `949523cc-d4f3-4fba-9c4d-e3aecaa4a687`, sin `merchantOrderId`
+  y sin `POST /orders`: fuente `PAYPAL`, asociación `LINKED`, enriquecimiento `COMPLETE`.
+- Dos artículos reales del checkout de prueba: SKU SANDBOX-A, cantidad 2,
+  unitario USD `0.30`; SANDBOX-B, cantidad 1, unitario USD `0.20`.
+  Item total `0.80`, envío `0.10`, impuestos `0.10`; los otros ceros fueron
+  enviados explícitamente en el checkout y devueltos por PayPal.
+- M04: `PAYMENT_RECORD`, `ORDER_SOURCE_RECORD` con JSON original PayPal y
+  `ORDER_RECORD`, los tres con integridad `VALID`. Refresh HTTP 201 sin aumentar
+  revisión 3. Sin sesión HTTP 401. Readiness `INCOMPLETE`: no se fabricó tracking
+  ni entrega. No se enviaron evidencias a PayPal.
+- `pnpm check`: 168 pruebas unitarias/HTTP. `pnpm test:db`: 72 pruebas en
+  PostgreSQL desechable; PayPal/JWKS/ERP son MOCK en esas suites. Migración
+  aplicada, repetida sin pendientes y sin diferencias de schema; aplicada también
+  en Supabase. Los originales JSON están en M04 privado; no se guardan respuestas
+  con datos personales completos ni credenciales en Git.
+
+Evidencia técnica sanitizada: [JSON](evidence/order-sources-sandbox-20261106.json).
+Contrato y limitaciones: [fuentes](order-information-sources.md).
+
+### Confirmación publicada
+
+PR #15 integrado en `main` (`728eb59`), CI aprobado y Render `Live`.
+Se restauró `TRANSACTION_WORKER_ENABLED=true` y se detuvo el worker local.
+La misma transacción se leyó desde Render con sus dos artículos; refresh
+consultó PayPal y mantuvo revisión 3. Sin sesión HTTP 401.
+Ver [verificación publicada](evidence/order-sources-render-20261106.json).
+
+Backfill real de `8YN46316PH6397206`: PayPal no proporcionó artículos ni
+breakdowns, por lo que devuelve `PARTIAL`, `items: []` y envío `null`.
+El pedido DEMO anterior conserva su ID y procedencia; PayPal se agrega como fuente
+independiente. El `READY` de ese expediente anterior procede de su cobertura
+DEMO de tracking/entrega y no convierte esos datos en información verificada.
+Ver [backfill publicado](evidence/order-sources-backfill-20261106.json).
+
+Regresión Storage de solo lectura desde Render: el JPEG existente del usuario
+se descargó con HTTP 200, 83.183 bytes e idéntico SHA-256 al archivo original;
+sin sesión HTTP 401. No se generó sustituto ni se adjuntó esa foto como prueba
+de envío a la nueva compra. Ver [resultado](evidence/order-sources-storage-regression-20261106.json).

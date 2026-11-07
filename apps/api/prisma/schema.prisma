@@ -25,6 +25,7 @@ model Merchant {
   orders                  MerchantOrder[]
   dossiers                EvidenceDossier[]
   investigations          InvestigationRun[]
+  orderSources            OrderSourceJob[]
 
   @@map("merchants")
 }
@@ -133,6 +134,7 @@ model Transaction {
   merchantOrder  MerchantOrder?     @relation(fields: [merchantOrderId, merchantId], references: [id, merchantId], onDelete: Restrict)
   dossier        EvidenceDossier?
   investigations InvestigationRun[]
+  orderSources   OrderSourceJob[]
 
   @@unique([merchantId, environment, paypalCaptureId])
   @@unique([merchantOrderId, merchantId])
@@ -234,4 +236,34 @@ model InvestigationRun {
   @@unique([merchantId, transactionId, idempotencyKey], map: "investigation_runs_merchant_id_transaction_id_idempotency_key_k")
   @@index([merchantId, transactionId, createdAt])
   @@map("investigation_runs")
+}
+
+// M03 owns source work and normalized current data; M04 owns original history.
+model OrderSourceJob {
+  id              String      @id @default(uuid()) @db.Uuid
+  merchantId      String      @map("merchant_id") @db.Uuid
+  transactionId   String      @map("transaction_id") @db.Uuid
+  providerId      String      @map("provider_id") @db.VarChar(64)
+  sourceKind      String      @map("source_kind")
+  sourceSystem    String      @map("source_system") @db.VarChar(255)
+  status          String      @default("PENDING")
+  attempts        Int         @default(0)
+  leaseToken      String?     @map("lease_token") @db.Uuid
+  leaseExpiresAt  DateTime?   @map("lease_expires_at") @db.Timestamptz(3)
+  nextAttemptAt   DateTime?   @map("next_attempt_at") @db.Timestamptz(3)
+  lastCheckedAt   DateTime?   @map("last_checked_at") @db.Timestamptz(3)
+  lastSucceededAt DateTime?   @map("last_succeeded_at") @db.Timestamptz(3)
+  errorCode       String?     @map("error_code") @db.VarChar(128)
+  httpStatus      Int?        @map("http_status")
+  evidenceId      String?     @map("evidence_id") @db.Uuid
+  normalized      Json?
+  contentHash     String?     @map("content_hash") @db.VarChar(64)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  merchant        Merchant    @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  transaction     Transaction @relation(fields: [transactionId, merchantId], references: [id, merchantId], onDelete: Cascade)
+
+  @@unique([transactionId, providerId])
+  @@index([merchantId, status, nextAttemptAt])
+  @@map("order_source_jobs")
 }

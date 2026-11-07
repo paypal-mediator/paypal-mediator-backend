@@ -8,10 +8,14 @@ import { TransactionsWorker } from '../../src/modules/transactions/transactions.
 describe('M03 worker scheduling', () => {
   const merchantId = '00000000-0000-4000-8000-000000000001';
   const processNextCapture = vi.fn<TransactionsService['processNextCapture']>();
+  const processNextOrderSource = vi.fn().mockResolvedValue('EMPTY');
   let worker: TransactionsWorker;
   function start(enabled: boolean, merchant: string | undefined = merchantId) {
     worker = new TransactionsWorker(
-      { processNextCapture } as unknown as TransactionsService,
+      {
+        processNextCapture,
+        processNextOrderSource,
+      } as unknown as TransactionsService,
       parseEnvironment({
         DATABASE_URL: 'postgresql://localhost:1/MOCK',
         TRANSACTION_WORKER_ENABLED: String(enabled),
@@ -38,7 +42,10 @@ describe('M03 worker scheduling', () => {
     async (enabled, merchant) => {
       // Pass undefined explicitly in configuration, bypassing the helper default.
       worker = new TransactionsWorker(
-        { processNextCapture } as unknown as TransactionsService,
+        {
+          processNextCapture,
+          processNextOrderSource,
+        } as unknown as TransactionsService,
         parseEnvironment({
           DATABASE_URL: 'postgresql://localhost:1/MOCK',
           TRANSACTION_WORKER_ENABLED: String(enabled),
