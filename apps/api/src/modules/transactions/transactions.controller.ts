@@ -135,6 +135,7 @@ export class TransactionsController {
       request.merchantActor.merchantId,
       id,
       evidenceId,
+      request.merchantActor.userId,
     );
     return new StreamableFile(file.bytes, {
       type: file.mediaType,

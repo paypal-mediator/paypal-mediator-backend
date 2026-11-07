@@ -1,3 +1,4 @@
+import { AuditService } from '../monitoring/audit.service.js';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   InvestigationResponseSchema,
@@ -34,7 +35,17 @@ export class InvestigatorService {
     @Inject(AgentProvider) private readonly provider: AgentProvider,
     @Inject(InvestigatorEngine) private readonly engine: InvestigatorEngine,
     @Inject(ENVIRONMENT) private readonly env: Environment,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
+
+  async operationalMetrics(merchantId: string) {
+    const groups = await this.prisma.investigationRun.groupBy({
+      by: ['status'],
+      where: { merchantId },
+      _count: { _all: true },
+    });
+    return groups.map((g) => ({ status: g.status, count: g._count._all }));
+  }
 
   async start(
     actor: MerchantActor,
@@ -65,7 +76,7 @@ export class InvestigatorService {
     const acquired = await this.prisma.$transaction(async (tx) => {
       const key = `investigate:${actor.merchantId}:${transactionId}`;
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))::text`;
-      await tx.investigationRun.updateMany({
+      const expired = await tx.investigationRun.updateManyAndReturn({
         where: {
           merchantId: actor.merchantId,
           transactionId,
@@ -78,6 +89,24 @@ export class InvestigatorService {
           finishedAt: new Date(),
         },
       });
+      for (const run of expired)
+        await this.audit.append(
+          {
+            merchantId: run.merchantId,
+            actorUserId: run.actorUserId,
+            actorKind: 'SYSTEM',
+            transactionId: run.transactionId,
+            resourceType: 'INVESTIGATION',
+            resourceId: run.id,
+            outcome: 'FAILED',
+            durationMs: Math.max(0, Date.now() - run.createdAt.getTime()),
+            record: {
+              action: 'INVESTIGATION_FINISHED',
+              details: { errorCode: 'INVESTIGATION_TIMEOUT' },
+            },
+          },
+          tx,
+        );
       const existing = await tx.investigationRun.findUnique({
         where: {
           merchantId_transactionId_idempotencyKey: {
@@ -120,6 +149,21 @@ export class InvestigatorService {
           expiresAt: new Date(Date.now() + this.env.INVESTIGATOR_TIMEOUT_MS),
         },
       });
+      await this.audit.append(
+        {
+          merchantId: actor.merchantId,
+          actorUserId: actor.userId,
+          transactionId,
+          resourceType: 'INVESTIGATION',
+          resourceId: row.id,
+          outcome: 'STARTED',
+          record: {
+            action: 'INVESTIGATION_STARTED',
+            details: { provider: config.provider },
+          },
+        },
+        tx,
+      );
       return { row, created: true };
     });
     if (!acquired.created)
@@ -139,16 +183,46 @@ export class InvestigatorService {
       );
       if (latest.dossier.revision !== snapshot.dossier.revision)
         throw new AgentError('INVESTIGATION_STALE');
-      const saved = await this.prisma.investigationRun.updateMany({
-        where: { id: row.id, status: 'RUNNING', expiresAt: { gt: new Date() } },
-        data: {
-          status: 'COMPLETED',
-          finishedAt: new Date(),
-          result: result as unknown as Prisma.InputJsonValue,
-          resultHash: contentHash(result),
-          trace: trace as unknown as Prisma.InputJsonValue,
-          usage,
-        },
+      const saved = await this.prisma.$transaction(async (tx) => {
+        const saved = await tx.investigationRun.updateMany({
+          where: {
+            id: row.id,
+            status: 'RUNNING',
+            expiresAt: { gt: new Date() },
+          },
+          data: {
+            status: 'COMPLETED',
+            finishedAt: new Date(),
+            result: result as unknown as Prisma.InputJsonValue,
+            resultHash: contentHash(result),
+            trace: trace as unknown as Prisma.InputJsonValue,
+            usage,
+          },
+        });
+        if (saved.count) {
+          const context = {
+            merchantId: actor.merchantId,
+            actorUserId: actor.userId,
+            transactionId,
+            resourceId: row.id,
+          };
+          await this.audit.agentSteps(context, 'INVESTIGATION', trace, tx);
+          await this.audit.append(
+            {
+              ...context,
+              actorKind: 'AGENT',
+              resourceType: 'INVESTIGATION',
+              durationMs: Math.max(0, Date.now() - row.createdAt.getTime()),
+              ...usage,
+              record: {
+                action: 'INVESTIGATION_FINISHED',
+                details: { provider: config.provider },
+              },
+            },
+            tx,
+          );
+        }
+        return saved;
       });
       if (!saved.count) throw new AgentError('INVESTIGATION_TIMEOUT');
     } catch (error) {
@@ -156,15 +230,41 @@ export class InvestigatorService {
         error instanceof AgentError || error instanceof ApiException
           ? error.code
           : 'INVESTIGATION_FAILED';
-      await this.prisma.investigationRun.updateMany({
-        where: { id: row.id, status: 'RUNNING' },
-        data: {
-          status: 'FAILED',
-          errorCode: code,
-          finishedAt: new Date(),
-          trace: trace as unknown as Prisma.InputJsonValue,
-          usage,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const saved = await tx.investigationRun.updateMany({
+          where: { id: row.id, status: 'RUNNING' },
+          data: {
+            status: 'FAILED',
+            errorCode: code,
+            finishedAt: new Date(),
+            trace: trace as unknown as Prisma.InputJsonValue,
+            usage,
+          },
+        });
+        if (saved.count) {
+          const context = {
+            merchantId: actor.merchantId,
+            actorUserId: actor.userId,
+            transactionId,
+            resourceId: row.id,
+          };
+          await this.audit.agentSteps(context, 'INVESTIGATION', trace, tx);
+          await this.audit.append(
+            {
+              ...context,
+              actorKind: 'AGENT',
+              resourceType: 'INVESTIGATION',
+              outcome: 'FAILED',
+              durationMs: Math.max(0, Date.now() - row.createdAt.getTime()),
+              ...usage,
+              record: {
+                action: 'INVESTIGATION_FINISHED',
+                details: { errorCode: code, provider: config.provider },
+              },
+            },
+            tx,
+          );
+        }
       });
     }
     return this.detail(actor.merchantId, transactionId, row.id);

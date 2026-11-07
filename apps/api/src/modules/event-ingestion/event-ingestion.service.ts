@@ -7,6 +7,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../common/database/prisma.service.js';
 import { ApiException } from '../../common/http/api.exception.js';
 import { MerchantsService } from '../merchants/index.js';
+import { AuditService } from '../monitoring/audit.service.js';
 import { PayPalWebhookVerifier } from './paypal-webhook.verifier.js';
 import {
   ingestionJobKind,
@@ -22,6 +23,7 @@ export class EventIngestionService {
     @Inject(MerchantsService) private readonly merchants: MerchantsService,
     @Inject(PayPalWebhookVerifier)
     private readonly verifier: PayPalWebhookVerifier,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
   async receive(
@@ -34,7 +36,22 @@ export class EventIngestionService {
     const originalBody = rawBody!;
     const hashes = webhookHashes(event, originalBody);
     const context = await this.merchants.getPayPalWebhookContext();
-    await this.verifier.verify(event, headers, context.webhookId);
+    try {
+      await this.verifier.verify(event, headers, context.webhookId);
+    } catch (error) {
+      await this.audit.append({
+        merchantId: context.merchantId,
+        actorUserId: null,
+        actorKind: 'PAYPAL',
+        resourceType: 'WEBHOOK',
+        outcome: 'BLOCKED',
+        record: {
+          action: 'WEBHOOK_REJECTED',
+          details: { errorCode: 'WEBHOOK_VERIFICATION_FAILED' },
+        },
+      });
+      throw error;
+    }
     const kind = ingestionJobKind(event.event_type);
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -55,6 +72,21 @@ export class EventIngestionService {
         const job = kind
           ? await tx.ingestionJob.create({ data: { eventId: stored.id, kind } })
           : null;
+        await this.audit.append(
+          {
+            merchantId: context.merchantId,
+            actorUserId: null,
+            actorKind: 'PAYPAL',
+            resourceType: 'WEBHOOK',
+            resourceId: stored.id,
+            outcome: kind ? 'SUCCEEDED' : 'IGNORED',
+            record: {
+              action: 'WEBHOOK_RECEIVED',
+              details: { state: kind ? 'QUEUED' : 'IGNORED' },
+            },
+          },
+          tx,
+        );
         return WebhookReceiptSchema.parse({
           eventId: stored.id,
           paypalEventId: event.id,
@@ -82,12 +114,34 @@ export class EventIngestionService {
         include: { job: true },
       });
       if (!existing) throw error;
-      if (existing.payloadHash !== hashes.payloadHash)
+      if (existing.payloadHash !== hashes.payloadHash) {
+        await this.audit.append({
+          merchantId: context.merchantId,
+          actorUserId: null,
+          actorKind: 'PAYPAL',
+          resourceType: 'WEBHOOK',
+          resourceId: existing.id,
+          outcome: 'BLOCKED',
+          record: {
+            action: 'WEBHOOK_REJECTED',
+            details: { errorCode: 'WEBHOOK_EVENT_CONFLICT' },
+          },
+        });
         throw new ApiException(
           'WEBHOOK_EVENT_CONFLICT',
           'This PayPal event ID was received with different content',
           409,
         );
+      }
+      await this.audit.append({
+        merchantId: context.merchantId,
+        actorUserId: null,
+        actorKind: 'PAYPAL',
+        resourceType: 'WEBHOOK',
+        resourceId: existing.id,
+        outcome: 'DUPLICATE',
+        record: { action: 'WEBHOOK_DUPLICATE', details: {} },
+      });
       return WebhookReceiptSchema.parse({
         eventId: existing.id,
         paypalEventId: event.id,

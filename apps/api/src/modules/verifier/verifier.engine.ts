@@ -26,6 +26,8 @@ export type InvestigationSnapshot = Awaited<
 >;
 export interface VerificationTrace {
   step: number;
+  durationMs?: number;
+  observedAt?: string;
   action: string;
   evidenceId: string | null;
   outcome: string;
@@ -78,6 +80,7 @@ export class VerifierEngine {
     const readIds = new Set<string>();
     let images = 0;
     for (let step = 1; step <= this.env.VERIFIER_MAX_STEPS; step++) {
+      const stepStartedAt = Date.now();
       await this.merchants.assertActionAllowed(
         transaction.merchantId,
         'INVESTIGATE',
@@ -100,6 +103,8 @@ export class VerifierEngine {
           throw new AgentError('AI_INVALID_RESPONSE');
         this.assertCitations(command.result, readIds);
         trace.push({
+          observedAt: new Date().toISOString(),
+          durationMs: Date.now() - stepStartedAt,
           step,
           action: 'FINISH',
           evidenceId: null,
@@ -180,6 +185,8 @@ export class VerifierEngine {
         });
       }
       trace.push({
+        observedAt: new Date().toISOString(),
+        durationMs: Date.now() - stepStartedAt,
         step,
         action: 'READ_EVIDENCE',
         evidenceId: item.id,

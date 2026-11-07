@@ -10,6 +10,7 @@ import { ApiException } from '../../common/http/api.exception.js';
 import { contentHash } from '../../common/data/content-hash.js';
 import { EvidenceService } from '../evidence/index.js';
 import type { MerchantActor } from '../merchants/index.js';
+import { AuditService } from '../monitoring/audit.service.js';
 import { lockMerchantOrders, reconcileOrder } from './order-linking.js';
 import {
   evidenceContext,
@@ -24,6 +25,7 @@ export class OrdersService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(EvidenceService) private readonly evidence: EvidenceService,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
   async create(actor: MerchantActor, input: CreateOrder) {
@@ -99,6 +101,20 @@ export class OrdersService {
           const linked = await reconcileOrder(tx, capture);
           await this.evidence.syncBase(tx, evidenceContext(linked));
         }
+        if (!existing)
+          await this.audit.append(
+            {
+              merchantId: actor.merchantId,
+              actorUserId: actor.userId,
+              resourceType: 'ORDER',
+              resourceId: order.id,
+              record: {
+                action: 'ORDER_CREATED',
+                details: { sourceKind: parsed.sourceKind },
+              },
+            },
+            tx,
+          );
         return {
           outcome: existing ? ('DUPLICATE' as const) : ('CREATED' as const),
           order: orderResponse(order),

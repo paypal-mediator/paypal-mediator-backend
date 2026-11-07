@@ -6,6 +6,7 @@ import { contentHash } from '../../../common/data/content-hash.js';
 import { ApiException } from '../../../common/http/api.exception.js';
 import { Prisma, type Transaction } from '../../../generated/prisma/client.js';
 import { EvidenceService } from '../../evidence/index.js';
+import { AuditService } from '../../monitoring/audit.service.js';
 import { evidenceContext } from '../order-mapping.js';
 import { lockMerchantOrders } from '../order-linking.js';
 import {
@@ -21,6 +22,7 @@ export class OrderSourcesService {
     @Inject(EvidenceService) private readonly evidence: EvidenceService,
     @Inject(ORDER_INFORMATION_SOURCES)
     private readonly sources: OrderInformationSource[],
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {
     if (new Set(sources.map((s) => s.providerId)).size !== sources.length)
       throw new Error('DUPLICATE_ORDER_PROVIDER');
@@ -43,6 +45,14 @@ export class OrderSourcesService {
         },
         update: {},
       });
+  }
+  async operationalMetrics(merchantId: string) {
+    const groups = await this.prisma.orderSourceJob.groupBy({
+      by: ['status'],
+      where: { merchantId },
+      _count: { _all: true },
+    });
+    return groups.map((g) => ({ status: g.status, count: g._count._all }));
   }
   async refresh(merchantId: string, id: string) {
     await this.prisma.$transaction(async (tx) => {
@@ -85,6 +95,7 @@ export class OrderSourcesService {
       if ((await this.processNext(merchantId, id)) === 'EMPTY') break;
   }
   async processNext(merchantId: string, transactionId?: string) {
+    const startedAt = Date.now();
     const job = await this.prisma.$transaction(async (tx) => {
       const now = new Date();
       // Merchant lock establishes the same ordering as capture/evidence refresh.
@@ -102,7 +113,7 @@ export class OrderSourcesService {
         orderBy: { createdAt: 'asc' },
       });
       if (!candidate) return null;
-      return tx.orderSourceJob.update({
+      const leased = await tx.orderSourceJob.update({
         where: { id: candidate.id },
         data: {
           status: 'FETCHING',
@@ -114,6 +125,20 @@ export class OrderSourcesService {
         },
         include: { transaction: true },
       });
+      await this.audit.append(
+        {
+          merchantId,
+          actorUserId: null,
+          actorKind: 'SYSTEM',
+          transactionId: leased.transactionId,
+          resourceType: 'ORDER_SOURCE',
+          resourceId: leased.id,
+          outcome: 'STARTED',
+          record: { action: 'ORDER_SOURCE_STARTED', details: {} },
+        },
+        tx,
+      );
+      return leased;
     });
     if (!job) return 'EMPTY';
     const source = this.sources.find((s) => s.providerId === job.providerId);
@@ -153,7 +178,7 @@ export class OrderSourcesService {
               },
             },
           );
-          await tx.orderSourceJob.update({
+          const saved = await tx.orderSourceJob.update({
             where: { id: job.id },
             data: {
               status:
@@ -173,6 +198,26 @@ export class OrderSourcesService {
               leaseExpiresAt: null,
             },
           });
+          await this.audit.append(
+            {
+              merchantId,
+              actorUserId: null,
+              actorKind: 'SYSTEM',
+              transactionId: job.transactionId,
+              resourceType: 'ORDER_SOURCE',
+              resourceId: job.id,
+              durationMs: Date.now() - startedAt,
+              outcome: saved.status === 'CONFLICT' ? 'BLOCKED' : 'SUCCEEDED',
+              record: {
+                action: 'ORDER_SOURCE_FINISHED',
+                details: {
+                  state: saved.status as 'COMPLETE' | 'PARTIAL' | 'CONFLICT',
+                  httpStatus: 200,
+                },
+              },
+            },
+            tx,
+          );
           const updated = await tx.transaction.findUniqueOrThrow({
             where: { id: row.id },
             include: { merchantOrder: true, orderSources: true },
@@ -187,21 +232,49 @@ export class OrderSourcesService {
         error instanceof OrderSourceError
           ? error
           : new OrderSourceError('ORDER_SOURCE_PROCESSING_FAILED', true);
-      await this.prisma.orderSourceJob.updateMany({
-        where: { id: job.id, leaseToken: job.leaseToken },
-        data: {
-          status: safe.code === 'NOT_CONFIGURED' ? 'NOT_CONFIGURED' : 'FAILED',
-          errorCode: safe.code,
-          httpStatus: safe.httpStatus,
-          leaseToken: null,
-          leaseExpiresAt: null,
-          nextAttemptAt:
-            safe.retryable && job.attempts < 5
-              ? new Date(
-                  Date.now() + Math.min(300000, 1000 * 2 ** job.attempts),
-                )
-              : null,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const saved = await tx.orderSourceJob.updateMany({
+          where: { id: job.id, leaseToken: job.leaseToken },
+          data: {
+            status:
+              safe.code === 'NOT_CONFIGURED' ? 'NOT_CONFIGURED' : 'FAILED',
+            errorCode: safe.code,
+            httpStatus: safe.httpStatus,
+            leaseToken: null,
+            leaseExpiresAt: null,
+            nextAttemptAt:
+              safe.retryable && job.attempts < 5
+                ? new Date(
+                    Date.now() + Math.min(300000, 1000 * 2 ** job.attempts),
+                  )
+                : null,
+          },
+        });
+        if (saved.count)
+          await this.audit.append(
+            {
+              merchantId,
+              actorUserId: null,
+              actorKind: 'SYSTEM',
+              transactionId: job.transactionId,
+              resourceType: 'ORDER_SOURCE',
+              resourceId: job.id,
+              outcome: 'FAILED',
+              durationMs: Date.now() - startedAt,
+              record: {
+                action: 'ORDER_SOURCE_FINISHED',
+                details: {
+                  state:
+                    safe.code === 'NOT_CONFIGURED'
+                      ? 'NOT_CONFIGURED'
+                      : 'FAILED',
+                  errorCode: safe.code,
+                  ...(safe.httpStatus ? { httpStatus: safe.httpStatus } : {}),
+                },
+              },
+            },
+            tx,
+          );
       });
       return 'FAILED';
     }

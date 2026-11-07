@@ -25,6 +25,7 @@ import {
 } from '../event-ingestion/index.js';
 import { parseCapture } from './capture.js';
 import { OrderSourcesService } from './sources/order-sources.service.js';
+import { AuditService } from '../monitoring/audit.service.js';
 
 function response(
   row: TransactionWithOrder,
@@ -59,6 +60,7 @@ export class TransactionsService {
     private readonly queue: IngestionQueueService,
     @Inject(EvidenceService) private readonly evidence: EvidenceService,
     @Inject(OrderSourcesService) private readonly sources: OrderSourcesService,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
   async processNextCapture(merchantId: string) {
@@ -96,7 +98,7 @@ export class TransactionsService {
           const linked = await reconcileOrder(tx, existing);
           await this.evidence.syncBase(tx, evidenceContext(linked));
           await this.sources.schedule(tx, linked);
-          return;
+          return { transactionId: existing.id };
         }
         const created = await tx.transaction.create({
           data: {
@@ -107,8 +109,21 @@ export class TransactionsService {
           },
         });
         const linked = await reconcileOrder(tx, created);
+        await this.audit.append(
+          {
+            merchantId: delivery.merchantId,
+            actorUserId: null,
+            actorKind: 'SYSTEM',
+            transactionId: created.id,
+            resourceType: 'TRANSACTION',
+            resourceId: created.id,
+            record: { action: 'TRANSACTION_CAPTURED', details: {} },
+          },
+          tx,
+        );
         await this.evidence.syncBase(tx, evidenceContext(linked));
         await this.sources.schedule(tx, linked);
+        return { transactionId: created.id };
       },
     );
   }
@@ -189,6 +204,17 @@ export class TransactionsService {
           await this.row(tx, actor.merchantId, id),
         );
         await this.evidence.syncBase(tx, evidenceContext(row));
+        await this.audit.append(
+          {
+            merchantId: actor.merchantId,
+            actorUserId: actor.userId,
+            transactionId: id,
+            resourceType: 'TRANSACTION',
+            resourceId: id,
+            record: { action: 'EVIDENCE_REFRESHED', details: {} },
+          },
+          tx,
+        );
         return (await this.responses(tx, [row]))[0]!;
       },
       { timeout: 15000 },
@@ -197,6 +223,9 @@ export class TransactionsService {
 
   processNextOrderSource(merchantId: string) {
     return this.sources.processNext(merchantId);
+  }
+  orderSourceMetrics(merchantId: string) {
+    return this.sources.operationalMetrics(merchantId);
   }
   async refreshOrderSources(actor: MerchantActor, id: string) {
     await this.sources.refresh(actor.merchantId, id);
@@ -264,11 +293,17 @@ export class TransactionsService {
     merchantId: string,
     id: string,
     evidenceId: string,
+    actorUserId?: string,
   ) {
     return this.prisma.$transaction(
       async (tx) => {
         const row = await this.row(tx, merchantId, id);
-        return this.evidence.downloadFile(tx, evidenceContext(row), evidenceId);
+        return this.evidence.downloadFile(
+          tx,
+          evidenceContext(row),
+          evidenceId,
+          actorUserId,
+        );
       },
       { timeout: 15000 },
     );

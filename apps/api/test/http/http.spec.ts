@@ -114,6 +114,8 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/transactions/{transactionId}/investigations/{id}',
       '/api/transactions/{transactionId}/investigations/{investigationId}/verifications',
       '/api/transactions/{transactionId}/investigations/{investigationId}/verifications/{id}',
+      '/api/activity/metrics',
+      '/api/activity',
     ]);
     await request(context.app.getHttpServer()).get('/api/docs/').expect(200);
   });

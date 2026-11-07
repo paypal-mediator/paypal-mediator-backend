@@ -22,6 +22,8 @@ apps/api/
       transactions/         # M03: capturas, consultas y checklist documental
       evidence/             # M04: registros, archivos privados, versiones y cobertura
       investigator/         # M05: prompts, proveedores y borradores citados (incremento local)
+      verifier/             # M06: revisión independiente de fuentes
+      monitoring/           # M09: auditoría transaccional, timeline y métricas
     generated/prisma/       # Generado, ignorado en Git
   test/
     unit/
@@ -50,6 +52,12 @@ No crear carpetas vacías ni stubs que aparenten funcionalidades implementadas.
 | M07 | `disputes`               | Orquestación y estados internos                 |
 | M08 | `submissions`            | Guard determinista y envío autorizado           |
 | M09 | `monitoring`             | Auditoría persistente y actividad               |
+
+M09 instrumenta M01–M06. `AuditModule` publica escritura append-only
+transaccional sin importar módulos de negocio. `MonitoringModule` importa sus
+interfaces públicas para consultar estados operativos; expone `/api/activity`
+y `/api/activity/metrics`. Los productores importan únicamente el módulo/servicio
+de escritura para evitar dependencias circulares. Ver [alcance M09](m09-monitoring.md).
 
 Cada carpeta contendrá su módulo NestJS y su interfaz pública; añadir
 subcarpetas según el volumen. Importar servicios exportados por su módulo

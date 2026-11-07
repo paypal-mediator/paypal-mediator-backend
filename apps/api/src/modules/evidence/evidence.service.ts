@@ -14,6 +14,7 @@ import { ApiException } from '../../common/http/api.exception.js';
 import { paymentRecord, type EvidenceContext } from './evidence-context.js';
 import { currentEvidence, evaluateEvidence } from './evidence-readiness.js';
 import { EvidenceStorage, binaryHash } from './evidence-storage.js';
+import { AuditService } from '../monitoring/audit.service.js';
 
 interface EvidenceRecord {
   type:
@@ -54,6 +55,7 @@ export class EvidenceService {
   }
   constructor(
     @Inject(EvidenceStorage) private readonly storage: EvidenceStorage,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
   async uploadFile(
@@ -125,6 +127,7 @@ export class EvidenceService {
     tx: Prisma.TransactionClient,
     context: EvidenceContext,
     evidenceId: string,
+    actorUserId?: string,
   ) {
     const item = await tx.evidenceItem.findFirst({
       where: {
@@ -162,6 +165,21 @@ export class EvidenceService {
         'Stored file integrity check failed',
         409,
       );
+    await this.audit.append(
+      {
+        merchantId: context.merchantId,
+        actorUserId: actorUserId ?? null,
+        actorKind: actorUserId ? 'USER' : 'SYSTEM',
+        transactionId: context.transactionId,
+        resourceType: 'EVIDENCE',
+        resourceId: item.id,
+        record: {
+          action: 'EVIDENCE_DOWNLOADED',
+          details: { evidenceType: 'DOCUMENT' },
+        },
+      },
+      tx,
+    );
     return { bytes, ...metadata.data };
   }
   private async append(
@@ -233,6 +251,25 @@ export class EvidenceService {
         actorUserId,
       },
     });
+    await this.audit.append(
+      {
+        merchantId: context.merchantId,
+        actorUserId,
+        actorKind: actorUserId ? 'USER' : 'SYSTEM',
+        transactionId: context.transactionId,
+        resourceType: 'EVIDENCE',
+        resourceId: item.id,
+        record: {
+          action: 'EVIDENCE_APPENDED',
+          details: {
+            evidenceType: record.type,
+            sourceKind: record.sourceKind,
+            version: revision,
+          },
+        },
+      },
+      tx,
+    );
     await tx.evidenceDossier.update({
       where: { id: dossier.id },
       data: { revision },

@@ -9,6 +9,7 @@ import {
 import { createApp } from '../../src/application.js';
 import { PrismaService } from '../../src/common/database/prisma.service.js';
 import { MerchantsService } from '../../src/modules/merchants/merchants.service.js';
+import { AuditService } from '../../src/modules/monitoring/audit.service.js';
 import { PayPalConnectionClient } from '../../src/modules/merchants/paypal/paypal-connection.client.js';
 import { createMockAuth } from '../fixtures/auth.js';
 
@@ -168,6 +169,18 @@ describe('M01 HTTP + PostgreSQL + signed JWTs (MOCK identity issuer and PayPal)'
       .send({ allowInvestigations: true, displayName: 'Updated Merchant' })
       .expect(200);
     expect(response.body.policy.allowInvestigations).toBe(true);
+    const auditRows = await prisma.auditEvent.findMany({
+      where: { merchantId },
+    });
+    expect(auditRows).toHaveLength(1);
+    expect(auditRows[0]).toMatchObject({
+      actorUserId: adminId,
+      record: {
+        action: 'SETTINGS_UPDATED',
+        details: { displayNameChanged: true, allowInvestigations: true },
+      },
+    });
+    expect(JSON.stringify(auditRows)).not.toContain('Updated Merchant');
     expect(
       await prisma.merchantEvent.count({
         where: { merchantId, actorUserId: adminId, action: 'SETTINGS_UPDATED' },
@@ -176,6 +189,34 @@ describe('M01 HTTP + PostgreSQL + signed JWTs (MOCK identity issuer and PayPal)'
     await expect(
       service.assertActionAllowed(merchantId, 'INVESTIGATE'),
     ).resolves.toBeUndefined();
+  });
+
+  it('rolls back settings when M09 audit persistence fails', async () => {
+    const before = await prisma.merchant.findUniqueOrThrow({
+      where: { id: merchantId },
+    });
+    const audit = context.app.get(AuditService);
+    const failure = vi
+      .spyOn(audit, 'append')
+      .mockRejectedValueOnce(new Error('MOCK audit unavailable'));
+    try {
+      await request(context.app.getHttpServer())
+        .patch('/api/merchants/me/settings')
+        .auth(adminToken, { type: 'bearer' })
+        .send({ displayName: 'MUST ROLLBACK' })
+        .expect(500);
+      const after = await prisma.merchant.findUniqueOrThrow({
+        where: { id: merchantId },
+      });
+      expect(after.displayName).toBe(before.displayName);
+      expect(
+        await prisma.auditEvent.count({
+          where: { merchantId, action: 'SETTINGS_UPDATED' },
+        }),
+      ).toBe(1);
+    } finally {
+      failure.mockRestore();
+    }
   });
 
   it.each([
@@ -236,6 +277,7 @@ describe('M01 HTTP + PostgreSQL + signed JWTs (MOCK identity issuer and PayPal)'
       prisma,
       rotatedEnvironment,
       new PayPalConnectionClient(rotatedEnvironment, fetch),
+      context.app.get(AuditService),
     );
     expect((await rotated.getIntegrations(merchantId)).paypal).toMatchObject({
       connectionStatus: 'NOT_CHECKED',

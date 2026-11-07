@@ -219,6 +219,30 @@ describe('M05 read-only investigator (real PostgreSQL/HTTP, explicit MOCK model/
     expect(parsed.result?.findings[0]?.evidenceIds).toEqual([payment.id]);
     expect((await start(row.id, key).expect(201)).body.id).toBe(parsed.id);
     expect(step).toHaveBeenCalledTimes(2);
+    const telemetry = await db.auditEvent.findMany({
+      where: { merchantId, resourceId: parsed.id },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(
+      telemetry.filter((e) => e.action === 'INVESTIGATION_STARTED'),
+    ).toHaveLength(1);
+    expect(
+      telemetry.filter((e) => e.action === 'INVESTIGATION_STEP'),
+    ).toHaveLength(2);
+    expect(
+      telemetry.filter((e) => e.action === 'INVESTIGATION_FINISHED'),
+    ).toHaveLength(1);
+    expect(
+      telemetry.find((e) => e.action === 'INVESTIGATION_FINISHED'),
+    ).toMatchObject({
+      transactionId: row.id,
+      inputTokens: 20,
+      outputTokens: 10,
+      outcome: 'SUCCEEDED',
+    });
+    expect(JSON.stringify(telemetry)).not.toContain(
+      'DEMO / MOCK bounded investigation',
+    );
     await http()
       .get(endpoint(row.id) + '/' + parsed.id)
       .auth(viewerToken, { type: 'bearer' })
@@ -273,6 +297,18 @@ describe('M05 read-only investigator (real PostgreSQL/HTTP, explicit MOCK model/
       status: 'FAILED',
       errorCode: 'AI_RATE_LIMITED',
       result: null,
+    });
+    expect(
+      await db.auditEvent.findFirst({
+        where: {
+          merchantId,
+          transactionId: row.id,
+          action: 'INVESTIGATION_FINISHED',
+        },
+      }),
+    ).toMatchObject({
+      outcome: 'FAILED',
+      record: { details: { errorCode: 'AI_RATE_LIMITED' } },
     });
   });
   it('enforces the model step budget even when it keeps requesting reads', async () => {
@@ -577,6 +613,36 @@ describe('M05 read-only investigator (real PostgreSQL/HTTP, explicit MOCK model/
         actorUserId: adminId,
       });
       expect(reviewed.result.verdict).toBe('REJECTED');
+      expect(
+        await db.auditEvent.count({
+          where: {
+            merchantId,
+            resourceId: first.id,
+            action: 'VERIFICATION_STARTED',
+          },
+        }),
+      ).toBe(1);
+      expect(
+        await db.auditEvent.count({
+          where: {
+            merchantId,
+            resourceId: first.id,
+            action: 'VERIFICATION_FINISHED',
+          },
+        }),
+      ).toBe(1);
+      expect(
+        await db.auditEvent.findFirst({
+          where: {
+            merchantId,
+            resourceId: reviewed.id,
+            action: 'VERIFICATION_FINISHED',
+          },
+        }),
+      ).toMatchObject({
+        module: 'M06',
+        record: { details: { verdict: 'REJECTED' } },
+      });
       const stored = await db.verificationRun.findUniqueOrThrow({
         where: { id: reviewed.id },
       });
