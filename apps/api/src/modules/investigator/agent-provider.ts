@@ -51,6 +51,7 @@ export class AgentProvider {
     messages: AgentMessage[],
     signal: AbortSignal,
     outputSchema: z.ZodType<T>,
+    maxOutputTokens = 3072,
   ) {
     const config = this.configuration();
     const nvidia = config.provider === 'NVIDIA';
@@ -61,7 +62,7 @@ export class AgentProvider {
       ? {
           model: config.model,
           stream: false,
-          max_tokens: 3072,
+          max_tokens: maxOutputTokens,
           temperature: 0.6,
           chat_template_kwargs: { enable_thinking: false },
           messages: messages.map((m) => ({
@@ -82,7 +83,7 @@ export class AgentProvider {
       : {
           model: config.model,
           store: false,
-          max_output_tokens: 3072,
+          max_output_tokens: maxOutputTokens,
           input: messages.map((m) => ({
             role: m.role,
             content: m.image

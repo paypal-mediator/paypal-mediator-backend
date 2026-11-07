@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   VerificationResponseSchema,
+  VerificationResultSchema,
   type StartVerification,
 } from '@resolve-ai/contracts';
 import { PrismaService } from '../../common/database/prisma.service.js';
@@ -113,6 +114,41 @@ export class VerifierService {
         },
       });
       if (existing) return { row: existing, created: false };
+      // Serialized with acquisition: a different key or investigation cannot erase a rejection.
+      const rejection = await tx.verificationRun.findFirst({
+        where: {
+          merchantId: actor.merchantId,
+          transactionId,
+          status: 'COMPLETED',
+          result: { path: ['verdict'], equals: 'REJECTED' },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      });
+      if (rejection && contentHash(rejection.result) !== rejection.resultHash)
+        throw new ApiException(
+          'VERIFICATION_INTEGRITY_MISMATCH',
+          'Rejected result integrity check failed',
+          409,
+        );
+      if (rejection && input.rejectionReview?.verificationId !== rejection.id)
+        throw new ApiException(
+          'VERIFICATION_REJECTION_REVIEW_REQUIRED',
+          'An administrator must review and justify retrying the latest rejected verification',
+          409,
+        );
+      if (!rejection && input.rejectionReview)
+        throw new ApiException(
+          'VERIFICATION_REJECTION_REVIEW_INVALID',
+          'No rejected verification exists for this transaction',
+          409,
+        );
+      const rejectionReview = input.rejectionReview
+        ? {
+            ...input.rejectionReview,
+            actorUserId: actor.userId,
+            reviewedAt: new Date().toISOString(),
+          }
+        : null;
       if (
         await tx.verificationRun.findFirst({
           where: {
@@ -142,10 +178,12 @@ export class VerifierService {
           snapshot: {
             ...snapshot,
             draft: investigation.result,
+            rejectionReview,
           } as unknown as Prisma.InputJsonValue,
           snapshotHash: contentHash({
             ...snapshot,
             draft: investigation.result,
+            rejectionReview,
           }),
           trace: [],
           usage: { inputTokens: 0, outputTokens: 0 },
@@ -266,7 +304,23 @@ export class VerifierService {
         'Verification integrity check failed',
         409,
       );
-    const snapshot = row.snapshot as unknown as InvestigationSnapshot;
+    if (
+      row.result !== null &&
+      !VerificationResultSchema.safeParse(row.result).success
+    )
+      throw new ApiException(
+        'VERIFICATION_RESULT_REVIEW_REQUIRED',
+        'This historical result does not satisfy the current verification contract; request a new review',
+        409,
+      );
+    const snapshot = row.snapshot as unknown as InvestigationSnapshot & {
+      rejectionReview?: {
+        verificationId: string;
+        justification: string;
+        actorUserId: string;
+        reviewedAt: string;
+      } | null;
+    };
     return VerificationResponseSchema.parse({
       ...row,
       createdAt: row.createdAt.toISOString(),
@@ -275,6 +329,7 @@ export class VerifierService {
       expired: row.status === 'RUNNING' && row.expiresAt.getTime() < Date.now(),
       stale: row.evidenceRevision !== currentRevision,
       containsDemo: snapshot.transaction.readiness.containsDemo,
+      rejectionReview: snapshot.rejectionReview ?? null,
       scope: 'PREVENTIVE_INR',
       submissionAuthorized: false,
     });

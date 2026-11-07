@@ -84,3 +84,66 @@ real con NVIDIA/OpenAI/Storage requiere servicios y configuraci?n externos.
 Comprobaciones est?ticas ejecutadas: generaci?n local del cliente Prisma (ignorado
 en Git), validaci?n de schema Prisma, typecheck de contratos/API y ESLint aprobados.
 No se ejecutaron pnpm check, suites de pruebas, migraciones ni llamadas de inferencia.
+
+## Correcci?n de los cuatro hallazgos (prompt v2)
+
+El servidor construye requiredClaimUnits desde TODO el resumen, cada hallazgo,
+cada contradicci?n y suggestedResponse. Divide en frases/l?neas conservando el
+texto y asigna IDs estables por campo e ?ndice. M06 debe devolver una evaluaci?n
+por unidad con texto exacto, conclusi?n, explicaci?n y citas. Unidades omitidas
+impiden APPROVED; IDs inventados, texto alterado o duplicados producen REJECTED.
+SUPPORTED exige fuentes le?das e incluidas en verifiedEvidenceIds. UNSUPPORTED o
+CONTRADICTED rechazan, NOT_VERIFIABLE deja INCOMPLETE. NON_FACTUAL requiere
+justificaci?n y solo corresponde a texto sin hechos. Una frase con varios hechos
+se eval?a completa: un solo hecho falso impide SUPPORTED. La clasificaci?n y la
+relaci?n sem?ntica entre texto/fuente siguen dependiendo del modelo; estos controles
+hacen obligatoria y auditable la evaluaci?n, sin garantizar infalibilidad del LLM.
+M?ximo 256 unidades; no se trunca silenciosamente un borrador mayor.
+
+checklist es un objeto obligatorio con PROVENANCE, INTEGRITY, IDENTITY, CONSISTENCY,
+RELEVANCE, COVERAGE, EXPLAINABILITY y CURRENTNESS. Cada dimensi?n incluye status
+PASS/FAIL/NOT_EVALUATED, explanation y evidenceIds. PASS sin citas impide aprobaci?n;
+NOT_EVALUATED permanece expl?cito e impide aprobaci?n. FAIL de cobertura/vigencia
+implica INCOMPLETE; los dem?s FAIL implican REJECTED. Los bloqueos deterministas
+actualizan tambi?n la dimensi?n afectada y prevalecen sobre el modelo.
+
+La comparaci?n de carrier usa toUpperCase(), como M04; el tracking conserva su
+comparaci?n exacta. DHL y dhl ya no son una contradicci?n por capitalizaci?n.
+
+Despu?s de cualquier REJECTED de esa transacci?n, una clave nueva o investigaci?n
+nueva devuelve 409 VERIFICATION_REJECTION_REVIEW_REQUIRED salvo revisi?n expl?cita
+del ADMIN. Se exige referenciar el rechazo m?s reciente del mismo merchant y
+transacci?n, con justificaci?n de al menos 20 caracteres:
+
+```json
+{
+  "idempotencyKey": "UUID-nuevo",
+  "rejectionReview": {
+    "verificationId": "UUID-del-rechazo-mas-reciente",
+    "justification": "Revis? el rechazo y document? la correcci?n o el motivo para reconsiderarlo."
+  }
+}
+```
+
+La revisi?n permite otra evaluaci?n independiente; nunca convierte un resultado
+en APPROVED. No hay desbloqueo autom?tico por un simple cambio de revision. Se
+persiste rejectionReview con actorUserId y reviewedAt generados en servidor dentro
+del snapshot protegido por hash, y se expone en la respuesta. El control corre
+bajo el mismo lock de adquisici?n, antes de inferencia. Repetir la clave original
+recupera el recurso existente sin cambiar el rechazo ni registrar otra revisi?n.
+Un rechazo posterior exige revisar ese nuevo rechazo. No existe autorizaci?n de
+reintento impl?cita ni autom?tica por corregir datos.
+
+Cambio de contrato: claims y checklist son obligatorios en resultados v2;
+rejectionReview es opcional en POST y nullable en respuesta. El almacenamiento
+utiliza las columnas JSON existentes: no se agrega migraci?n. Los consumidores
+HTTP deben adoptar estos campos; un resultado v1 no acredita los controles v2.
+
+Estas correcciones a?n no tienen validaci?n funcional: por indicaci?n del usuario
+no se ejecutaron pruebas ni llamadas externas. Se revisan tipos y ESLint.
+
+El presupuesto de salida de M06 pasa a 8192 tokens por paso para el resultado
+con checklist y afirmaciones; M05 conserva 3072. El l?mite de tiempo/pasos y la
+validaci?n de truncamiento siguen activos. Resultados hist?ricos incompatibles
+con el contrato actual devuelven 409 VERIFICATION_RESULT_REVIEW_REQUIRED; no se
+completan autom?ticamente campos de auditor?a ni se presentan como aprobaciones v2.

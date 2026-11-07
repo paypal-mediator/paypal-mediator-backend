@@ -6,12 +6,56 @@ const reason = z.strictObject({
   explanation: z.string().min(1).max(2000),
   evidenceIds: z.array(z.uuid()).max(32),
 });
+export const VerificationDimensionSchema = z.enum([
+  'PROVENANCE',
+  'INTEGRITY',
+  'IDENTITY',
+  'CONSISTENCY',
+  'RELEVANCE',
+  'COVERAGE',
+  'EXPLAINABILITY',
+  'CURRENTNESS',
+]);
+export const VerificationCheckSchema = z.strictObject({
+  status: z.enum(['PASS', 'FAIL', 'NOT_EVALUATED']),
+  explanation: z.string().trim().min(1).max(2000),
+  evidenceIds: z.array(z.uuid()).max(32),
+});
+export const VerificationChecklistSchema = z.strictObject({
+  PROVENANCE: VerificationCheckSchema,
+  INTEGRITY: VerificationCheckSchema,
+  IDENTITY: VerificationCheckSchema,
+  CONSISTENCY: VerificationCheckSchema,
+  RELEVANCE: VerificationCheckSchema,
+  COVERAGE: VerificationCheckSchema,
+  EXPLAINABILITY: VerificationCheckSchema,
+  CURRENTNESS: VerificationCheckSchema,
+});
+export const VerificationClaimSchema = z.strictObject({
+  unitId: z.string().min(1).max(100),
+  statement: z.string().trim().min(1).max(6000),
+  status: z.enum([
+    'SUPPORTED',
+    'UNSUPPORTED',
+    'CONTRADICTED',
+    'NOT_VERIFIABLE',
+    'NON_FACTUAL',
+  ]),
+  explanation: z.string().trim().min(1).max(2000),
+  evidenceIds: z.array(z.uuid()).max(32),
+});
+export const RejectionReviewSchema = z.strictObject({
+  verificationId: z.uuid(),
+  justification: z.string().trim().min(20).max(2000),
+});
 export const VerificationResultSchema = z.strictObject({
   verdict: z.enum(['APPROVED', 'INCOMPLETE', 'REJECTED']),
   verifiedEvidenceIds: z.array(z.uuid()).max(64),
-  missingRequirements: z.array(z.string().min(1).max(2000)).max(64),
-  contradictions: z.array(z.string().min(1).max(2000)).max(64),
-  reasons: z.array(reason).min(1).max(64),
+  missingRequirements: z.array(z.string().min(1).max(2000)).max(1024),
+  contradictions: z.array(z.string().min(1).max(2000)).max(1024),
+  reasons: z.array(reason).min(1).max(1024),
+  checklist: VerificationChecklistSchema,
+  claims: z.array(VerificationClaimSchema).max(256),
 });
 export type VerificationResult = z.infer<typeof VerificationResultSchema>;
 export const VerificationStepSchema = z.strictObject({
@@ -21,6 +65,7 @@ export const VerificationStepSchema = z.strictObject({
 });
 export const StartVerificationSchema = z.strictObject({
   idempotencyKey: z.uuid(),
+  rejectionReview: RejectionReviewSchema.optional(),
 });
 export type StartVerification = z.infer<typeof StartVerificationSchema>;
 export const VerificationResponseSchema = z.object({
@@ -41,6 +86,10 @@ export const VerificationResponseSchema = z.object({
   expired: z.boolean(),
   stale: z.boolean(),
   containsDemo: z.boolean(),
+  rejectionReview: RejectionReviewSchema.extend({
+    actorUserId: z.uuid(),
+    reviewedAt: z.iso.datetime(),
+  }).nullable(),
   scope: z.literal('PREVENTIVE_INR'),
   submissionAuthorized: z.literal(false),
   result: VerificationResultSchema.nullable(),

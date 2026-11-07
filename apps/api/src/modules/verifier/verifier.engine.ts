@@ -18,6 +18,7 @@ import {
   type AgentMessage,
 } from '../investigator/index.js';
 import { VERIFIER_SYSTEM_PROMPT } from './prompts/verifier.prompts.js';
+import { draftUnits } from './draft-units.js';
 import { enforceVerification } from './verification-policy.js';
 
 export type InvestigationSnapshot = Awaited<
@@ -49,6 +50,8 @@ export class VerifierEngine {
   ) {
     const { transaction, dossier } = snapshot;
     const current = dossier.items.filter((i) => i.current);
+    const units = draftUnits(draft);
+    if (units.length > 256) throw new AgentError('VERIFICATION_CLAIM_LIMIT');
     const messages: AgentMessage[] = [
       { role: 'system', text: VERIFIER_SYSTEM_PROMPT },
       {
@@ -56,6 +59,7 @@ export class VerifierEngine {
         text: JSON.stringify({
           task: 'Revision independiente de preparacion preventiva INR.',
           untrustedInvestigatorDraft: draft,
+          requiredClaimUnits: units,
           transaction,
           evidenceIndex: current.map(
             ({ id, type, sourceKind, integrity, version }) => ({
@@ -84,6 +88,7 @@ export class VerifierEngine {
         messages,
         signal,
         VerificationStepSchema,
+        8192,
       );
       usage.inputTokens += turn.usage.inputTokens;
       usage.outputTokens += turn.usage.outputTokens;
@@ -187,6 +192,8 @@ export class VerifierEngine {
     const cited = [
       ...result.verifiedEvidenceIds,
       ...result.reasons.flatMap((f) => f.evidenceIds),
+      ...result.claims.flatMap((claim) => claim.evidenceIds),
+      ...Object.values(result.checklist).flatMap((check) => check.evidenceIds),
     ];
     if (cited.some((id) => !readIds.has(id)))
       throw new AgentError('AI_UNSUPPORTED_CITATION');
