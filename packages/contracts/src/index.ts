@@ -29,3 +29,5 @@ export const ApiErrorSchema = z.object({
   details: z.unknown().optional(),
 });
 export type ApiError = z.infer<typeof ApiErrorSchema>;
+
+export * from './verifications.js';

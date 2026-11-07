@@ -24,6 +24,7 @@ model Merchant {
   transactions            Transaction[]
   orders                  MerchantOrder[]
   dossiers                EvidenceDossier[]
+  verifications           VerificationRun[]
   investigations          InvestigationRun[]
   orderSources            OrderSourceJob[]
 
@@ -133,6 +134,7 @@ model Transaction {
   sourceEvent    WebhookEvent       @relation(fields: [sourceEventId], references: [id], onDelete: Restrict)
   merchantOrder  MerchantOrder?     @relation(fields: [merchantOrderId, merchantId], references: [id, merchantId], onDelete: Restrict)
   dossier        EvidenceDossier?
+  verifications  VerificationRun[]
   investigations InvestigationRun[]
   orderSources   OrderSourceJob[]
 
@@ -210,30 +212,32 @@ model EvidenceItem {
 
 // M05 owns investigations; evidence originals remain owned by M04.
 model InvestigationRun {
-  id               String      @id @default(uuid()) @db.Uuid
-  merchantId       String      @map("merchant_id") @db.Uuid
-  transactionId    String      @map("transaction_id") @db.Uuid
-  idempotencyKey   String      @map("idempotency_key") @db.Uuid
-  actorUserId      String      @map("actor_user_id") @db.Uuid
-  status           String      @default("RUNNING")
+  id               String            @id @default(uuid()) @db.Uuid
+  merchantId       String            @map("merchant_id") @db.Uuid
+  transactionId    String            @map("transaction_id") @db.Uuid
+  idempotencyKey   String            @map("idempotency_key") @db.Uuid
+  actorUserId      String            @map("actor_user_id") @db.Uuid
+  status           String            @default("RUNNING")
   provider         String
-  model            String      @db.VarChar(128)
-  promptVersion    String      @map("prompt_version") @db.VarChar(64)
-  evidenceRevision Int         @map("evidence_revision")
+  model            String            @db.VarChar(128)
+  promptVersion    String            @map("prompt_version") @db.VarChar(64)
+  evidenceRevision Int               @map("evidence_revision")
   snapshot         Json
-  snapshotHash     String      @map("snapshot_hash") @db.VarChar(64)
+  snapshotHash     String            @map("snapshot_hash") @db.VarChar(64)
   result           Json?
-  resultHash       String?     @map("result_hash") @db.VarChar(64)
+  resultHash       String?           @map("result_hash") @db.VarChar(64)
   trace            Json
   usage            Json
-  errorCode        String?     @map("error_code") @db.VarChar(80)
-  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
-  expiresAt        DateTime    @map("expires_at") @db.Timestamptz(3)
-  finishedAt       DateTime?   @map("finished_at") @db.Timestamptz(3)
-  merchant         Merchant    @relation(fields: [merchantId], references: [id], onDelete: Restrict)
-  transaction      Transaction @relation(fields: [transactionId, merchantId], references: [id, merchantId], onDelete: Restrict)
+  errorCode        String?           @map("error_code") @db.VarChar(80)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt        DateTime          @map("expires_at") @db.Timestamptz(3)
+  finishedAt       DateTime?         @map("finished_at") @db.Timestamptz(3)
+  merchant         Merchant          @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  transaction      Transaction       @relation(fields: [transactionId, merchantId], references: [id, merchantId], onDelete: Restrict)
+  verifications    VerificationRun[]
 
   @@unique([merchantId, transactionId, idempotencyKey], map: "investigation_runs_merchant_id_transaction_id_idempotency_key_k")
+  @@unique([id, transactionId, merchantId])
   @@index([merchantId, transactionId, createdAt])
   @@map("investigation_runs")
 }
@@ -266,4 +270,37 @@ model OrderSourceJob {
   @@unique([transactionId, providerId])
   @@index([merchantId, status, nextAttemptAt])
   @@map("order_source_jobs")
+}
+
+// M06 owns verification runs; M05 remains immutable during verification.
+model VerificationRun {
+  id               String      @id @default(uuid()) @db.Uuid
+  merchantId       String      @map("merchant_id") @db.Uuid
+  transactionId    String      @map("transaction_id") @db.Uuid
+  investigationId  String      @map("investigation_id") @db.Uuid
+  idempotencyKey   String      @map("idempotency_key") @db.Uuid
+  actorUserId      String      @map("actor_user_id") @db.Uuid
+  status           String      @default("RUNNING")
+  provider         String
+  model            String      @db.VarChar(128)
+  promptVersion    String      @map("prompt_version") @db.VarChar(64)
+  evidenceRevision Int         @map("evidence_revision")
+  snapshot         Json
+  snapshotHash     String      @map("snapshot_hash") @db.VarChar(64)
+  result           Json?
+  resultHash       String?     @map("result_hash") @db.VarChar(64)
+  trace            Json
+  usage            Json
+  errorCode        String?     @map("error_code") @db.VarChar(80)
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt        DateTime    @map("expires_at") @db.Timestamptz(3)
+  finishedAt       DateTime?   @map("finished_at") @db.Timestamptz(3)
+  merchant         Merchant    @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  transaction      Transaction @relation(fields: [transactionId, merchantId], references: [id, merchantId], onDelete: Restrict)
+
+  investigation InvestigationRun @relation(fields: [investigationId, transactionId, merchantId], references: [id, transactionId, merchantId], onDelete: Restrict, map: "verification_runs_investigation_fkey")
+
+  @@unique([merchantId, investigationId, idempotencyKey], map: "verification_runs_idempotency_key")
+  @@index([merchantId, transactionId, createdAt])
+  @@map("verification_runs")
 }

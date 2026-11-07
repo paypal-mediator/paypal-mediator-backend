@@ -40,7 +40,7 @@ export const InvestigationResponseSchema = z.object({
   promptVersion: z.string(),
   evidenceRevision: z.number().int(),
   containsDemo: z.boolean(),
-  commercialSource: z.literal('NOT_CONNECTED'),
+  commercialSource: z.enum(['NOT_CONNECTED', 'AVAILABLE']),
   requiresVerification: z.literal(true),
   errorCode: z.string().nullable(),
   createdAt: z.iso.datetime(),

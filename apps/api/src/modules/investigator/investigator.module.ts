@@ -15,6 +15,6 @@ import { InvestigatorController } from './investigator.controller.js';
     InvestigatorService,
     { provide: INVESTIGATOR_FETCH, useFactory: () => globalThis.fetch },
   ],
-  exports: [InvestigatorService],
+  exports: [InvestigatorService, AgentProvider],
 })
 export class InvestigatorModule {}

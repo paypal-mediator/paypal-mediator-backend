@@ -44,9 +44,17 @@ export class AgentProvider {
   }
 
   async step(messages: AgentMessage[], signal: AbortSignal) {
+    return this.structuredStep(messages, signal, InvestigationStepSchema);
+  }
+
+  async structuredStep<T>(
+    messages: AgentMessage[],
+    signal: AbortSignal,
+    outputSchema: z.ZodType<T>,
+  ) {
     const config = this.configuration();
     const nvidia = config.provider === 'NVIDIA';
-    const schema = z.toJSONSchema(InvestigationStepSchema, {
+    const schema = z.toJSONSchema(outputSchema, {
       target: 'draft-7',
     });
     const body = nvidia
@@ -210,7 +218,7 @@ export class AgentProvider {
         };
       }
       return {
-        command: InvestigationStepSchema.parse(JSON.parse(content)),
+        command: outputSchema.parse(JSON.parse(content)),
         usage: usageSchema.parse(usage),
       };
     } catch {

@@ -48,7 +48,9 @@ export class InvestigatorEngine {
         role: 'user',
         text: JSON.stringify({
           task: 'Preparación preventiva INR. Investiga las fuentes y los faltantes.',
-          commercialSource: 'NOT_CONNECTED',
+          commercialSources: transaction.orderEnrichment,
+          sourceWarning:
+            'Only persisted sources are accessible; no live commerce lookup tool.',
           transaction,
           evidenceIndex: current.map(
             ({ id, type, sourceKind, integrity, version }) => ({

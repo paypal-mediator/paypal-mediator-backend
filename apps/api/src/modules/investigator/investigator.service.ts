@@ -133,6 +133,12 @@ export class InvestigatorService {
       const result = await this.engine.execute(snapshot, signal, trace, usage);
       await this.merchants.assertActionAllowed(actor.merchantId, 'INVESTIGATE');
       if (signal.aborted) throw new AgentError('INVESTIGATION_TIMEOUT');
+      const latest = await this.transactions.investigationSnapshot(
+        actor.merchantId,
+        transactionId,
+      );
+      if (latest.dossier.revision !== snapshot.dossier.revision)
+        throw new AgentError('INVESTIGATION_STALE');
       const saved = await this.prisma.investigationRun.updateMany({
         where: { id: row.id, status: 'RUNNING', expiresAt: { gt: new Date() } },
         data: {
@@ -215,11 +221,23 @@ export class InvestigatorService {
       expired: row.status === 'RUNNING' && row.expiresAt.getTime() < Date.now(),
       stale: row.evidenceRevision !== currentRevision,
       containsDemo: snapshot.transaction.readiness.containsDemo,
-      commercialSource: 'NOT_CONNECTED',
+      commercialSource: snapshot.transaction.orderEnrichment?.records.some(
+        (record) =>
+          record.integrity === 'VALID' &&
+          record.data?.association === 'MATCHED',
+      )
+        ? 'AVAILABLE'
+        : 'NOT_CONNECTED',
       requiresVerification: true,
       deterministicIssues: [
         ...snapshot.transaction.readiness.reasons,
-        'COMMERCIAL_SOURCE_NOT_CONNECTED',
+        ...(snapshot.transaction.orderEnrichment?.records.some(
+          (record) =>
+            record.integrity === 'VALID' &&
+            record.data?.association === 'MATCHED',
+        )
+          ? []
+          : ['COMMERCIAL_SOURCE_NOT_CONNECTED']),
         ...snapshot.transaction.readiness.checks
           .filter((check) => check.status === 'MISSING')
           .map((check) => `MISSING_${check.code}`),

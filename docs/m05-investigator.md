@@ -140,3 +140,13 @@ calificó READY con datos DEMO como una contradicción. Los hallazgos individual
 sí conservaron la distinción de pago Sandbox y fuentes DEMO. El borrador original
 se conserva sin corregirlo para aparentar una respuesta perfecta. Schema y citas
 válidas no equivalen a verdad: no debe usarse para aprobar o enviar evidencia.
+
+## Incremento local de integraci?n M06 (sin pruebas todav?a)
+
+Ver [M06](m06-verifier.md) para POST/GET de verificaciones vinculadas al ID de M05.
+M05 no se autocertifica: conserva requiresVerification=true. El prompt v1.2 reconoce
+orderEnrichment y la respuesta permite commercialSource=AVAILABLE para originales
+MATCHED v?lidos, sin afirmar una consulta en vivo ni conexi?n ERP. Se rechaza la
+finalizaci?n cuando cambia la revisi?n del expediente durante inferencia.
+Las cifras de validaci?n anteriores corresponden al incremento previo; esta
+integraci?n a?n requiere pruebas y aplicar la migraci?n de M06.

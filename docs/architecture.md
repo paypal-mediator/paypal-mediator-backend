@@ -122,3 +122,11 @@ La unidad de trabajo Prisma se comparte por parámetro; cada servicio escribe so
 sus tablas. M04 recibe contexto autorizado de M03 y no importa su módulo. Los GET
 leen snapshots; POST de pedido/evidencia/refresh reconcilian y persisten. Ver
 [contrato M04](m04-evidence.md) y los límites de una captura/un paquete por pedido.
+
+## Integraci?n local M05/M06 pendiente de pruebas
+
+M06 (`verifier`) consume la interfaz p?blica M05 y recupera originales de M03/M04
+con contexto independiente. Es propietario de VerificationRun; no escribe resultados
+en InvestigationRun. Comparte solo el transporte AI exportado por InvestigatorModule.
+Ver [contrato y l?mites M06](m06-verifier.md). Este incremento no est? validado con
+pruebas ni aplicado a PostgreSQL; no implica implementaci?n de M07/M08.

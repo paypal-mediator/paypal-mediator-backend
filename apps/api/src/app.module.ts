@@ -5,6 +5,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { MerchantsModule } from './modules/merchants/index.js';
 import { EventIngestionModule } from './modules/event-ingestion/index.js';
 import { TransactionsModule } from './modules/transactions/index.js';
+import { VerifierModule } from './modules/verifier/index.js';
 import { InvestigatorModule } from './modules/investigator/index.js';
 
 @Module({})
@@ -19,6 +20,7 @@ export class AppModule {
         EventIngestionModule,
         TransactionsModule,
         InvestigatorModule,
+        VerifierModule,
       ],
     };
   }
