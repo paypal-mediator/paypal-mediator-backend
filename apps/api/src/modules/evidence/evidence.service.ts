@@ -14,6 +14,7 @@ import { ApiException } from '../../common/http/api.exception.js';
 import { paymentRecord, type EvidenceContext } from './evidence-context.js';
 import { currentEvidence, evaluateEvidence } from './evidence-readiness.js';
 import { EvidenceStorage, binaryHash } from './evidence-storage.js';
+import { PdfTextExtractor } from './pdf-text-extractor.js';
 import { AuditService } from '../monitoring/audit.service.js';
 
 interface EvidenceRecord {
@@ -55,6 +56,7 @@ export class EvidenceService {
   }
   constructor(
     @Inject(EvidenceStorage) private readonly storage: EvidenceStorage,
+    @Inject(PdfTextExtractor) private readonly pdfExtractor: PdfTextExtractor,
     @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
@@ -91,6 +93,10 @@ export class EvidenceService {
         400,
       );
     const sha256 = binaryHash(bytes);
+    let extractedText: string | undefined;
+    if (parsed.mediaType === 'application/pdf') {
+      extractedText = await this.pdfExtractor.extract(bytes);
+    }
     const receipt = await this.append(
       tx,
       context,
@@ -105,6 +111,7 @@ export class EvidenceService {
           mediaType: parsed.mediaType,
           byteLength: bytes.length,
           sha256,
+          ...(extractedText ? { extractedText } : {}),
         },
       },
       actorUserId,

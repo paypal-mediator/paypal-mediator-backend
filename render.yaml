@@ -47,3 +47,19 @@ services:
         sync: false
       - key: PAYPAL_WEBHOOK_ID
         sync: false
+      - key: AI_PROVIDER
+        value: nvidia
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_MODEL
+        value: nvidia/nemotron-3.5-super-vl-120b-a12b
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      - key: INVESTIGATOR_MAX_STEPS
+        value: '8'
+      - key: INVESTIGATOR_TIMEOUT_MS
+        value: '60000'
+      - key: MAX_INVESTIGATION_ROUNDS
+        value: '2'

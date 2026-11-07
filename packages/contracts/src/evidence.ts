@@ -79,6 +79,7 @@ export const EvidenceFileMetadataSchema = z.strictObject({
   mediaType: z.enum(['application/pdf', 'image/png', 'image/jpeg']),
   byteLength: z.number().int().min(1).max(MAX_EVIDENCE_FILE_BYTES),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  extractedText: z.string().optional(),
 });
 export const UploadEvidenceFileSchema = z.strictObject({
   ...provenance,
