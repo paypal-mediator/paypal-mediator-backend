@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from '../monitoring/audit.module.js';
 import { MerchantsModule } from '../merchants/index.js';
 import { EventIngestionModule } from '../event-ingestion/index.js';
 import { TransactionsController } from './transactions.controller.js';
@@ -12,7 +13,7 @@ import { OrderSourcesService } from './sources/order-sources.service.js';
 import { ORDER_INFORMATION_SOURCES } from './sources/order-information-source.js';
 
 @Module({
-  imports: [MerchantsModule, EventIngestionModule, EvidenceModule],
+  imports: [MerchantsModule, EventIngestionModule, EvidenceModule, AuditModule],
   controllers: [TransactionsController, OrdersController],
   providers: [
     TransactionsService,

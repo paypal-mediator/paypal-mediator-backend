@@ -1,3 +1,4 @@
+import { AuditService } from '../monitoring/audit.service.js';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   VerificationResponseSchema,
@@ -38,7 +39,17 @@ export class VerifierService {
     @Inject(AgentProvider) private readonly provider: AgentProvider,
     @Inject(VerifierEngine) private readonly engine: VerifierEngine,
     @Inject(ENVIRONMENT) private readonly env: Environment,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
+
+  async operationalMetrics(merchantId: string) {
+    const groups = await this.prisma.verificationRun.groupBy({
+      by: ['status'],
+      where: { merchantId },
+      _count: { _all: true },
+    });
+    return groups.map((g) => ({ status: g.status, count: g._count._all }));
+  }
 
   async verify(
     actor: MerchantActor,
@@ -91,7 +102,7 @@ export class VerifierService {
     const acquired = await this.prisma.$transaction(async (tx) => {
       const key = `verify:${actor.merchantId}:${transactionId}`;
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))::text`;
-      await tx.verificationRun.updateMany({
+      const expired = await tx.verificationRun.updateManyAndReturn({
         where: {
           merchantId: actor.merchantId,
           transactionId,
@@ -104,6 +115,24 @@ export class VerifierService {
           finishedAt: new Date(),
         },
       });
+      for (const run of expired)
+        await this.audit.append(
+          {
+            merchantId: run.merchantId,
+            actorUserId: run.actorUserId,
+            actorKind: 'SYSTEM',
+            transactionId: run.transactionId,
+            resourceType: 'VERIFICATION',
+            resourceId: run.id,
+            outcome: 'FAILED',
+            durationMs: Math.max(0, Date.now() - run.createdAt.getTime()),
+            record: {
+              action: 'VERIFICATION_FINISHED',
+              details: { errorCode: 'VERIFICATION_TIMEOUT' },
+            },
+          },
+          tx,
+        );
       const existing = await tx.verificationRun.findUnique({
         where: {
           merchantId_investigationId_idempotencyKey: {
@@ -190,6 +219,21 @@ export class VerifierService {
           expiresAt: new Date(Date.now() + this.env.VERIFIER_TIMEOUT_MS),
         },
       });
+      await this.audit.append(
+        {
+          merchantId: actor.merchantId,
+          actorUserId: actor.userId,
+          transactionId,
+          resourceType: 'VERIFICATION',
+          resourceId: row.id,
+          outcome: 'STARTED',
+          record: {
+            action: 'VERIFICATION_STARTED',
+            details: { provider: config.provider },
+          },
+        },
+        tx,
+      );
       return { row, created: true };
     });
     if (!acquired.created)
@@ -215,16 +259,49 @@ export class VerifierService {
       );
       if (latest.dossier.revision !== snapshot.dossier.revision)
         throw new AgentError('VERIFICATION_STALE');
-      const saved = await this.prisma.verificationRun.updateMany({
-        where: { id: row.id, status: 'RUNNING', expiresAt: { gt: new Date() } },
-        data: {
-          status: 'COMPLETED',
-          finishedAt: new Date(),
-          result: result as unknown as Prisma.InputJsonValue,
-          resultHash: contentHash(result),
-          trace: trace as unknown as Prisma.InputJsonValue,
-          usage,
-        },
+      const saved = await this.prisma.$transaction(async (tx) => {
+        const saved = await tx.verificationRun.updateMany({
+          where: {
+            id: row.id,
+            status: 'RUNNING',
+            expiresAt: { gt: new Date() },
+          },
+          data: {
+            status: 'COMPLETED',
+            finishedAt: new Date(),
+            result: result as unknown as Prisma.InputJsonValue,
+            resultHash: contentHash(result),
+            trace: trace as unknown as Prisma.InputJsonValue,
+            usage,
+          },
+        });
+        if (saved.count) {
+          const context = {
+            merchantId: actor.merchantId,
+            actorUserId: actor.userId,
+            transactionId,
+            resourceId: row.id,
+          };
+          await this.audit.agentSteps(context, 'VERIFICATION', trace, tx);
+          await this.audit.append(
+            {
+              ...context,
+              actorKind: 'AGENT',
+              resourceType: 'VERIFICATION',
+              durationMs: Math.max(0, Date.now() - row.createdAt.getTime()),
+              ...usage,
+              record: {
+                action: 'VERIFICATION_FINISHED',
+                details: {
+                  provider: config.provider,
+                  verdict: result.verdict,
+                },
+              },
+            },
+            tx,
+          );
+        }
+        return saved;
       });
       if (!saved.count) throw new AgentError('VERIFICATION_TIMEOUT');
     } catch (error) {
@@ -233,15 +310,41 @@ export class VerifierService {
         : error instanceof AgentError || error instanceof ApiException
           ? error.code
           : 'VERIFICATION_FAILED';
-      await this.prisma.verificationRun.updateMany({
-        where: { id: row.id, status: 'RUNNING' },
-        data: {
-          status: 'FAILED',
-          errorCode: code,
-          finishedAt: new Date(),
-          trace: trace as unknown as Prisma.InputJsonValue,
-          usage,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const saved = await tx.verificationRun.updateMany({
+          where: { id: row.id, status: 'RUNNING' },
+          data: {
+            status: 'FAILED',
+            errorCode: code,
+            finishedAt: new Date(),
+            trace: trace as unknown as Prisma.InputJsonValue,
+            usage,
+          },
+        });
+        if (saved.count) {
+          const context = {
+            merchantId: actor.merchantId,
+            actorUserId: actor.userId,
+            transactionId,
+            resourceId: row.id,
+          };
+          await this.audit.agentSteps(context, 'VERIFICATION', trace, tx);
+          await this.audit.append(
+            {
+              ...context,
+              actorKind: 'AGENT',
+              resourceType: 'VERIFICATION',
+              outcome: 'FAILED',
+              durationMs: Math.max(0, Date.now() - row.createdAt.getTime()),
+              ...usage,
+              record: {
+                action: 'VERIFICATION_FINISHED',
+                details: { errorCode: code, provider: config.provider },
+              },
+            },
+            tx,
+          );
+        }
       });
     }
     return this.detail(

@@ -7,6 +7,7 @@ import { EventIngestionModule } from './modules/event-ingestion/index.js';
 import { TransactionsModule } from './modules/transactions/index.js';
 import { VerifierModule } from './modules/verifier/index.js';
 import { InvestigatorModule } from './modules/investigator/index.js';
+import { MonitoringModule } from './modules/monitoring/monitoring.module.js';
 
 @Module({})
 export class AppModule {
@@ -21,6 +22,7 @@ export class AppModule {
         TransactionsModule,
         InvestigatorModule,
         VerifierModule,
+        MonitoringModule,
       ],
     };
   }

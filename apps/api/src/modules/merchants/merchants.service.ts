@@ -16,6 +16,7 @@ import { PrismaService } from '../../common/database/prisma.service.js';
 import { ApiException } from '../../common/http/api.exception.js';
 import type { MerchantActor } from './auth/merchant-access.guard.js';
 import { PayPalConnectionClient } from './paypal/paypal-connection.client.js';
+import { AuditService } from '../monitoring/audit.service.js';
 
 @Injectable()
 export class MerchantsService {
@@ -26,6 +27,7 @@ export class MerchantsService {
     @Inject(ENVIRONMENT) private readonly environment: Environment,
     @Inject(PayPalConnectionClient)
     private readonly paypal: PayPalConnectionClient,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
   private assertScope(merchantId: string): void {
@@ -120,6 +122,22 @@ export class MerchantsService {
         where: { id: actor.merchantId },
         data: settings,
       });
+      await this.audit.append(
+        {
+          merchantId: actor.merchantId,
+          actorUserId: actor.userId,
+          record: {
+            action: 'SETTINGS_UPDATED',
+            details: {
+              displayNameChanged: settings.displayName !== undefined,
+              allowInvestigations: settings.allowInvestigations,
+              allowSubmissions: settings.allowSubmissions,
+              requireMerchantApproval: settings.requireMerchantApproval,
+            },
+          },
+        },
+        tx,
+      );
       await tx.merchantEvent.create({
         data: {
           merchantId: actor.merchantId,
@@ -214,6 +232,27 @@ export class MerchantsService {
           details: result,
         },
       });
+      await this.audit.append(
+        {
+          merchantId: actor.merchantId,
+          actorUserId: actor.userId,
+          resourceId: actor.merchantId,
+          outcome:
+            result.connectionStatus === 'CONNECTED' &&
+            result.disputesReadStatus === 'AVAILABLE'
+              ? 'SUCCEEDED'
+              : 'FAILED',
+          record: {
+            action: 'PAYPAL_CONNECTION_CHECKED',
+            details: {
+              ...(result.paypalHttpStatus
+                ? { httpStatus: result.paypalHttpStatus }
+                : {}),
+            },
+          },
+        },
+        tx,
+      );
     });
     return this.getIntegrations(actor.merchantId);
   }

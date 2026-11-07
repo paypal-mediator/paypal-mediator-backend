@@ -131,6 +131,19 @@ describe('M01 ↔ M02 communication over HTTP and real PostgreSQL (MOCK PayPal/J
       kind: 'TRANSACTION_CAPTURED',
       status: 'QUEUED',
     });
+    expect(
+      await prisma.auditEvent.findFirst({
+        where: {
+          merchantId,
+          resourceId: stored.id,
+          action: 'WEBHOOK_RECEIVED',
+        },
+      }),
+    ).toMatchObject({
+      module: 'M02',
+      actorKind: 'PAYPAL',
+      outcome: 'SUCCEEDED',
+    });
     const verification = calls.find((call) =>
       call.path.endsWith('verify-webhook-signature'),
     );

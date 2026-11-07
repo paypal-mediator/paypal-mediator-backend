@@ -8,6 +8,30 @@ datasource db {
   provider = "postgresql"
 }
 
+// M09 keeps historical identity references without cascading deletions.
+model AuditEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  merchantId    String   @map("merchant_id") @db.Uuid
+  actorUserId   String?  @map("actor_user_id") @db.Uuid
+  actorKind     String   @default("USER") @map("actor_kind")
+  module        String   @default("M01")
+  action        String   @default("SETTINGS_UPDATED")
+  outcome       String   @default("SUCCEEDED")
+  transactionId String?  @map("transaction_id") @db.Uuid
+  resourceType  String   @default("MERCHANT") @map("resource_type")
+  resourceId    String?  @map("resource_id") @db.Uuid
+  durationMs    Int?     @map("duration_ms")
+  inputTokens   Int?     @map("input_tokens")
+  outputTokens  Int?     @map("output_tokens")
+  record        Json
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([merchantId, createdAt, id])
+  @@index([merchantId, transactionId, createdAt])
+  @@index([merchantId, resourceId, createdAt])
+  @@map("audit_events")
+}
+
 // Minimal merchant identity anchor. M01 will own its integration and authorization.
 model Merchant {
   id                      String               @id @default(uuid()) @db.Uuid

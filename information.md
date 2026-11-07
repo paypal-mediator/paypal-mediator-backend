@@ -9,6 +9,13 @@
 > realizada por el usuario porque el control de Opera GX no estaba disponible.
 > Ver [evidencia y límites](docs/evidence/m01-m06-sandbox-20261107.json).
 
+> **M09 — implementado para M01–M06:** auditoría transaccional append-only,
+> timeline autenticado `/api/activity` con filtros y `/api/activity/metrics`,
+> pasos/resultados/errores de agentes, duraciones, tokens y estados de trabajos.
+> M07 y M08 continúan pendientes. El despliegue y la prueba live se documentan
+> por separado; la implementación no implica aprobación o envío a PayPal.
+> Ver [alcance y límites](docs/m09-monitoring.md).
+
 # ResolveAI — Contexto de proyecto para Codex CLI
 
 ## Incremento M03/M04: fuentes de pedidos
