@@ -1,3 +1,11 @@
+> **M09 desplegado y verificado (2026-11-07):** PR #16, commit `65bd498`, CI con
+> 191 pruebas unitarias/HTTP y 95 PostgreSQL. Timeline/métricas autenticados 200.
+> Nuevo pago de 1 USD ficticio aprobado en Opera GX/CDP 9223; webhook genuino,
+> fuentes PayPal y Storage íntegros. M05 real COMPLETED; M06 real REJECTED por
+> faltantes y una afirmación sin respaldo. Casos DEMO READY/NEEDS_REVIEW y errores
+> posteriores M05 conservados. Permisos restaurados; M07/M08 pendientes.
+> Ver [validación y límites M09](docs/m09-monitoring.md#validación-publicada--2026-11-07).
+
 > **M05/M06 verificados localmente (2026-11-07):** pago nuevo PayPal Sandbox de
 > 1 USD ficticio, webhook genuino, pedido enriquecido y originales íntegros.
 > Investigator y Verifier ejecutados con NVIDIA real: M05 COMPLETED y M06

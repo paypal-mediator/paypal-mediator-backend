@@ -83,3 +83,38 @@ aislamiento por merchant, paginación con empates, filtros, métricas, rechazo d
 metadatos privados, RLS, inmutabilidad, rollback y telemetría idempotente.
 Las pruebas automatizadas usan PostgreSQL desechable real y servicios externos
 MOCK explícitos.
+
+## Validación publicada — 2026-11-07
+
+PR #16 integrado en `main` (`65bd498`), CI aprobado y rutas M09 verificadas en
+Render. `pnpm check` pasó con 191 pruebas unitarias/HTTP y `pnpm test:db` con 95.
+Las 12 migraciones se aplicaron en PostgreSQL desechable, se repitieron y Prisma
+no detectó diferencias. Render aplicó las dos migraciones M09 en Supabase al
+arrancar; timeline y métricas autenticados devolvieron HTTP 200.
+
+Nuevo pago PayPal Sandbox de 1 USD ficticio: orden `4P679551HB887882T`, captura
+`7NG16302DE1762820`. El usuario inició sesión y el asistente aprobó el checkout
+controlando Opera GX mediante CDP local 9223. M02 verificó el webhook genuino,
+M03 enriqueció los dos artículos desde Orders v2 y M04 conservó originales
+íntegros; refresh sin duplicar versiones. NVIDIA real ejecutó M05 COMPLETED y
+M06 COMPLETED con veredicto REJECTED: faltan tracking/entrega y una afirmación del
+borrador no tiene apoyo verificado. Los replays conservaron IDs, uso y un único
+inicio/fin de auditoría por ejecución.
+
+Un PNG DEMO recorrió carga, descarga con bytes/SHA-256 idénticos y deduplicación
+en Storage real. Se creó una orden comercial DEMO idempotente; tracking/entrega
+DEMO llevaron el checklist a READY y una contradicción a NEEDS_REVIEW. La
+investigación con el PNG inicial de 1 píxel falló AI_PROVIDER_REJECTED. Se
+reemplazó por un PNG RGB de 512×128; el siguiente borrador fue bloqueado por
+AI_UNSUPPORTED_CITATION. Ambos fallos permanecen registrados; no se continuaron
+reintentos pagados ni se relajaron las citas.
+
+M06 bloqueó HTTP 409 la investigación obsoleta. La exigencia de revisión humana
+de un rechazo está cubierta por las pruebas PostgreSQL; en el segundo caso live
+no se alcanzó ese control porque M05 no produjo una investigación nueva válida.
+No se afirma un APPROVED live. `/api/activity` mostró M01–M06, paginación sin
+repetir IDs y acceso sin sesión 401; métricas 200, módulo M08 inválido 400.
+Se restauró la política original: investigaciones y envíos deshabilitados,
+aprobación humana obligatoria. No se usaron M07/M08.
+
+Ver [evidencia sanitizada](evidence/m09-m01-m06-sandbox-20261107.json).
