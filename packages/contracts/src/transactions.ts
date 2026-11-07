@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { OrderResponseSchema } from './orders.js';
 import { EvidenceReceiptSchema } from './evidence.js';
+import {
+  SourceOrderResponseSchema,
+  OrderEnrichmentSchema,
+} from './order-sources.js';
 
 export const TransactionQuerySchema = z.object({
   page: z.coerce.number().int().min(1).max(100000).default(1),
@@ -22,7 +26,8 @@ export const TransactionResponseSchema = z.object({
   capturedAt: z.iso.datetime(),
   sourceEventId: z.uuid(),
   createdAt: z.iso.datetime(),
-  order: OrderResponseSchema.nullable(),
+  order: z.union([OrderResponseSchema, SourceOrderResponseSchema]).nullable(),
+  orderEnrichment: OrderEnrichmentSchema,
   orderLink: z.object({
     status: z.enum(['UNLINKED', 'LINKED', 'CONFLICT']),
     reason: z.string().nullable(),

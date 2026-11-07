@@ -182,3 +182,9 @@ aislamiento merchant, autenticación, paginación y RLS. En las suites automatiz
 PayPal y JWKS son MOCK explícitos; la app NestJS y PostgreSQL son reales.
 La comprobación Sandbox descrita arriba utilizó PayPal, Supabase Auth y
 PostgreSQL Supabase reales, sin mocks.
+
+# Fuentes conectadas
+
+El incremento de fuentes de pedidos añade consulta automática de Orders v2 tras
+capturas verificadas, retry/backfill y procedencia por proveedor sin depender de
+una orden manual. Ver [contrato, estados y adaptadores ERP](order-information-sources.md).

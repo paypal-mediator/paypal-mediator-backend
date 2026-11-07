@@ -1,4 +1,4 @@
-import type { OrderResponse } from '@resolve-ai/contracts';
+import type { TransactionResponse } from '@resolve-ai/contracts';
 
 // M03 supplies its authoritative context. M04 never reads or writes M03 tables.
 export interface EvidenceContext {
@@ -11,7 +11,9 @@ export interface EvidenceContext {
   amount: string;
   capturedAt: string;
   sourceEventId: string;
-  order: OrderResponse | null;
+  order: TransactionResponse['order'];
+  orders?: Array<NonNullable<TransactionResponse['order']>>;
+  orderRecordComplete?: boolean;
   orderRecordedBy: string | null;
   orderLinkError: string | null;
 }

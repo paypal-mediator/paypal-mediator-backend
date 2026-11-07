@@ -51,6 +51,19 @@ import { TransactionsService } from './transactions.service.js';
 @UseGuards(MerchantAccessGuard)
 @Controller('transactions')
 export class TransactionsController {
+  @Post(':id/refresh-order-sources')
+  @MerchantAdminOnly()
+  @ApiOperation({
+    summary:
+      'Fetch/retry registered order information sources (ADMIN); source failures remain explicit',
+  })
+  @ApiResponse({ status: 201, schema: zodOpenApi(TransactionResponseSchema) })
+  refreshOrderSources(
+    @Req() request: MerchantRequest,
+    @Param('id', new ZodValidationPipe(z.uuid())) id: string,
+  ) {
+    return this.transactions.refreshOrderSources(request.merchantActor, id);
+  }
   constructor(
     @Inject(TransactionsService)
     private readonly transactions: TransactionsService,
