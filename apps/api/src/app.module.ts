@@ -9,6 +9,7 @@ import { VerifierModule } from './modules/verifier/index.js';
 import { InvestigatorModule } from './modules/investigator/index.js';
 import { MonitoringModule } from './modules/monitoring/monitoring.module.js';
 import { DisputesModule } from './modules/disputes/index.js';
+import { SubmissionsModule } from './modules/submissions/index.js';
 
 @Module({})
 export class AppModule {
@@ -25,6 +26,7 @@ export class AppModule {
         VerifierModule,
         MonitoringModule,
         DisputesModule,
+        SubmissionsModule,
       ],
     };
   }

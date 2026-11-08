@@ -41,6 +41,7 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
         'VERIFICATION_STARTED',
         'VERIFICATION_FINISHED',
         'VERIFICATION_STEP',
+        'SUBMISSION_ATTEMPTED',
       ]),
       details: z
         .object({
@@ -103,6 +104,7 @@ export const AuditModuleSchema = z.enum([
   'M04',
   'M05',
   'M06',
+  'M08',
 ]);
 export const AuditOutcomeSchema = z.enum([
   'STARTED',
@@ -122,6 +124,7 @@ export const AuditResourceSchema = z.enum([
   'EVIDENCE',
   'INVESTIGATION',
   'VERIFICATION',
+  'SUBMISSION',
 ]);
 const counters = {
   durationMs: z.number().int().min(0).max(2147483647).nullable().default(null),

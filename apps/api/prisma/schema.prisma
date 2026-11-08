@@ -52,6 +52,7 @@ model Merchant {
   investigations          InvestigationRun[]
   orderSources            OrderSourceJob[]
   disputes                Dispute[]
+  submissions             Submission[]
 
   @@map("merchants")
 }
@@ -119,6 +120,7 @@ model WebhookEvent {
   transaction    Transaction?
   disputeSource  Dispute?       @relation("DisputeSourceEvent")
   disputeEvents  DisputeEvent[]
+  submissionEvents SubmissionEvent[]
 
   @@unique([merchantId, environment, paypalEventId])
   @@index([merchantId, receivedAt])
@@ -362,6 +364,7 @@ model Dispute {
   transaction Transaction?  @relation(fields: [transactionId], references: [id], onDelete: Restrict)
   sourceEvent WebhookEvent  @relation("DisputeSourceEvent", fields: [sourceEventId], references: [id], onDelete: Restrict)
   events      DisputeEvent[]
+  submissions Submission[]
 
   @@unique([merchantId, environment, paypalDisputeId])
   @@index([merchantId, disputedAt, id])
@@ -385,4 +388,49 @@ model DisputeEvent {
 
   @@index([disputeId, occurredAt, id])
   @@map("dispute_events")
+}
+
+// M08 owns submission orchestration. Evidence is only sent to PayPal when
+// the deterministic Submission Guard approves and the merchant has authorised.
+model Submission {
+  id              String   @id @default(uuid()) @db.Uuid
+  merchantId      String   @map("merchant_id") @db.Uuid
+  disputeId       String   @map("dispute_id") @db.Uuid
+  environment     String   @default("sandbox")
+  paypalRequestId String?  @map("paypal_request_id") @db.VarChar(255)
+  status          String   @default("BLOCKED") @map("status") @db.VarChar(16)
+  paypalResponseStatus Int?  @map("paypal_response_status")
+  submittedAt     DateTime? @map("submitted_at")
+  errorCode       String?  @map("error_code") @db.VarChar(80)
+  errorMessage    String?  @map("error_message") @db.VarChar(2000)
+  guardVerdict    String   @map("guard_verdict") @db.VarChar(16)
+  guardReasons    Json     @map("guard_reasons")
+  idempotencyKey  String   @unique @map("idempotency_key") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  merchant   Merchant   @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  dispute    Dispute    @relation(fields: [disputeId], references: [id], onDelete: Restrict)
+  events     SubmissionEvent[]
+
+  @@unique([merchantId, disputeId])
+  @@index([merchantId, createdAt, id])
+  @@map("submissions")
+}
+
+model SubmissionEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  submissionId  String   @map("submission_id") @db.Uuid
+  eventId       String   @unique @map("event_id") @db.Uuid
+  eventType     String   @map("event_type") @db.VarChar(128)
+  paypalEventId String   @map("paypal_event_id") @db.VarChar(255)
+  outcome       String   @default("APPLIED") @db.VarChar(32)
+  reason        String?  @db.VarChar(64)
+  occurredAt    DateTime @map("occurred_at") @db.Timestamptz(3)
+  receivedAt    DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  event      WebhookEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+
+  @@index([submissionId, occurredAt, id])
+  @@map("submission_events")
 }
