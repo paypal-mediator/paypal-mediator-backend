@@ -3,7 +3,7 @@
 > Nuevo pago de 1 USD ficticio aprobado en Opera GX/CDP 9223; webhook genuino,
 > fuentes PayPal y Storage íntegros. M05 real COMPLETED; M06 real REJECTED por
 > faltantes y una afirmación sin respaldo. Casos DEMO READY/NEEDS_REVIEW y errores
-> posteriores M05 conservados. Permisos restaurados; M07/M08 pendientes.
+> posteriores M05 conservados. Permisos restaurados; M07 pendiente, M08 implementado y desplegado (Submission Guard).
 > Ver [validación y límites M09](docs/m09-monitoring.md#validación-publicada--2026-11-07).
 
 > **M05/M06 verificados localmente (2026-11-07):** pago nuevo PayPal Sandbox de
@@ -20,7 +20,9 @@
 > **M09 — implementado para M01–M06:** auditoría transaccional append-only,
 > timeline autenticado `/api/activity` con filtros y `/api/activity/metrics`,
 > pasos/resultados/errores de agentes, duraciones, tokens y estados de trabajos.
-> M07 y M08 continúan pendientes. El despliegue y la prueba live se documentan
+> M07 sigue pendiente. M08 implementado y desplegado: Submission Guard y
+> endpoint `/api/disputes/:id/submit` que llama a PayPal `provide-evidence`
+> solo cuando el guard lo aprueba. El despliegue y la prueba live se documentan
 > por separado; la implementación no implica aprobación o envío a PayPal.
 > Ver [alcance y límites](docs/m09-monitoring.md).
 
@@ -186,10 +188,12 @@ producción, respetando `TRANSACTION_WORKER_ENABLED=false` cuando sea explícito
 
 ### Límites y siguiente paso
 
-- **M04 es parcial; M05–M09 siguen pendientes.** M03 consume capturas verificadas;
-  los trabajos de disputas permanecen `QUEUED`. Hay expedientes estructurados,
-  pero no consumidores de disputas,
-  Investigator, Verifier, presentación de evidencia ni auditoría completa.
+- **M04 es parcial; M05–M07 y M09 siguen pendientes.** M03 consume capturas
+  verificadas; los trabajos de disputas permanecen `QUEUED`. Hay expedientes
+  estructurados, pero no consumidores de disputas, Investigator, Verifier ni
+  auditoría completa. M08 (Submission Guard) está implementado y desplegado,
+  pero requiere que M06 devuelva veredicto `APPROVED` antes de poder enviar
+  evidencia a PayPal.
 - Se registraron eventos de disputas, pero no se ha demostrado una entrega
   genuina de disputa ni una llamada real a `provide-evidence`.
 - OpenAI y el frontend no están integrados en este backend. Storage privado sí.
@@ -356,11 +360,11 @@ cuando se implementen; no añadir carpetas vacías que aparenten trabajo termina
 | M09 | Monitoring & Audit | Actividad, métricas, eventos, errores, seguimiento | Timeline auditable |
 | M10 | Merchant Dashboard | UX e integración frontend de M01–M09 | Pantallas end-to-end |
 
-En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M01 y M02
-están implementados; M03 incluye capturas, órdenes y readiness; M04 tiene la base
-estructurada y archivos privados. Conectores de M04 y M05–M09 son alcance futuro. M10 vive en el repositorio
-del frontend. Evitar que un módulo escriba las tablas privadas de otro sin una
-interfaz definida.
+En backend M01–M09 son módulos NestJS dentro del **mismo servicio**. M01, M02,
+M03, M04 y M08 están implementados; M03 incluye capturas, órdenes y readiness;
+M04 tiene la base estructurada y archivos privados. M05–M07 y M09 son alcance
+futuro. M10 vive en el repositorio del frontend. Evitar que un módulo escriba
+las tablas privadas de otro sin una interfaz definida.
 
 ### Interfaces entre módulos
 
@@ -421,6 +425,31 @@ PayPal Webhooks → Event Ingestion → Transaction Manager / Dispute Orchestrat
 - La disputa no está en un estado que permita proporcionar evidencia.
 - Ya se registró una presentación equivalente: no repetir a ciegas.
 - Error de API cuya resolución requiera validación humana.
+
+### 6.4 Submission Guard y envío a PayPal (M08)
+
+M08 implementa el Submission Guard: código determinista que valida condiciones
+**antes** de enviar cualquier evidencia a PayPal. Nunca permite que el modelo de
+IA envíe evidencia saltándose las validaciones deterministas y las autorizaciones.
+
+**Flujo de envío:**
+
+1. El Verifier (M06) debe haber devuelto veredicto `APPROVED` sobre la disputa.
+2. M08 verifica que el merchant tenga `allowSubmissions=true` y aprobación humana
+   configurada (requerida por defecto).
+3. M08 verifica que el estado y etapa de PayPal permitan `provide-evidence`
+   (ej. `WAITING_FOR_SELLER_RESPONSE` / `INQUIRY` o `CHARGEBACK`).
+4. M08 verifica que la disputa esté vinculada (`LINKED`) a una transacción de M03.
+5. M08 verifica que no exista una presentación previa para la misma disputa
+   (idempotencia).
+6. Si todo pasa, se llama a `POST /v1/customer/disputes/{id}/provide-evidence`
+   de PayPal Sandbox con los IDs de evidencia verificados.
+7. El resultado (`SUBMITTED` / `BLOCKED` / `FAILED`) se registra en la tabla
+   `submissions` y en la auditoría M09 con actor, momento, acción y resultado.
+
+**Endpoint:** `POST /api/disputes/:id/submit` — requiere JWT y rol ADMIN.
+**Endpoint de consulta:** `GET /api/disputes` lista disputas con su estado de
+enlace y veredicto.
 
 ---
 
