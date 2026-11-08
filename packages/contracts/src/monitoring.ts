@@ -104,7 +104,6 @@ export const AuditModuleSchema = z.enum([
   'M04',
   'M05',
   'M06',
-  'M08',
 ]);
 export const AuditOutcomeSchema = z.enum([
   'STARTED',
