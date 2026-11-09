@@ -10,6 +10,7 @@ import { InvestigatorModule } from './modules/investigator/index.js';
 import { MonitoringModule } from './modules/monitoring/monitoring.module.js';
 import { DisputesModule } from './modules/disputes/index.js';
 import { SubmissionsModule } from './modules/submissions/index.js';
+import { BillingModule } from './modules/billing/index.js';
 
 @Module({})
 export class AppModule {
@@ -27,6 +28,7 @@ export class AppModule {
         MonitoringModule,
         DisputesModule,
         SubmissionsModule,
+        BillingModule,
       ],
     };
   }

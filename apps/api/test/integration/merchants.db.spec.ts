@@ -311,8 +311,11 @@ describe('M01 HTTP + PostgreSQL + signed JWTs (MOCK identity issuer and PayPal)'
   });
 
   it('uses current membership on every request and blocks a deactivated member', async () => {
+    const member = await prisma.merchantMember.findFirst({
+      where: { authUserId: viewerId, merchantId },
+    });
     await prisma.merchantMember.update({
-      where: { authUserId: viewerId },
+      where: { id: member!.id },
       data: { active: false },
     });
     await request(context.app.getHttpServer())

@@ -33,6 +33,11 @@ export const MerchantResponseSchema = z.object({
 });
 export type MerchantResponse = z.infer<typeof MerchantResponseSchema>;
 
+export const MerchantListResponseSchema = z.object({
+  items: z.array(MerchantResponseSchema),
+});
+export type MerchantListResponse = z.infer<typeof MerchantListResponseSchema>;
+
 export const PayPalIntegrationSchema = z.object({
   provider: z.literal('PAYPAL'),
   environment: z.literal('sandbox'),

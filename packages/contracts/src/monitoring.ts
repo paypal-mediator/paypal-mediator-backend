@@ -42,6 +42,7 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
         'VERIFICATION_FINISHED',
         'VERIFICATION_STEP',
         'SUBMISSION_ATTEMPTED',
+        'SUBSCRIPTION_CREATED',
       ]),
       details: z
         .object({
@@ -92,6 +93,7 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
             .optional(),
           evidenceId: z.uuid().optional(),
           observedAt: z.iso.datetime().optional(),
+          planId: z.string().optional(),
         })
         .strict(),
     })
@@ -124,6 +126,7 @@ export const AuditResourceSchema = z.enum([
   'INVESTIGATION',
   'VERIFICATION',
   'SUBMISSION',
+  'SUBSCRIPTION',
 ]);
 const counters = {
   durationMs: z.number().int().min(0).max(2147483647).nullable().default(null),

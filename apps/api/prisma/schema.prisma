@@ -53,8 +53,41 @@ model Merchant {
   orderSources            OrderSourceJob[]
   disputes                Dispute[]
   submissions             Submission[]
+  subscriptions           Subscription[]
 
   @@map("merchants")
+}
+
+// Planes de suscripción. Los precios se configuran en base de datos (no hardcodeados).
+model Plan {
+  id                   String   @id @default(uuid()) @db.Uuid
+  name                 String   @db.VarChar(120)
+  priceCents           Int      // Precio en centavos de la moneda indicada
+  currency             String   @default("USD") @db.VarChar(3)
+  interval             String   @db.VarChar(16) // MONTH | YEAR
+  maxTransactions      Int?
+  maxDisputes          Int?
+  includesConciliation Boolean  @default(false)
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  subscriptions        Subscription[]
+
+  @@map("plans")
+}
+
+// Suscripción activa de un merchant a un plan.
+model Subscription {
+  id                String   @id @default(uuid()) @db.Uuid
+  merchantId        String   @map("merchant_id") @db.Uuid
+  planId            String   @map("plan_id") @db.Uuid
+  status            String   @default("ACTIVE") @db.VarChar(32) // ACTIVE | CANCELED | EXPIRED
+  currentPeriodEnd  DateTime @map("current_period_end") @db.Timestamptz(3)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  plan              Plan     @relation(fields: [planId], references: [id])
+  merchant          Merchant @relation(fields: [merchantId], references: [id])
+
+  @@map("subscriptions")
 }
 
 enum MerchantRole {
@@ -65,13 +98,14 @@ enum MerchantRole {
 model MerchantMember {
   id         String       @id @default(uuid()) @db.Uuid
   merchantId String       @map("merchant_id") @db.Uuid
-  authUserId String       @unique @map("auth_user_id") @db.Uuid
+  authUserId String       @map("auth_user_id") @db.Uuid
   role       MerchantRole @default(VIEWER)
   active     Boolean      @default(true)
   createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
   merchant   Merchant     @relation(fields: [merchantId], references: [id], onDelete: Restrict)
 
   @@index([merchantId])
+  @@index([authUserId])
   @@map("merchant_members")
 }
 

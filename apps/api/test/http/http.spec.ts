@@ -97,6 +97,7 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/health',
       '/api/health/ready',
       '/api/merchants/me',
+      '/api/merchants',
       '/api/merchants/me/settings',
       '/api/settings/integrations',
       '/api/settings/integrations/paypal/check',
@@ -119,6 +120,8 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/disputes',
       '/api/disputes/{id}',
       '/api/disputes/{id}/submit',
+      '/api/billing/plans',
+      '/api/billing/subscription',
     ]);
     await request(context.app.getHttpServer()).get('/api/docs/').expect(200);
   });

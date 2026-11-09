@@ -37,17 +37,10 @@ export class MerchantAccessGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<MerchantRequest>();
     const userId = await this.auth.authenticate(request.headers.authorization);
-    if (!this.environment.MERCHANT_ID) {
-      throw new ApiException(
-        'MERCHANT_NOT_CONFIGURED',
-        'The Sandbox merchant is not configured',
-        503,
-      );
-    }
-    const member = await this.prisma.merchantMember.findUnique({
-      where: { authUserId: userId },
+    const member = await this.prisma.merchantMember.findFirst({
+      where: { authUserId: userId, active: true },
     });
-    if (!member?.active || member.merchantId !== this.environment.MERCHANT_ID) {
+    if (!member) {
       throw new ApiException(
         'MERCHANT_ACCESS_DENIED',
         'Access to this merchant is not authorized',

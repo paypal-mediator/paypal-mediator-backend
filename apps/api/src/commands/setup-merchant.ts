@@ -34,21 +34,26 @@ try {
   const role = MerchantRoleSchema.parse(values.role);
   prisma = new PrismaService(environment);
   await prisma.$transaction(async (tx) => {
-    const existing = await tx.merchantMember.findUnique({
+    const existingMember = await tx.merchantMember.findFirst({
       where: { authUserId: userId },
     });
-    if (existing && existing.merchantId !== merchantId)
+    if (existingMember && existingMember.merchantId !== merchantId)
       throw new Error('Conflicting membership');
     await tx.merchant.upsert({
       where: { id: merchantId },
       create: { id: merchantId, displayName },
       update: {},
     });
-    await tx.merchantMember.upsert({
-      where: { authUserId: userId },
-      create: { merchantId, authUserId: userId, role },
-      update: { role, active: true },
-    });
+    if (existingMember) {
+      await tx.merchantMember.update({
+        where: { id: existingMember.id },
+        data: { merchantId, role, active: true },
+      });
+    } else {
+      await tx.merchantMember.create({
+        data: { merchantId, authUserId: userId, role },
+      });
+    }
     await tx.merchantEvent.create({
       data: {
         merchantId,

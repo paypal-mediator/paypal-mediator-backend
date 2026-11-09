@@ -1,9 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   IntegrationsResponseSchema,
+  MerchantListResponseSchema,
   MerchantPolicySchema,
   MerchantResponseSchema,
   type IntegrationsResponse,
+  type MerchantListResponse,
   type MerchantPolicy,
   type MerchantResponse,
   type UpdateMerchantSettings,
@@ -31,8 +33,11 @@ export class MerchantsService {
   ) {}
 
   private assertScope(merchantId: string): void {
+    // Cuando MERCHANT_ID está configurado (despliegue single-tenant legacy),
+    // se respeta como merchant autorizado. Cuando no está definido, se permite
+    // cualquier merchant activo del usuario autenticado (multicliente).
     if (
-      !this.environment.MERCHANT_ID ||
+      this.environment.MERCHANT_ID &&
       merchantId !== this.environment.MERCHANT_ID
     ) {
       throw new ApiException(
@@ -64,6 +69,22 @@ export class MerchantsService {
       role: actor.role,
       policy: merchant,
     });
+  }
+
+  async listMerchants(userId: string): Promise<MerchantListResponse> {
+    const members = await this.prisma.merchantMember.findMany({
+      where: { authUserId: userId, active: true },
+      include: { merchant: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    const items = members.map((member) =>
+      MerchantResponseSchema.parse({
+        ...member.merchant,
+        role: member.role,
+        policy: member.merchant,
+      }),
+    );
+    return MerchantListResponseSchema.parse({ items });
   }
 
   async getPolicy(merchantId: string): Promise<MerchantPolicy> {

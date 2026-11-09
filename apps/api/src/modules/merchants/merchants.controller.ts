@@ -19,6 +19,7 @@ import {
   UpdateMerchantSettingsSchema,
   MerchantResponseSchema,
   IntegrationsResponseSchema,
+  MerchantListResponseSchema,
   type UpdateMerchantSettings,
 } from '@resolve-ai/contracts';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -52,6 +53,15 @@ export class MerchantsController {
   @ApiResponse({ status: 200, schema: zodOpenApi(MerchantResponseSchema) })
   getMerchant(@Req() request: MerchantRequest) {
     return this.merchants.getMerchant(request.merchantActor);
+  }
+
+  @Get('merchants')
+  @ApiOperation({
+    summary: 'List all merchants the authenticated user belongs to',
+  })
+  @ApiResponse({ status: 200, schema: zodOpenApi(MerchantListResponseSchema) })
+  listMerchants(@Req() request: MerchantRequest) {
+    return this.merchants.listMerchants(request.merchantActor.userId);
   }
 
   @Patch('merchants/me/settings')
