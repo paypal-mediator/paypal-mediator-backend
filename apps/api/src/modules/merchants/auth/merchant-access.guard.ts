@@ -37,21 +37,49 @@ export class MerchantAccessGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<MerchantRequest>();
     const userId = await this.auth.authenticate(request.headers.authorization);
-    const member = await this.prisma.merchantMember.findFirst({
-      where: { authUserId: userId, active: true },
-    });
-    if (!member) {
-      throw new ApiException(
-        'MERCHANT_ACCESS_DENIED',
-        'Access to this merchant is not authorized',
-        403,
-      );
+
+    let merchantId: string;
+    let role: MerchantRole;
+
+    if (this.environment.MERCHANT_ID) {
+      // Single-tenant legacy: only the configured merchant is accessible.
+      const member = await this.prisma.merchantMember.findFirst({
+        where: {
+          authUserId: userId,
+          active: true,
+          merchantId: this.environment.MERCHANT_ID,
+        },
+      });
+      if (!member) {
+        throw new ApiException(
+          'MERCHANT_ACCESS_DENIED',
+          'Access to this merchant is not authorized',
+          403,
+        );
+      }
+      merchantId = this.environment.MERCHANT_ID;
+      role = member.role;
+    } else {
+      // Multicliente futuro: any active membership is allowed.
+      const member = await this.prisma.merchantMember.findFirst({
+        where: { authUserId: userId, active: true },
+      });
+      if (!member) {
+        throw new ApiException(
+          'MERCHANT_ACCESS_DENIED',
+          'Access to this merchant is not authorized',
+          403,
+        );
+      }
+      merchantId = member.merchantId;
+      role = member.role;
     }
+
     const adminOnly = this.reflector.getAllAndOverride<boolean>(ADMIN_ONLY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (adminOnly && member.role !== 'ADMIN') {
+    if (adminOnly && role !== 'ADMIN') {
       throw new ApiException(
         'MERCHANT_ADMIN_REQUIRED',
         'A merchant administrator is required',
@@ -60,8 +88,8 @@ export class MerchantAccessGuard implements CanActivate {
     }
     request.merchantActor = {
       userId,
-      merchantId: member.merchantId,
-      role: member.role,
+      merchantId,
+      role,
     };
     return true;
   }
