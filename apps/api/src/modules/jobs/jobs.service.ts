@@ -50,7 +50,7 @@ export interface JobOptions {
 @Injectable()
 export class JobsService {
   private readonly logger = new Logger(JobsService.name);
-  private boss?: Boss;
+  private boss?: typeof Boss;
   private readonly handlers = new Map<string, JobHandler>();
 
   constructor(
