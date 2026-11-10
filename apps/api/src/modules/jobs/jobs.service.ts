@@ -7,7 +7,8 @@ import { AuditService } from '../monitoring/audit.service.js';
 
 const require = createRequire(import.meta.url);
 // pg-boss es CommonJS; importarlo mediante require para ESM.
-const Boss: new (connectionString: string) => {
+// Definimos el tipo de la instancia (lo que devuelve `new Boss()`)
+interface PgBossInstance {
   start: () => Promise<void>;
   close: () => Promise<void>;
   subscribe: <T = unknown>(
@@ -24,7 +25,11 @@ const Boss: new (connectionString: string) => {
       priority?: number;
     },
   ) => Promise<string>;
-} = require('pg-boss');
+}
+// El constructor que devuelve `require('pg-boss')`
+type PgBossConstructor = new (connectionString: string) => PgBossInstance;
+
+const Boss = require('pg-boss') as PgBossConstructor;
 
 export type JobHandler = (data: unknown) => Promise<void>;
 
@@ -50,7 +55,7 @@ export interface JobOptions {
 @Injectable()
 export class JobsService {
   private readonly logger = new Logger(JobsService.name);
-  private boss?: typeof Boss;
+  private boss?: PgBossInstance;
   private readonly handlers = new Map<string, JobHandler>();
 
   constructor(
