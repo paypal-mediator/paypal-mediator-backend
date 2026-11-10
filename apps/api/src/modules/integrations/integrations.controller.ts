@@ -18,6 +18,7 @@ import {
   ErpCatalogResponseSchema,
   ErpConnectionListResponseSchema,
   ErpConnectionStatusResponseSchema,
+  ErpProvider,
   ErpSyncTriggerSchema,
   ExternalRecordListResponseSchema,
   StartErpConnectionSchema,
@@ -56,7 +57,7 @@ export class IntegrationsController {
     schema: zodOpenApi(ErpCatalogResponseSchema),
   })
   catalog(): ErpCatalogResponse {
-    return this.integrations.getCatalog() as any;
+    return this.integrations.getCatalog();
   }
 
   @Get()
@@ -68,8 +69,7 @@ export class IntegrationsController {
     schema: zodOpenApi(ErpConnectionListResponseSchema),
   })
   async list(@Req() req: MerchantRequest): Promise<ErpConnectionListResponse> {
-    return this.integrations
-      .listConnections(req.merchantActor.merchantId) as any;
+    return this.integrations.listConnections(req.merchantActor.merchantId);
   }
 
   @Post(':provider/start')
@@ -83,7 +83,8 @@ export class IntegrationsController {
   async start(
     @Req() req: MerchantRequest,
     @Param('provider') provider: string,
-    @Body(new ZodValidationPipe(StartErpConnectionSchema)) body: {
+    @Body(new ZodValidationPipe(StartErpConnectionSchema))
+    body: {
       provider: string;
     },
   ) {
@@ -95,7 +96,8 @@ export class IntegrationsController {
     return {
       provider,
       nextStep: 'connect-with-key',
-      message: 'Usa POST /api/integrations/:provider/connect-with-key para API Key, o completa el flujo OAuth si aplica.',
+      message:
+        'Usa POST /api/integrations/:provider/connect-with-key para API Key, o completa el flujo OAuth si aplica.',
     };
   }
 
@@ -110,7 +112,8 @@ export class IntegrationsController {
   async connectWithKey(
     @Req() req: MerchantRequest,
     @Param('provider') provider: string,
-    @Body(new ZodValidationPipe(ConnectErpWithKeySchema)) body: {
+    @Body(new ZodValidationPipe(ConnectErpWithKeySchema))
+    body: {
       provider: string;
       apiKey: string;
       baseUrl?: string;
@@ -121,7 +124,7 @@ export class IntegrationsController {
     }
     const result = await this.integrations.connectWithKey(
       req.merchantActor.merchantId,
-      body.provider as any,
+      body.provider as ErpProvider,
       body.apiKey,
       body.baseUrl ?? undefined,
     );
@@ -144,8 +147,10 @@ export class IntegrationsController {
     @Req() req: MerchantRequest,
     @Param('connectionId') connectionId: string,
   ): Promise<ErpConnectionStatusResponse> {
-    return this.integrations
-      .getConnectionStatus(req.merchantActor.merchantId, connectionId) as any;
+    return this.integrations.getConnectionStatus(
+      req.merchantActor.merchantId,
+      connectionId,
+    );
   }
 
   @Post(':connectionId/sync')
@@ -159,7 +164,8 @@ export class IntegrationsController {
   async sync(
     @Req() req: MerchantRequest,
     @Param('connectionId') connectionId: string,
-    @Body(new ZodValidationPipe(ErpSyncTriggerSchema)) body: {
+    @Body(new ZodValidationPipe(ErpSyncTriggerSchema))
+    body: {
       connectionId: string;
       resource?: string;
     },
@@ -170,7 +176,7 @@ export class IntegrationsController {
     return this.integrations.sync(
       req.merchantActor.merchantId,
       connectionId,
-      body.resource as any,
+      body.resource,
     );
   }
 
@@ -201,8 +207,10 @@ export class IntegrationsController {
     @Req() req: MerchantRequest,
     @Param('captureId') captureId: string,
   ): Promise<TransactionLinkListResponse> {
-    return this.integrations
-      .getLinkedRecords(req.merchantActor.merchantId, captureId) as any;
+    return this.integrations.getLinkedRecords(
+      req.merchantActor.merchantId,
+      captureId,
+    );
   }
 
   @Get('disputes/:disputeId/evidence-sources')

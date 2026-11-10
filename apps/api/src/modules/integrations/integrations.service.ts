@@ -84,12 +84,17 @@ export class IntegrationsService implements OnModuleInit {
 
   async onModuleInit() {
     await this.jobs.connect();
-    this.jobs.registerHandler(
-      'ERP_SYNC',
-      async (data) => {
-        await this.processErpSync(data as any);
-      },
-    );
+    this.jobs.registerHandler('ERP_SYNC', async (data) => {
+      await this.processErpSync(
+        data as {
+          connectionId: string;
+          merchantId: string;
+          provider: string;
+          resource: string;
+          cursor: string | null;
+        },
+      );
+    });
     this.logger.log('Registered ERP_SYNC job handler');
   }
 
@@ -174,8 +179,10 @@ export class IntegrationsService implements OnModuleInit {
     try {
       await adapter.verifyConnection(tempConnectionId);
     } catch (error) {
-      this.logger.warn(`Connection verification failed for ${provider}: ${String(error)}`);
-      throw new Error('CONNECTION_VERIFICATION_FAILED');
+      this.logger.warn(
+        `Connection verification failed for ${provider}: ${String(error)}`,
+      );
+      throw new Error('CONNECTION_VERIFICATION_FAILED', { cause: error });
     }
 
     const connection = await this.prisma.erpConnection.create({
@@ -279,9 +286,7 @@ export class IntegrationsService implements OnModuleInit {
       'documents',
     ] as const;
     const resources: Array<(typeof validResources)[number]> = resource
-      ? validResources.includes(
-        resource as (typeof validResources)[number],
-      )
+      ? validResources.includes(resource as (typeof validResources)[number])
         ? [resource as (typeof validResources)[number]]
         : ['sales_orders', 'invoices', 'shipments']
       : ['sales_orders', 'invoices', 'shipments'];
@@ -408,7 +413,10 @@ export class IntegrationsService implements OnModuleInit {
     };
     try {
       if (resource === 'sales_orders') {
-        result = await adapter.pullSalesOrders(connectionId, cursor ?? undefined);
+        result = await adapter.pullSalesOrders(
+          connectionId,
+          cursor ?? undefined,
+        );
       } else if (resource === 'invoices') {
         result = await adapter.pullInvoices(connectionId, cursor ?? undefined);
       } else if (resource === 'shipments' && adapter.pullShipments) {
@@ -437,9 +445,7 @@ export class IntegrationsService implements OnModuleInit {
 
     for (const raw of result.records) {
       const rawRecord = raw as Record<string, unknown>;
-      const externalId = String(
-        rawRecord?.externalId ?? rawRecord?.id ?? '',
-      );
+      const externalId = String(rawRecord?.externalId ?? rawRecord?.id ?? '');
       if (!externalId) continue;
 
       const normalizedPayload = {

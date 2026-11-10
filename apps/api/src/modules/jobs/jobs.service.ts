@@ -3,7 +3,7 @@ import type { Environment } from '../../common/config/environment.js';
 import { ENVIRONMENT } from '../../common/config/environment.js';
 import { PrismaService } from '../../common/database/prisma.service.js';
 import { AuditService } from '../monitoring/audit.service.js';
-// @ts-ignore - pg-boss v12 no tiene tipos de export default claros
+// @ts-expect-error - pg-boss v12 no tiene tipos de export default claros
 import Boss from 'pg-boss';
 
 export type JobHandler = (data: unknown) => Promise<void>;
@@ -81,15 +81,15 @@ export class JobsService {
   }
 
   private subscribe(name: string, handler: JobHandler) {
-    return this.boss!.subscribe(name, async (job: any) => {
+    return this.boss!.subscribe(name, async (job) => {
       try {
-        await handler(job.data);
+        await handler((job as { data: unknown }).data);
         await this.audit.append({
           merchantId: null as unknown as string,
           actorUserId: null,
           actorKind: 'SYSTEM',
           resourceType: 'INGESTION_JOB',
-          resourceId: job.id,
+          resourceId: (job as { id: string }).id,
           outcome: 'SUCCEEDED',
           record: {
             action: 'INGESTION_FINISHED',
@@ -97,13 +97,12 @@ export class JobsService {
           },
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
         await this.audit.append({
           merchantId: null as unknown as string,
           actorUserId: null,
           actorKind: 'SYSTEM',
           resourceType: 'INGESTION_JOB',
-          resourceId: job.id,
+          resourceId: (job as { id: string }).id,
           outcome: 'FAILED',
           record: {
             action: 'INGESTION_FINISHED',
