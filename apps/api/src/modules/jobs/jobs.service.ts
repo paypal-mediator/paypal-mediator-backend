@@ -1,10 +1,25 @@
+import { createRequire } from 'node:module';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Environment } from '../../common/config/environment.js';
 import { ENVIRONMENT } from '../../common/config/environment.js';
 import { PrismaService } from '../../common/database/prisma.service.js';
 import { AuditService } from '../monitoring/audit.service.js';
-// @ts-expect-error - pg-boss v12 no tiene tipos de export default claros
-import Boss from 'pg-boss';
+
+const require = createRequire(import.meta.url);
+// pg-boss es CommonJS; importarlo mediante require para ESM.
+const Boss: new (connectionString: string) => {
+  start: () => Promise<void>;
+  close: () => Promise<void>;
+  subscribe: <T = unknown>(
+    name: string,
+    handler: (job: { id: string; data: T }) => Promise<void>,
+  ) => Promise<void>;
+  send: (
+    name: string,
+    data: unknown,
+    options?: { retries?: number; delay?: number; ttl?: number; priority?: number },
+  ) => Promise<string>;
+} = require('pg-boss');
 
 export type JobHandler = (data: unknown) => Promise<void>;
 
