@@ -17,7 +17,12 @@ const Boss: new (connectionString: string) => {
   send: (
     name: string,
     data: unknown,
-    options?: { retries?: number; delay?: number; ttl?: number; priority?: number },
+    options?: {
+      retries?: number;
+      delay?: number;
+      ttl?: number;
+      priority?: number;
+    },
   ) => Promise<string>;
 } = require('pg-boss');
 
