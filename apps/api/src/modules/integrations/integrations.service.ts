@@ -89,7 +89,7 @@ export class IntegrationsService implements OnModuleInit {
         data as {
           connectionId: string;
           merchantId: string;
-          provider: string;
+          provider: ErpProvider;
           resource: string;
           cursor: string | null;
         },
@@ -112,7 +112,7 @@ export class IntegrationsService implements OnModuleInit {
         connectionExperience: c.connectionExperience,
         capabilities: c.capabilities,
         priority: c.priority,
-        authUrl: c.authUrl ?? null,
+        authUrl: c.authUrl,
       })),
     };
   }

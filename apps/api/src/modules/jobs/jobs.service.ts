@@ -81,7 +81,7 @@ export class JobsService {
   }
 
   private subscribe(name: string, handler: JobHandler) {
-    return this.boss!.subscribe(name, async (job) => {
+    return this.boss!.subscribe(name, async (job: unknown) => {
       try {
         await handler((job as { data: unknown }).data);
         await this.audit.append({

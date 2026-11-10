@@ -18,6 +18,7 @@ import {
   ErpCatalogResponseSchema,
   ErpConnectionListResponseSchema,
   ErpConnectionStatusResponseSchema,
+  ErpConnectionStatus,
   ErpProvider,
   ErpSyncTriggerSchema,
   ExternalRecordListResponseSchema,
@@ -29,6 +30,8 @@ import {
   type ErpConnectionStatusResponse,
   type ExternalRecordListResponse,
   type TransactionLinkListResponse,
+  type MatchMethod,
+  type Confidence,
 } from '@resolve-ai/contracts';
 import { zodOpenApi } from '../../common/http/zod-openapi.js';
 import {
@@ -69,7 +72,17 @@ export class IntegrationsController {
     schema: zodOpenApi(ErpConnectionListResponseSchema),
   })
   async list(@Req() req: MerchantRequest): Promise<ErpConnectionListResponse> {
-    return this.integrations.listConnections(req.merchantActor.merchantId);
+    const connections = await this.integrations.listConnections(
+      req.merchantActor.merchantId,
+    );
+    return {
+      items: connections.items.map((c) => ({
+        ...c,
+        provider: c.provider as ErpProvider,
+        status: c.status as ErpConnectionStatus,
+      })),
+      total: connections.total,
+    };
   }
 
   @Post(':provider/start')
@@ -147,10 +160,15 @@ export class IntegrationsController {
     @Req() req: MerchantRequest,
     @Param('connectionId') connectionId: string,
   ): Promise<ErpConnectionStatusResponse> {
-    return this.integrations.getConnectionStatus(
+    const status = await this.integrations.getConnectionStatus(
       req.merchantActor.merchantId,
       connectionId,
     );
+    return {
+      ...status,
+      provider: status.provider as ErpProvider,
+      status: status.status as ErpConnectionStatus,
+    };
   }
 
   @Post(':connectionId/sync')
@@ -207,10 +225,18 @@ export class IntegrationsController {
     @Req() req: MerchantRequest,
     @Param('captureId') captureId: string,
   ): Promise<TransactionLinkListResponse> {
-    return this.integrations.getLinkedRecords(
+    const records = await this.integrations.getLinkedRecords(
       req.merchantActor.merchantId,
       captureId,
     );
+    return {
+      items: records.items.map((l) => ({
+        ...l,
+        matchMethod: l.matchMethod as MatchMethod,
+        confidence: l.confidence as Confidence,
+      })),
+      total: records.total,
+    };
   }
 
   @Get('disputes/:disputeId/evidence-sources')
