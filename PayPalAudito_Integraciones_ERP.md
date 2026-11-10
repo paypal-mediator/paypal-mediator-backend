@@ -56,27 +56,27 @@ flowchart TD
 
 ## 3. Matriz rápida de integraciones
 
-| Plataforma | Segmento típico | Tipo de integración | Experiencia de conexión | Datos potencialmente útiles | Prioridad sugerida |
-|---|---|---|---|---|---|
-| **Bind ERP** | Pequeña / mediana, México | REST + API Key | Copiar API Key en configuración | Clientes, productos, documentos comerciales según endpoint | **P0** |
-| **Siigo Nube México** | Pequeña, México | REST + `username`/`access_key` para token | Generar credenciales API | Facturas, clientes, productos, recepciones de pago | **P0** |
-| **Odoo** | Pequeña / mediana | JSON-2 (v19+) + API Key; otros métodos heredados | URL de instancia + API Key | Pedidos, facturas, contactos, stock | **P0/P1** |
-| **ERPNext (Frappe)** | Pequeña / mediana | REST + token; opciones OAuth según instancia | URL de instancia + clave/secret | Sales Order, Sales Invoice, Customer, Delivery Note | **P1** |
-| **Zoho Books** (contabilidad) | Pequeña / mediana | REST + OAuth 2.0 | Conectar cuenta Zoho y seleccionar organización | Invoices, customers, sales orders, pagos | **P1** |
-| **CONTPAQi** | Pequeña / mediana, México | SDK de escritorio / APIs según producto nube | Configuración local o alta del producto | Facturación y datos comerciales según producto | **P2: piloto** |
-| **Aspel SAE escritorio** | Pequeña / mediana, México | Integración según versión/implantación | Conector especial; no asumir REST pública universal | Ventas, clientes y facturas si se habilita | **P2: investigación** |
-| **Dynamics 365 Business Central** | Mediana | REST API v2.0/OData + OAuth Entra | OAuth y posible consentimiento de administrador | Sales invoices, orders, customers | **P1** |
-| **Oracle NetSuite** | Mediana / grande | SuiteTalk REST + OAuth 2.0 | Registro de integración + autorización | Transacciones, órdenes, clientes, facturas | **P1/P2** |
-| **SAP Business One** | Mediana | Service Layer OData v4 | URL de instancia + sesión/configuración | Invoices, Orders, BusinessPartners | **P2** |
-| **Acumatica** | Mediana | REST/OData + OAuth 2.0 | Registrar app en instancia + autorización | Pedidos, facturas, embarques | **P2** |
-| **Sage Intacct** | Mediana | REST + licencia de Web Services | Alta del acceso técnico y permisos | AR invoices, clientes y registros financieros | **P2** |
-| **SAP S/4HANA** | Grande | APIs OData/REST por proceso | Escenario de comunicación de TI | Órdenes, facturación, socios comerciales | **P3** |
-| **Oracle Fusion Cloud ERP** | Grande | REST de Oracle Financials/ERP | Identidad corporativa + privilegios | Facturas, cuentas por cobrar y operaciones | **P3** |
-| **Dynamics 365 Finance & Operations** | Grande | OData + OAuth Entra | App registrada + acceso a entidades | Facturas, clientes, órdenes y finanzas | **P3** |
-| **Infor CloudSuite / LN / M3** | Grande | ION API Gateway + OAuth 2.0 | Authorized App/archivo de configuración | Datos según API suite y tenant | **P3** |
-| **Workday** | Grande; enfoque finanzas/RR. HH. | REST/Integrations + OAuth | Registro y configuración corporativa | Datos financieros donde estén expuestos | **P3** |
-| **QuickBooks Online** (contabilidad) | Pequeña / mediana, internacional | REST + OAuth 2.0 | Botón «Conectar QuickBooks» | Facturas, clientes, pagos y transacciones | **P1 internacional** |
-| **Xero** (contabilidad) | Pequeña / mediana, internacional | REST + OAuth 2.0 | Botón «Conectar Xero» y elegir organización | Invoices, contacts, payments | **P1 internacional** |
+| Plataforma                            | Segmento típico                  | Tipo de integración                              | Experiencia de conexión                             | Datos potencialmente útiles                                | Prioridad sugerida    |
+| ------------------------------------- | -------------------------------- | ------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------- | --------------------- |
+| **Bind ERP**                          | Pequeña / mediana, México        | REST + API Key                                   | Copiar API Key en configuración                     | Clientes, productos, documentos comerciales según endpoint | **P0**                |
+| **Siigo Nube México**                 | Pequeña, México                  | REST + `username`/`access_key` para token        | Generar credenciales API                            | Facturas, clientes, productos, recepciones de pago         | **P0**                |
+| **Odoo**                              | Pequeña / mediana                | JSON-2 (v19+) + API Key; otros métodos heredados | URL de instancia + API Key                          | Pedidos, facturas, contactos, stock                        | **P0/P1**             |
+| **ERPNext (Frappe)**                  | Pequeña / mediana                | REST + token; opciones OAuth según instancia     | URL de instancia + clave/secret                     | Sales Order, Sales Invoice, Customer, Delivery Note        | **P1**                |
+| **Zoho Books** (contabilidad)         | Pequeña / mediana                | REST + OAuth 2.0                                 | Conectar cuenta Zoho y seleccionar organización     | Invoices, customers, sales orders, pagos                   | **P1**                |
+| **CONTPAQi**                          | Pequeña / mediana, México        | SDK de escritorio / APIs según producto nube     | Configuración local o alta del producto             | Facturación y datos comerciales según producto             | **P2: piloto**        |
+| **Aspel SAE escritorio**              | Pequeña / mediana, México        | Integración según versión/implantación           | Conector especial; no asumir REST pública universal | Ventas, clientes y facturas si se habilita                 | **P2: investigación** |
+| **Dynamics 365 Business Central**     | Mediana                          | REST API v2.0/OData + OAuth Entra                | OAuth y posible consentimiento de administrador     | Sales invoices, orders, customers                          | **P1**                |
+| **Oracle NetSuite**                   | Mediana / grande                 | SuiteTalk REST + OAuth 2.0                       | Registro de integración + autorización              | Transacciones, órdenes, clientes, facturas                 | **P1/P2**             |
+| **SAP Business One**                  | Mediana                          | Service Layer OData v4                           | URL de instancia + sesión/configuración             | Invoices, Orders, BusinessPartners                         | **P2**                |
+| **Acumatica**                         | Mediana                          | REST/OData + OAuth 2.0                           | Registrar app en instancia + autorización           | Pedidos, facturas, embarques                               | **P2**                |
+| **Sage Intacct**                      | Mediana                          | REST + licencia de Web Services                  | Alta del acceso técnico y permisos                  | AR invoices, clientes y registros financieros              | **P2**                |
+| **SAP S/4HANA**                       | Grande                           | APIs OData/REST por proceso                      | Escenario de comunicación de TI                     | Órdenes, facturación, socios comerciales                   | **P3**                |
+| **Oracle Fusion Cloud ERP**           | Grande                           | REST de Oracle Financials/ERP                    | Identidad corporativa + privilegios                 | Facturas, cuentas por cobrar y operaciones                 | **P3**                |
+| **Dynamics 365 Finance & Operations** | Grande                           | OData + OAuth Entra                              | App registrada + acceso a entidades                 | Facturas, clientes, órdenes y finanzas                     | **P3**                |
+| **Infor CloudSuite / LN / M3**        | Grande                           | ION API Gateway + OAuth 2.0                      | Authorized App/archivo de configuración             | Datos según API suite y tenant                             | **P3**                |
+| **Workday**                           | Grande; enfoque finanzas/RR. HH. | REST/Integrations + OAuth                        | Registro y configuración corporativa                | Datos financieros donde estén expuestos                    | **P3**                |
+| **QuickBooks Online** (contabilidad)  | Pequeña / mediana, internacional | REST + OAuth 2.0                                 | Botón «Conectar QuickBooks»                         | Facturas, clientes, pagos y transacciones                  | **P1 internacional**  |
+| **Xero** (contabilidad)               | Pequeña / mediana, internacional | REST + OAuth 2.0                                 | Botón «Conectar Xero» y elegir organización         | Invoices, contacts, payments                               | **P1 internacional**  |
 
 **Importante:** no todos los productos de la tabla son ERP completos: **Zoho Books, QuickBooks Online y Xero** se incluyen por su utilidad como fuentes contables. «Datos potencialmente útiles» no significa que todos estén disponibles en cualquier plan, licencia, región o tenant. P0–P3 son **prioridades propuestas** para PayPalAudito, no una valoración oficial.
 
@@ -200,7 +200,7 @@ Documentación de generación de token: <https://developers.siigo.com/docs/siigo
 ### 4.13. SAP S/4HANA — P3
 
 - **Descripción:** ERP corporativo con procesos financieros, ventas, compras y cadena de suministro.
-- **APIs:** endpoints por **objeto/proceso** publicados en SAP Business Accelerator Hub; en S/4HANA Cloud pueden necesitarse *communication scenarios/arrangements* configurados.
+- **APIs:** endpoints por **objeto/proceso** publicados en SAP Business Accelerator Hub; en S/4HANA Cloud pueden necesitarse _communication scenarios/arrangements_ configurados.
 - **Cómo conectarlo:** equipo TI configura comunicación, permisos y entorno → selecciona APIs relevantes (p. ej., Sales Order y Billing Document, según edición) → PayPalAudito se autentica con el mecanismo permitido → ingiere solo los objetos habilitados.
 - **Referencia:** <https://api.sap.com/package/SAPS4HANACloud>.
 - **Limitación:** S/4HANA Public Cloud, Private Cloud y on-premise no son intercambiables; confirmar edición y versión.
@@ -376,7 +376,7 @@ export interface ErpConnector {
 }
 
 export interface SyncPage {
-  records: unknown[];  // Validar y mapear con Zod según proveedor.
+  records: unknown[]; // Validar y mapear con Zod según proveedor.
   nextCursor?: string;
   sourceUpdatedAt?: string;
 }
@@ -386,16 +386,16 @@ Cada adaptador implementa: autenticación, fetch, límites, paginación, convers
 
 ### 6.2. Tablas recomendadas
 
-| Tabla | Campos esenciales | Consideración |
-|---|---|---|
-| `merchants` | `id`, `name`, `owner_user_id` | Identidad interna de empresa |
-| `erp_connections` | `id`, `merchant_id`, `provider`, `external_tenant_id`, `base_url`, `status`, `scopes`, `last_sync_at` | Una empresa puede tener varias conexiones |
-| `erp_secrets` | `connection_id`, `encrypted_payload`, `key_version`, `rotated_at` | Acceso backend restringido; alternativa: vault gestionado |
-| `erp_sync_cursors` | `connection_id`, `resource`, `cursor`, `last_success_at` | Sincronización incremental |
-| `external_records` | `merchant_id`, `connection_id`, `record_type`, `external_id`, `updated_at`, `normalized_payload`, `source_hash` | `UNIQUE(connection_id, record_type, external_id)` |
-| `transaction_links` | `merchant_id`, `paypal_capture_id`, `paypal_order_id`, `record_id`, `match_method`, `confidence`, `reviewed_by` | Conciliación trazable |
-| `evidence_items` | `merchant_id`, `dispute_id`, `source`, `source_record_id`, `storage_path`, `sha256`, `collected_at`, `verification_status` | Prueba con cadena de procedencia |
-| `integration_audit_events` | `merchant_id`, `connection_id`, `actor_id`, `action`, `status`, `occurred_at` | No guardar tokens, PII excesiva o documentos en logs |
+| Tabla                      | Campos esenciales                                                                                                          | Consideración                                             |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `merchants`                | `id`, `name`, `owner_user_id`                                                                                              | Identidad interna de empresa                              |
+| `erp_connections`          | `id`, `merchant_id`, `provider`, `external_tenant_id`, `base_url`, `status`, `scopes`, `last_sync_at`                      | Una empresa puede tener varias conexiones                 |
+| `erp_secrets`              | `connection_id`, `encrypted_payload`, `key_version`, `rotated_at`                                                          | Acceso backend restringido; alternativa: vault gestionado |
+| `erp_sync_cursors`         | `connection_id`, `resource`, `cursor`, `last_success_at`                                                                   | Sincronización incremental                                |
+| `external_records`         | `merchant_id`, `connection_id`, `record_type`, `external_id`, `updated_at`, `normalized_payload`, `source_hash`            | `UNIQUE(connection_id, record_type, external_id)`         |
+| `transaction_links`        | `merchant_id`, `paypal_capture_id`, `paypal_order_id`, `record_id`, `match_method`, `confidence`, `reviewed_by`            | Conciliación trazable                                     |
+| `evidence_items`           | `merchant_id`, `dispute_id`, `source`, `source_record_id`, `storage_path`, `sha256`, `collected_at`, `verification_status` | Prueba con cadena de procedencia                          |
+| `integration_audit_events` | `merchant_id`, `connection_id`, `actor_id`, `action`, `status`, `occurred_at`                                              | No guardar tokens, PII excesiva o documentos en logs      |
 
 **Aislamiento:** cada consulta interna debe estar limitada por `merchant_id` y permisos del usuario; las políticas RLS de Supabase (si se aplican) y los guards del backend deben implementarse y probarse. No usar el campo `merchant_id` recibido del cliente sin validar ownership.
 
@@ -424,16 +424,16 @@ La parte crítica no es «leer una factura», sino probar **qué documento perte
 
 ### 7.1. Identificadores a conservar
 
-| Origen | Identificador | Uso |
-|---|---|---|
-| PayPal | `capture_id` | Pago capturado; principal punto de unión al expediente |
-| PayPal | `order_id` | Orden PayPal asociada |
-| PayPal | `invoice_id` | Número externo facilitado durante el checkout, si el comercio lo envió |
-| PayPal | `custom_id` | Referencia externa útil para conciliación, si el comercio la envió |
-| ERP | `external_order_id` | Pedido ERP |
-| ERP | `invoice_number`, `external_invoice_id` | Factura y folio |
-| ERP | `external_payment_id` | Cobro registrado, no necesariamente la captura PayPal |
-| Logística | `tracking_number`, `carrier` | Seguimiento, por sí solo no acredita entrega |
+| Origen    | Identificador                           | Uso                                                                    |
+| --------- | --------------------------------------- | ---------------------------------------------------------------------- |
+| PayPal    | `capture_id`                            | Pago capturado; principal punto de unión al expediente                 |
+| PayPal    | `order_id`                              | Orden PayPal asociada                                                  |
+| PayPal    | `invoice_id`                            | Número externo facilitado durante el checkout, si el comercio lo envió |
+| PayPal    | `custom_id`                             | Referencia externa útil para conciliación, si el comercio la envió     |
+| ERP       | `external_order_id`                     | Pedido ERP                                                             |
+| ERP       | `invoice_number`, `external_invoice_id` | Factura y folio                                                        |
+| ERP       | `external_payment_id`                   | Cobro registrado, no necesariamente la captura PayPal                  |
+| Logística | `tracking_number`, `carrier`            | Seguimiento, por sí solo no acredita entrega                           |
 
 Los campos `invoice_id` y `custom_id` de PayPal **pueden estar ausentes** en ventas históricas o integraciones donde el comercio no los proporcionó. Documentación oficial: <https://developer.paypal.com/api/orders/v2/definitions/purchase_unit>.
 
@@ -486,13 +486,13 @@ Los campos `invoice_id` y `custom_id` de PayPal **pueden estar ausentes** en ven
 
 ## 8. Datos de ERP convertidos en evidencia útil para reclamos
 
-| Situación | Registro a buscar | Qué respalda | Qué NO demuestra automáticamente |
-|---|---|---|---|
-| Producto no recibido (INR) | Pedido + factura + guía + confirmación del transportista | Venta, preparación, envío y eventualmente entrega | Una factura por sí sola no prueba recepción |
-| Producto distinto de lo anunciado | Descripción/SKU en pedido, factura, catálogo histórico y comunicaciones | Qué se vendió y qué se ofrecía | Estado real del producto sin prueba adicional |
-| Cargo no reconocido | Pedido, registro de checkout, historial de cumplimiento | Contexto de la compra | Identidad/autorización real del pagador por sí solo |
-| Reembolso reclamado | Nota de crédito, devolución y **reembolso PayPal real** | Gestión de devolución y fondos, si ambas fuentes coinciden | Una nota de crédito no prueba reembolso de PayPal |
-| Entrega tardía o no efectuada | Orden y fecha prometida, despacho, tracking | Cronología del cumplimiento | Aceptación del comprador sin confirmación |
+| Situación                         | Registro a buscar                                                       | Qué respalda                                               | Qué NO demuestra automáticamente                    |
+| --------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------- |
+| Producto no recibido (INR)        | Pedido + factura + guía + confirmación del transportista                | Venta, preparación, envío y eventualmente entrega          | Una factura por sí sola no prueba recepción         |
+| Producto distinto de lo anunciado | Descripción/SKU en pedido, factura, catálogo histórico y comunicaciones | Qué se vendió y qué se ofrecía                             | Estado real del producto sin prueba adicional       |
+| Cargo no reconocido               | Pedido, registro de checkout, historial de cumplimiento                 | Contexto de la compra                                      | Identidad/autorización real del pagador por sí solo |
+| Reembolso reclamado               | Nota de crédito, devolución y **reembolso PayPal real**                 | Gestión de devolución y fondos, si ambas fuentes coinciden | Una nota de crédito no prueba reembolso de PayPal   |
+| Entrega tardía o no efectuada     | Orden y fecha prometida, despacho, tracking                             | Cronología del cumplimiento                                | Aceptación del comprador sin confirmación           |
 
 **Requisito:** leer la disputa real de PayPal y consultar `reason`, `evidences.evidence_type`, `evidences.source`, `seller_response_due_date`, `status`, `allowed_response_options`. La documentación de PayPal describe `POST /v1/customer/disputes/{id}/provide-evidence`, pero **solo** corresponde enviar cuando el estado y la API lo permiten, con acceso y autorizaciones suficientes. Fuentes: <https://developer.paypal.com/platforms/disputes/handle-disputes/use-disputes-api/> y <https://developer.paypal.com/disputes/reasons-evidence/>.
 
