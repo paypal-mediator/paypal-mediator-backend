@@ -11,6 +11,8 @@ import { MonitoringModule } from './modules/monitoring/monitoring.module.js';
 import { DisputesModule } from './modules/disputes/index.js';
 import { SubmissionsModule } from './modules/submissions/index.js';
 import { BillingModule } from './modules/billing/index.js';
+import { JobsModule } from './modules/jobs/index.js';
+import { IntegrationsModule } from './modules/integrations/index.js';
 
 @Module({})
 export class AppModule {
@@ -29,6 +31,8 @@ export class AppModule {
         DisputesModule,
         SubmissionsModule,
         BillingModule,
+        JobsModule,
+        IntegrationsModule,
       ],
     };
   }

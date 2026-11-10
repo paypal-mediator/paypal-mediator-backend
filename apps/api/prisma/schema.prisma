@@ -54,6 +54,9 @@ model Merchant {
   disputes                Dispute[]
   submissions             Submission[]
   subscriptions           Subscription[]
+  erpConnections          ErpConnection[]
+  externalRecords         ExternalRecord[]
+  transactionLinks        TransactionLink[]
 
   @@map("merchants")
 }
@@ -467,4 +470,99 @@ model SubmissionEvent {
 
   @@index([submissionId, occurredAt, id])
   @@map("submission_events")
+}
+
+// --- M04: ERP Integraciones (PayPalAudito) ---
+
+// Conexión de un merchant a un ERP o sistema contable autorizado.
+model ErpConnection {
+  id                String   @id @default(uuid()) @db.Uuid
+  merchantId        String   @map("merchant_id") @db.Uuid
+  provider          String   @map("provider") @db.VarChar(64) // bind, siigo-mx, odoo, erpnext, ...
+  externalTenantId  String?  @map("external_tenant_id") @db.VarChar(255)
+  baseUrl           String?  @map("base_url") @db.VarChar(1024)
+  status            String   @map("status") @db.VarChar(32) // pending_authorization | connected | syncing | restricted_permissions | needs_reauth | rate_limited | error | disconnected
+  scopes            String?  @map("scopes") @db.VarChar(1024)
+  lastSyncAt        DateTime? @map("last_sync_at") @db.Timestamptz(3)
+  lastSyncError     String?  @map("last_sync_error") @db.VarChar(1024)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  merchant   Merchant          @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  secret     ErpSecret?
+  cursors    ErpSyncCursor[]
+  records    ExternalRecord[]
+
+  @@index([merchantId, provider])
+  @@map("erp_connections")
+}
+
+// Credenciales cifradas de una conexión ERP. Nunca se exponen al frontend.
+model ErpSecret {
+  id              String   @id @default(uuid()) @db.Uuid
+  connectionId    String   @unique @map("connection_id") @db.Uuid
+  encryptedPayload String @map("encrypted_payload") // JSON cifrado con API key/token, fechas de expiración, etc.
+  keyVersion      Int      @default(1) @map("key_version")
+  rotatedAt       DateTime @default(now()) @map("rotated_at") @db.Timestamptz(3)
+
+  connection ErpConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@map("erp_secrets")
+}
+
+// Cursor de sincronización incremental por recurso y conexión.
+model ErpSyncCursor {
+  id             String   @id @default(uuid()) @db.Uuid
+  connectionId   String   @map("connection_id") @db.Uuid
+  resource       String   @map("resource") @db.VarChar(64) // sales_orders | invoices | payments | shipments | customers
+  cursor         String?  @map("cursor") @db.VarChar(1024)
+  lastSuccessAt  DateTime? @map("last_success_at") @db.Timestamptz(3)
+  lastError      String?  @map("last_error") @db.VarChar(1024)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  connection ErpConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, resource])
+  @@map("erp_sync_cursors")
+}
+
+// Registros normalizados extraídos de un ERP, listos para conciliar con PayPal.
+model ExternalRecord {
+  id                String   @id @default(uuid()) @db.Uuid
+  merchantId        String   @map("merchant_id") @db.Uuid
+  connectionId      String   @map("connection_id") @db.Uuid
+  recordType        String   @map("record_type") @db.VarChar(64) // sales_order | invoice | payment | shipment | customer
+  externalId        String   @map("external_id") @db.VarChar(255)
+  updatedAt         DateTime @map("updated_at") @db.Timestamptz(3)
+  normalizedPayload Json     @map("normalized_payload")
+  sourceHash        String   @map("source_hash") @db.VarChar(64)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  merchant    Merchant      @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  connection  ErpConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  transactionLinks TransactionLink[]
+
+  @@unique([connectionId, recordType, externalId])
+  @@index([merchantId, recordType, externalId])
+  @@map("external_records")
+}
+
+// Conciliación trazable entre una captura PayPal y un registro de ERP.
+model TransactionLink {
+  id               String   @id @default(uuid()) @db.Uuid
+  merchantId       String   @map("merchant_id") @db.Uuid
+  paypalCaptureId  String   @map("paypal_capture_id") @db.VarChar(255)
+  paypalOrderId    String?  @map("paypal_order_id") @db.VarChar(255)
+  recordId         String   @map("record_id") @db.Uuid
+  matchMethod      String   @map("match_method") @db.VarChar(64) // invoice_id_exact | custom_id_exact | corroborated | suggested
+  confidence       String   @map("confidence") @db.VarChar(16) // high | medium | low
+  reviewedBy       String?  @map("reviewed_by") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  record   ExternalRecord @relation(fields: [recordId], references: [id], onDelete: Restrict)
+
+  @@unique([merchantId, paypalCaptureId, recordId])
+  @@index([merchantId, paypalCaptureId])
+  @@map("transaction_links")
 }

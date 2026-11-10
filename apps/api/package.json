@@ -21,8 +21,13 @@
     "helmet": "^8.1.0",
     "jose": "6.2.15",
     "pdf-parse": "^2.4.5",
+    "pg-boss": "^12.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "swagger-ui-express": "^5.0.1",
     "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/swagger-ui-express": "^4.1.7"
   }
 }

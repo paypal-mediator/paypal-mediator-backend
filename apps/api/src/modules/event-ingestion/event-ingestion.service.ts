@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   WebhookReceiptSchema,
   type WebhookReceipt,
@@ -18,6 +18,8 @@ import {
 
 @Injectable()
 export class EventIngestionService {
+  private readonly logger = new Logger(EventIngestionService.name);
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(MerchantsService) private readonly merchants: MerchantsService,
