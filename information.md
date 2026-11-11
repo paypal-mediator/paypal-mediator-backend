@@ -1,3 +1,50 @@
+> **Estado vigente — 11 de noviembre de 2026:** backend y frontend separados,
+> publicados en Render. Las notas del 6–7 de noviembre conservan el historial;
+> sus URLs y pendientes deben contrastarse con la actualización siguiente.
+
+## Despliegue y cuentas sin equipos — 2026-11-11
+
+- **Backend:** <https://paypal-mediator-backend.onrender.com/api>, servicio
+  `paypal-mediator-backend`, Free, Oregon, rama `main`. Render confirmó `live`
+  para el commit `640b6a2d3ea9b60bcca5a287713ad46601705954`, despliegue
+  `dep-dbq7r4lbedkc739h8img`. Readiness devolvió HTTP 200 con PostgreSQL `up`.
+- **Build:** `pnpm build` genera el cliente Prisma antes de compilar contratos
+  y API, corrección `dc54592`. El servicio usa
+  `pnpm install --frozen-lockfile && pnpm run build` y `pnpm run start`.
+  Este arranque no aplica migraciones; usar `pnpm db:deploy` por separado o
+  configurar `pnpm start:render`. No se aplicaron migraciones en esta corrección.
+- **Frontend:** <https://paypal-mediator-frontend.onrender.com>, repositorio
+  `paypal-mediator-frontend`, commit `a6d40f011cc114b82cf77e5622e7ebed292e09e8`,
+  despliegue `dep-dbq7r4qvcj2c739ue1og` confirmado `live`. Usa `npm start`,
+  servidor estático de producción con `PORT` de Render y fallback SPA.
+  `VITE_API_URL` apunta al backend nuevo y `VITE_DATA_MODE=live`.
+- **CORS:** el backend permite el origen exacto del frontend publicado y
+  `http://localhost:3000`; preflight verificado con HTTP 204.
+- **Cuentas sin equipo:** `GET /api/merchants` autentica el JWT de Supabase
+  independientemente de la membresía. Consulta únicamente las membresías activas
+  del usuario autenticado y devuelve `{ "items": [] }` cuando no tiene equipos.
+  El frontend consulta esta ruta antes de montar el workspace del merchant y
+  muestra un dashboard vacío con «No teams yet», recarga y cierre de sesión.
+  En ese estado no solicita transacciones, disputas ni actividad del merchant.
+- **Autorización conservada:** `/api/merchants/me`, transacciones y actividad
+  siguen exigiendo membresía activa; la regresión verificó HTTP 403 para una
+  cuenta sin equipo. No se crea un merchant ni se concede membresía al iniciar
+  sesión. `MERCHANT_ID` sigue restringiendo el guard del backend desplegado.
+- **Alcance de equipos:** la implementación completa de creación/invitaciones
+  y selección mediante `X-Merchant-Id` existe en `paypal-mediator-production`,
+  pero no está incorporada en este backend desplegado. Esta corrección habilita
+  el estado vacío de la cuenta; no publica el flujo completo de equipos.
+- **Validación ejecutada:** `pnpm check` aprobado con 210 pruebas unitarias/HTTP,
+  generación/validación Prisma, lint, formato, tipos y build. Frontend: 16 pruebas,
+  lint, tipos y build aprobados. Navegador local y frontend publicado verificados
+  con autenticación y respuestas API **MOCK**: dashboard vacío, recarga funcional
+  y solicitudes únicamente a la lista de equipos. No se inició sesión con la
+  cuenta real afectada ni se modificaron usuarios o membresías. No se ejecutó
+  `pnpm test:db` en esta corrección; no cambió la persistencia.
+- **Pendiente observado:** el servicio arranca y readiness responde, pero el
+  adaptador opcional pg-boss registró `Boss is not a constructor`; esta corrección
+  no resuelve ese problema ni acredita el funcionamiento de sus jobs.
+
 > **M09 desplegado y verificado (2026-11-07):** PR #16, commit `65bd498`, CI con
 > 191 pruebas unitarias/HTTP y 95 PostgreSQL. Timeline/métricas autenticados 200.
 > Nuevo pago de 1 USD ficticio aprobado en Opera GX/CDP 9223; webhook genuino,
@@ -48,7 +95,7 @@ desde Render verificados; descarga del archivo previo del usuario desde Storage
 con bytes idénticos. Issue #10 cerrado. Ver [validación publicada](docs/validation.md).
 
 > **Estado del documento:** contexto de producto, estado verificado del backend y especificación de los módulos pendientes. Los flujos futuros descritos abajo no implican que todo el MVP esté implementado.
-> **Versión:** 1.1 · **Actualizado:** 2026-11-06 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
+> **Versión:** 1.2 · **Actualizado:** 2026-11-11 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
 > **Alcance del repositorio:** únicamente backend. El frontend/M10 se desarrolla en otro repositorio.
 > **Objetivo de uso:** leer este documento y `AGENTS.md` al comenzar una sesión; contrastar las propuestas con el código y las pruebas existentes.
 
@@ -631,6 +678,7 @@ Barra lateral: `Overview`, `Transactions`, `Disputes`, `Agent Activity`, `Settin
 |---|---|---|
 | GET | `/api/health` | Liveness; no afirma conectividad a servicios externos |
 | GET | `/api/health/ready` | Readiness con consulta PostgreSQL |
+| GET | `/api/merchants` | JWT Supabase; lista propia, vacía si no tiene equipos |
 | GET | `/api/merchants/me` | JWT Supabase y membresía activa |
 | PATCH | `/api/merchants/me/settings` | JWT y rol ADMIN |
 | GET | `/api/settings/integrations` | JWT y membresía; sin secretos |
