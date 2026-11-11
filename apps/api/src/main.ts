@@ -10,16 +10,12 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-try {
-  const { app, environment } = await createApp();
-  await app.listen(environment.PORT, '0.0.0.0');
-} catch (error) {
-  // Never print arbitrary connection/initialization errors with credentials.
-  const message =
-    error instanceof Error &&
-    error.message.startsWith('Invalid environment configuration:')
-      ? error.message
-      : 'API startup failed';
-  console.error(message);
-  process.exitCode = 1;
-}
+const { app, environment } = await createApp();
+
+console.log(`[BOOT] NODE_ENV=${process.env.NODE_ENV}`);
+console.log(`[BOOT] PORT from env: ${process.env.PORT}`);
+console.log(`[BOOT] PORT from schema: ${environment.PORT}`);
+console.log(`[BOOT] Starting server on 0.0.0.0:${environment.PORT}`);
+
+await app.listen(environment.PORT, '0.0.0.0');
+console.log(`[BOOT] Server listening on port ${environment.PORT}`);
