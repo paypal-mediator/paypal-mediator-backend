@@ -9,6 +9,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditFailureInterceptor } from './audit-failure.interceptor.js';
 import { EventIngestionModule } from '../event-ingestion/index.js';
 import { TransactionsModule } from '../transactions/index.js';
+import { DisputesModule } from '../disputes/index.js';
 import { InvestigatorModule } from '../investigator/index.js';
 import { VerifierModule } from '../verifier/index.js';
 
@@ -18,6 +19,7 @@ import { VerifierModule } from '../verifier/index.js';
     AuditModule,
     EventIngestionModule,
     TransactionsModule,
+    DisputesModule,
     InvestigatorModule,
     VerifierModule,
   ],

@@ -18,6 +18,9 @@ export class DashboardOptimizedController {
     summary: 'Get complete dashboard data in a single optimized query',
   })
   async getDashboard(@Req() req: { merchantActor: MerchantActor }) {
-    return this.dashboard.getDashboardData(req.merchantActor.merchantId);
+    return this.dashboard.getDashboardData(
+      req.merchantActor.merchantId,
+      req.merchantActor.role,
+    );
   }
 }
