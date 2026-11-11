@@ -5,3 +5,4 @@ coverage
 information.md
 apps/api/prisma/migrations
 apps/api/src/generated
+paypal-mediator-frontend/
