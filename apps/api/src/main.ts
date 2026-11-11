@@ -10,12 +10,19 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-const { app, environment } = await createApp();
+async function bootstrap() {
+  const { app, environment } = await createApp();
 
-console.log(`[BOOT] NODE_ENV=${process.env.NODE_ENV}`);
-console.log(`[BOOT] PORT from env: ${process.env.PORT}`);
-console.log(`[BOOT] PORT from schema: ${environment.PORT}`);
-console.log(`[BOOT] Starting server on 0.0.0.0:${environment.PORT}`);
+  console.log(`[BOOT] NODE_ENV=${process.env.NODE_ENV}`);
+  console.log(`[BOOT] PORT from env: ${process.env.PORT}`);
+  console.log(`[BOOT] PORT from schema: ${environment.PORT}`);
+  console.log(`[BOOT] Starting server on 0.0.0.0:${environment.PORT}`);
 
-await app.listen(environment.PORT, '0.0.0.0');
-console.log(`[BOOT] Server listening on port ${environment.PORT}`);
+  await app.listen(environment.PORT, '0.0.0.0');
+  console.log(`[BOOT] Server listening on port ${environment.PORT}`);
+}
+
+bootstrap().catch((error) => {
+  console.error('[BOOT] Failed to start server:', error);
+  process.exit(1);
+});
