@@ -1,5 +1,19 @@
 # Backend público y webhook PayPal
 
+## Servicio creado el 11 de noviembre de 2026
+
+El workspace `My Workspace` contiene `paypal-mediator-backend` en Oregon,
+con URL <https://paypal-mediator-backend.onrender.com> y despliegue automático
+desde `main`. Su comando de build es `pnpm install --frozen-lockfile && pnpm run build`.
+El script `build` genera el cliente Prisma antes de compilar: el cliente generado
+no se versiona y no existe en un checkout limpio. Omitir este paso causa errores
+TS2307 de `generated/prisma/client.js` y errores derivados en `PrismaService`.
+
+El comando de arranque configurado es `pnpm run start`; las migraciones requieren
+`pnpm db:deploy` por separado o configurar `pnpm start:render` como arranque.
+La configuración y las comprobaciones históricas siguientes corresponden al
+servicio anterior y no acreditan la disponibilidad de este servicio nuevo.
+
 ## M09 publicado y verificado — 7 de noviembre de 2026
 
 PR #16 integrado en `main` (`65bd498`); CI aprobó check (191 pruebas) y
