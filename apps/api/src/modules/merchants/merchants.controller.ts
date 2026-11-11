@@ -20,6 +20,8 @@ import {
   MerchantResponseSchema,
   IntegrationsResponseSchema,
   MerchantListResponseSchema,
+  CreateMerchantSchema,
+  type CreateMerchant,
   type UpdateMerchantSettings,
 } from '@resolve-ai/contracts';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -119,5 +121,17 @@ export class MerchantAccountsController {
   async listMerchants(@Req() request: Request) {
     const userId = await this.auth.authenticate(request.headers.authorization);
     return this.merchants.listMerchants(userId);
+  }
+
+  @Post('merchants')
+  @ApiOperation({ summary: 'Create a team and its initial ADMIN membership' })
+  @ApiBody({ schema: zodOpenApi(CreateMerchantSchema) })
+  @ApiResponse({ status: 201, schema: zodOpenApi(MerchantResponseSchema) })
+  async createMerchant(
+    @Req() request: Request,
+    @Body(new ZodValidationPipe(CreateMerchantSchema)) input: CreateMerchant,
+  ) {
+    const userId = await this.auth.authenticate(request.headers.authorization);
+    return this.merchants.createMerchant(userId, input);
   }
 }

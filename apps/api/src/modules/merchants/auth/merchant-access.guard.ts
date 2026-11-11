@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import type { MerchantRole } from '@resolve-ai/contracts';
+import { z } from 'zod';
 import {
   ENVIRONMENT,
   type Environment,
@@ -41,7 +42,27 @@ export class MerchantAccessGuard implements CanActivate {
     let merchantId: string;
     let role: MerchantRole;
 
-    if (this.environment.MERCHANT_ID) {
+    const selected = request.headers['x-merchant-id'];
+    if (selected !== undefined && !z.uuid().safeParse(selected).success) {
+      throw new ApiException(
+        'INVALID_MERCHANT_ID',
+        'X-Merchant-Id must be a single team UUID',
+        400,
+      );
+    }
+    if (typeof selected === 'string') {
+      const member = await this.prisma.merchantMember.findFirst({
+        where: { authUserId: userId, active: true, merchantId: selected },
+      });
+      if (!member)
+        throw new ApiException(
+          'MERCHANT_ACCESS_DENIED',
+          'Access to this merchant is not authorized',
+          403,
+        );
+      merchantId = member.merchantId;
+      role = member.role;
+    } else if (this.environment.MERCHANT_ID) {
       // Single-tenant legacy: only the configured merchant is accessible.
       const member = await this.prisma.merchantMember.findFirst({
         where: {

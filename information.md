@@ -2,7 +2,33 @@
 > publicados en Render. Las notas del 6–7 de noviembre conservan el historial;
 > sus URLs y pendientes deben contrastarse con la actualización siguiente.
 
-## Despliegue y cuentas sin equipos — 2026-11-11
+## Creación de equipos — corrección del 404, 2026-11-11
+
+- `POST /api/merchants` requiere JWT Supabase y acepta `{ "displayName": "Nombre" }`.
+  Crea atómicamente merchant, membresía ADMIN para el usuario autenticado y evento
+  `TEAM_CREATED`; devuelve HTTP 201 y políticas conservadoras. No acepta IDs de
+  usuario, merchant ni roles proporcionados por el cliente.
+- El frontend selecciona el equipo devuelto y envía `X-Merchant-Id` en las
+  solicitudes del workspace. El guard verifica membresía activa para ese equipo;
+  sin cabecera conserva la selección legacy mediante `MERCHANT_ID`.
+- Las operaciones del merchant autorizado no se limitan al merchant legacy.
+  Las credenciales PayPal globales y los webhooks siguen asociados únicamente a
+  `MERCHANT_ID`: un equipo nuevo recibe `NOT_CONFIGURED` y no puede ejecutar
+  comprobaciones con las credenciales de otro equipo.
+- El dashboard sin equipos no muestra sidebar y abre el wizard original de cinco
+  pasos. La revisión omite «Connect later» y el bloque «Your team». La creación
+  persiste nombre, membresía y evento; el resto del perfil, pagos y selección de
+  plan del wizard no están integrados en este contrato de creación. No se cobran
+  tarjetas ni se conecta PayPal desde este endpoint. Invitaciones/join siguen
+  pendientes en este backend.
+- Validación local: `pnpm check` (210 pruebas unitarias/HTTP), las 15 migraciones
+  existentes y `pnpm test:db` (112 pruebas) en PostgreSQL desechable. Frontend:
+  17 pruebas, lint, tipos y build aprobados. Navegador con API/PostgreSQL locales
+  reales e identidad firmada **MOCK**: wizard completo, POST 201, workspace nuevo
+  y selección conservada tras recarga; sin pagos ni llamadas PayPal. No cambió
+  el schema y no se requieren migraciones nuevas.
+
+## Historial de despliegue y cuentas sin equipos — 2026-11-11
 
 - **Backend:** <https://paypal-mediator-backend.onrender.com/api>, servicio
   `paypal-mediator-backend`, Free, Oregon, rama `main`. Render confirmó `live`

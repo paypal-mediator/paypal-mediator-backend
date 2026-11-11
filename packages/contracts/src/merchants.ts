@@ -38,6 +38,11 @@ export const MerchantListResponseSchema = z.object({
 });
 export type MerchantListResponse = z.infer<typeof MerchantListResponseSchema>;
 
+export const CreateMerchantSchema = z.strictObject({
+  displayName: z.string().trim().min(1).max(120),
+});
+export type CreateMerchant = z.infer<typeof CreateMerchantSchema>;
+
 export const PayPalIntegrationSchema = z.object({
   provider: z.literal('PAYPAL'),
   environment: z.literal('sandbox'),

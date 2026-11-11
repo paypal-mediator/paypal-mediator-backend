@@ -128,7 +128,7 @@ describe('M01 HTTP + PostgreSQL + signed JWTs (MOCK identity issuer and PayPal)'
     ).rejects.toMatchObject({ code: 'MERCHANT_ACTION_DISABLED' });
     await expect(
       service.assertActionAllowed(otherMerchantId, 'INVESTIGATE'),
-    ).rejects.toMatchObject({ code: 'MERCHANT_ACCESS_DENIED' });
+    ).rejects.toMatchObject({ code: 'MERCHANT_ACTION_DISABLED' });
   });
 
   it('blocks viewer writes and PayPal checks', async () => {
