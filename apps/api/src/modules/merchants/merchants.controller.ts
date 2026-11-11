@@ -30,6 +30,8 @@ import {
   type MerchantRequest,
 } from './auth/merchant-access.guard.js';
 import { MerchantsService } from './merchants.service.js';
+import { SupabaseAuthService } from './auth/supabase-auth.service.js';
+import type { Request } from 'express';
 
 @ApiTags('merchants')
 @ApiBearerAuth('supabase')
@@ -53,15 +55,6 @@ export class MerchantsController {
   @ApiResponse({ status: 200, schema: zodOpenApi(MerchantResponseSchema) })
   getMerchant(@Req() request: MerchantRequest) {
     return this.merchants.getMerchant(request.merchantActor);
-  }
-
-  @Get('merchants')
-  @ApiOperation({
-    summary: 'List all merchants the authenticated user belongs to',
-  })
-  @ApiResponse({ status: 200, schema: zodOpenApi(MerchantListResponseSchema) })
-  listMerchants(@Req() request: MerchantRequest) {
-    return this.merchants.listMerchants(request.merchantActor.userId);
   }
 
   @Patch('merchants/me/settings')
@@ -105,5 +98,26 @@ export class MerchantsController {
   })
   check(@Req() request: MerchantRequest) {
     return this.merchants.checkPayPal(request.merchantActor);
+  }
+}
+
+@ApiTags('merchants')
+@ApiBearerAuth('supabase')
+@Controller()
+export class MerchantAccountsController {
+  constructor(
+    @Inject(SupabaseAuthService) private readonly auth: SupabaseAuthService,
+    @Inject(MerchantsService) private readonly merchants: MerchantsService,
+  ) {}
+
+  @Get('merchants')
+  @ApiOperation({
+    summary: 'List the signed-in account’s teams, including an empty list',
+  })
+  @ApiResponse({ status: 200, schema: zodOpenApi(MerchantListResponseSchema) })
+  @ApiResponse({ status: 401, description: 'Missing or invalid user token' })
+  async listMerchants(@Req() request: Request) {
+    const userId = await this.auth.authenticate(request.headers.authorization);
+    return this.merchants.listMerchants(userId);
   }
 }

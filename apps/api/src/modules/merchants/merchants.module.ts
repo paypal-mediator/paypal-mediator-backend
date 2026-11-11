@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common';
 import { AuditModule } from '../monitoring/audit.module.js';
 import { SupabaseAuthService } from './auth/supabase-auth.service.js';
 import { MerchantAccessGuard } from './auth/merchant-access.guard.js';
-import { MerchantsController } from './merchants.controller.js';
+import {
+  MerchantAccountsController,
+  MerchantsController,
+} from './merchants.controller.js';
 import { MerchantsService } from './merchants.service.js';
 import {
   PAYPAL_FETCH,
@@ -12,7 +15,7 @@ import { PayPalAuthService } from './paypal/paypal-auth.service.js';
 
 @Module({
   imports: [AuditModule],
-  controllers: [MerchantsController],
+  controllers: [MerchantsController, MerchantAccountsController],
   providers: [
     SupabaseAuthService,
     MerchantAccessGuard,
