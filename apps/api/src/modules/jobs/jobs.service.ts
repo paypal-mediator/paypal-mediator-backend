@@ -10,12 +10,14 @@ const require = createRequire(import.meta.url);
 // El export es un objeto con export named `PgBoss`.
 // Definimos el tipo de la instancia (lo que devuelve `new PgBoss()`)
 interface PgBossInstance {
+  on: (event: 'error', listener: (error: unknown) => void) => void;
   start: () => Promise<void>;
   stop: () => Promise<void>;
+  createQueue: (name: string) => Promise<void>;
   work: <T = unknown>(
     name: string,
     handler: (jobs: Array<{ id: string; data: T }>) => Promise<void>,
-  ) => Promise<void>;
+  ) => Promise<string>;
   send: (
     name: string,
     data: unknown,
@@ -75,6 +77,9 @@ export class JobsService {
     this.logger.log('Connecting pg-boss to PostgreSQL');
     try {
       this.boss = new Boss(connectionString);
+      this.boss.on('error', (error) => {
+        this.logger.error(`pg-boss error: ${String(error)}`);
+      });
       await this.boss.start();
 
       // Subscribe to all handlers registered before connect.
@@ -111,39 +116,41 @@ export class JobsService {
   }
 
   private subscribe(name: string, handler: JobHandler) {
-    return this.boss!.work(name, async (jobs) => {
-      for (const job of jobs) {
-        try {
-          await handler(job.data);
-          await this.audit.append({
-            merchantId: null as unknown as string,
-            actorUserId: null,
-            actorKind: 'SYSTEM',
-            resourceType: 'INGESTION_JOB',
-            resourceId: job.id,
-            outcome: 'SUCCEEDED',
-            record: {
-              action: 'INGESTION_FINISHED',
-              details: { state: 'COMPLETED' },
-            },
-          });
-        } catch (error) {
-          await this.audit.append({
-            merchantId: null as unknown as string,
-            actorUserId: null,
-            actorKind: 'SYSTEM',
-            resourceType: 'INGESTION_JOB',
-            resourceId: job.id,
-            outcome: 'FAILED',
-            record: {
-              action: 'INGESTION_FINISHED',
-              details: { state: 'FAILED', errorCode: 'JOB_ERROR' as const },
-            },
-          });
-          throw error;
+    return this.boss!.createQueue(name).then(() =>
+      this.boss!.work(name, async (jobs) => {
+        for (const job of jobs) {
+          try {
+            await handler(job.data);
+            await this.audit.append({
+              merchantId: null as unknown as string,
+              actorUserId: null,
+              actorKind: 'SYSTEM',
+              resourceType: 'INGESTION_JOB',
+              resourceId: job.id,
+              outcome: 'SUCCEEDED',
+              record: {
+                action: 'INGESTION_FINISHED',
+                details: { state: 'COMPLETED' },
+              },
+            });
+          } catch (error) {
+            await this.audit.append({
+              merchantId: null as unknown as string,
+              actorUserId: null,
+              actorKind: 'SYSTEM',
+              resourceType: 'INGESTION_JOB',
+              resourceId: job.id,
+              outcome: 'FAILED',
+              record: {
+                action: 'INGESTION_FINISHED',
+                details: { state: 'FAILED', errorCode: 'JOB_ERROR' as const },
+              },
+            });
+            throw error;
+          }
         }
-      }
-    });
+      }),
+    );
   }
 
   /**

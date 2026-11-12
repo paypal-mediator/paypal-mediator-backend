@@ -94,7 +94,6 @@ export class IntegrationsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.jobs.connect();
     this.jobs.registerHandler('ERP_SYNC', async (data) => {
       await this.processErpSync(
         data as {
@@ -106,6 +105,7 @@ export class IntegrationsService implements OnModuleInit {
         },
       );
     });
+    await this.jobs.connect();
     this.logger.log('Registered ERP_SYNC job handler');
   }
 
