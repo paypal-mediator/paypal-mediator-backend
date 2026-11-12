@@ -107,8 +107,16 @@ export const DisputeEventResponseSchema = z.object({
 });
 export type DisputeEventResponse = z.infer<typeof DisputeEventResponseSchema>;
 
+export const DisputeMessageSchema = z.object({
+  postedBy: z.enum(['BUYER', 'SELLER', 'OTHER']),
+  postedAt: z.iso.datetime().nullable(),
+  content: z.string(),
+});
+export type DisputeMessage = z.infer<typeof DisputeMessageSchema>;
+
 export const DisputeDetailSchema = DisputeSummarySchema.extend({
   events: z.array(DisputeEventResponseSchema),
+  messages: z.array(DisputeMessageSchema),
 });
 export type DisputeDetail = z.infer<typeof DisputeDetailSchema>;
 

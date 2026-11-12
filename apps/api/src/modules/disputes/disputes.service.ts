@@ -19,6 +19,7 @@ import {
   IngestionRejection,
 } from '../event-ingestion/index.js';
 import {
+  latestDisputeMessages,
   parseDisputeEvent,
   type ParsedDisputeEvent,
 } from './dispute-payload.js';
@@ -357,7 +358,11 @@ export class DisputesService {
         const row = await tx.dispute.findFirst({
           where: { id, merchantId },
           include: {
-            events: { orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }] },
+            sourceEvent: { select: { payload: true } },
+            events: {
+              orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+              include: { event: { select: { payload: true } } },
+            },
           },
         });
         if (!row)
@@ -365,9 +370,37 @@ export class DisputesService {
         return DisputeDetailSchema.parse({
           ...summary(row),
           events: row.events.map(eventResponse),
+          messages: latestDisputeMessages([
+            row.sourceEvent.payload,
+            ...row.events.map((event) => event.event.payload),
+          ]),
         });
       },
       { isolationLevel: 'RepeatableRead' },
     );
+  }
+
+  // Conversation of the newest dispute linked to a transaction, for agents.
+  async conversationForTransaction(merchantId: string, transactionId: string) {
+    const row = await this.prisma.dispute.findFirst({
+      where: { merchantId, transactionId },
+      orderBy: [{ disputedAt: 'desc' }, { id: 'desc' }],
+      include: {
+        sourceEvent: { select: { payload: true } },
+        events: {
+          orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+          include: { event: { select: { payload: true } } },
+        },
+      },
+    });
+    if (!row) return null;
+    return {
+      paypalDisputeId: row.paypalDisputeId,
+      reason: row.paypalReason,
+      messages: latestDisputeMessages([
+        row.sourceEvent.payload,
+        ...row.events.map((event) => event.event.payload),
+      ]),
+    };
   }
 }

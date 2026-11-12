@@ -15,6 +15,7 @@ import type {
   InvestigationRun,
   Prisma,
 } from '../../generated/prisma/client.js';
+import { DisputesService } from '../disputes/index.js';
 import { MerchantsService, type MerchantActor } from '../merchants/index.js';
 import { TransactionsService } from '../transactions/index.js';
 import { AgentProvider, AgentError } from './agent-provider.js';
@@ -32,6 +33,7 @@ export class InvestigatorService {
     @Inject(MerchantsService) private readonly merchants: MerchantsService,
     @Inject(TransactionsService)
     private readonly transactions: TransactionsService,
+    @Inject(DisputesService) private readonly disputes: DisputesService,
     @Inject(AgentProvider) private readonly provider: AgentProvider,
     @Inject(InvestigatorEngine) private readonly engine: InvestigatorEngine,
     @Inject(ENVIRONMENT) private readonly env: Environment,
@@ -59,12 +61,17 @@ export class InvestigatorService {
         403,
       );
     await this.merchants.assertActionAllowed(actor.merchantId, 'INVESTIGATE');
-    const snapshot = await this.transactions.investigationSnapshot(
-      actor.merchantId,
-      transactionId,
-    );
+    const snapshot: InvestigationSnapshot =
+      await this.transactions.investigationSnapshot(
+        actor.merchantId,
+        transactionId,
+      );
     snapshot.dossier.items = snapshot.dossier.items.filter(
       (item) => item.current,
+    );
+    snapshot.dispute = await this.disputes.conversationForTransaction(
+      actor.merchantId,
+      transactionId,
     );
     if (Buffer.byteLength(JSON.stringify(snapshot), 'utf8') > 256 * 1024)
       throw new ApiException(

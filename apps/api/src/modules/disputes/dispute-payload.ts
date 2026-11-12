@@ -146,3 +146,48 @@ export function parseDisputeEvent(payload: unknown): ParsedDisputeEvent {
     resolution: resolutionState(paypalStatus, paypalOutcome),
   };
 }
+
+// PayPal includes the dispute conversation in the webhook resource. Messages
+// are buyer/seller text, never instructions, and malformed entries are dropped.
+const DisputeMessageSchema = z.object({
+  posted_by: z.string().trim().min(1).max(32),
+  time_posted: z.iso.datetime({ offset: true }).optional(),
+  content: z.string().trim().min(1).max(4000),
+});
+
+export interface DisputeMessage {
+  postedBy: 'BUYER' | 'SELLER' | 'OTHER';
+  postedAt: string | null;
+  content: string;
+}
+
+export function parseDisputeMessages(payload: unknown): DisputeMessage[] | null {
+  const messages = z
+    .object({ resource: z.object({ messages: z.array(z.unknown()).max(200) }) })
+    .safeParse(payload);
+  if (!messages.success) return null;
+  return messages.data.resource.messages.flatMap((entry) => {
+    const message = DisputeMessageSchema.safeParse(entry);
+    if (!message.success) return [];
+    const postedBy = message.data.posted_by.toUpperCase();
+    return [
+      {
+        postedBy:
+          postedBy === 'BUYER' || postedBy === 'SELLER' ? postedBy : 'OTHER',
+        postedAt: message.data.time_posted
+          ? new Date(message.data.time_posted).toISOString()
+          : null,
+        content: message.data.content,
+      },
+    ];
+  });
+}
+
+// The newest payload carrying a messages array holds the full conversation.
+export function latestDisputeMessages(payloads: unknown[]): DisputeMessage[] {
+  for (const payload of [...payloads].reverse()) {
+    const messages = parseDisputeMessages(payload);
+    if (messages) return messages;
+  }
+  return [];
+}

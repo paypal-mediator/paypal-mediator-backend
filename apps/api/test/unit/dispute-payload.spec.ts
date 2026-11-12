@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { IngestionRejection } from '../../src/modules/event-ingestion/index.js';
-import { parseDisputeEvent } from '../../src/modules/disputes/index.js';
+import {
+  latestDisputeMessages,
+  parseDisputeEvent,
+} from '../../src/modules/disputes/index.js';
 import { disputeEvent } from '../fixtures/dispute.js';
 
 describe('M07 dispute webhook parser (DEMO / MOCK payloads)', () => {
@@ -110,5 +113,44 @@ describe('M07 dispute webhook parser (DEMO / MOCK payloads)', () => {
         ...payload,
       }),
     ).toThrow(IngestionRejection);
+  });
+});
+
+describe('M07 dispute conversation (DEMO / MOCK payloads)', () => {
+  const withMessages = (messages: unknown[]) => ({
+    resource: { dispute_id: 'PP-D-MOCK', messages },
+  });
+
+  it('reads buyer messages from the newest payload that carries them', () => {
+    expect(
+      latestDisputeMessages([
+        withMessages([{ posted_by: 'BUYER', content: 'Old' }]),
+        withMessages([
+          {
+            posted_by: 'BUYER',
+            time_posted: '2026-11-11T10:00:00.000Z',
+            content: 'Hi! I did not receive this item',
+          },
+          { posted_by: 'seller', content: 'Tracking sent' },
+        ]),
+        { resource: { dispute_id: 'PP-D-MOCK' } },
+      ]),
+    ).toEqual([
+      {
+        postedBy: 'BUYER',
+        postedAt: '2026-11-11T10:00:00.000Z',
+        content: 'Hi! I did not receive this item',
+      },
+      { postedBy: 'SELLER', postedAt: null, content: 'Tracking sent' },
+    ]);
+  });
+
+  it('drops malformed messages and returns none without a conversation', () => {
+    expect(
+      latestDisputeMessages([
+        withMessages([{ posted_by: 'BUYER', content: '' }, 'text', null]),
+      ]),
+    ).toEqual([]);
+    expect(latestDisputeMessages([{}, null])).toEqual([]);
   });
 });

@@ -7,6 +7,7 @@ import {
 import { contentHash } from '../../common/data/content-hash.js';
 import { TransactionsService } from '../transactions/index.js';
 import { MerchantsService } from '../merchants/index.js';
+import type { DisputeMessage } from '../disputes/index.js';
 import {
   AgentProvider,
   AgentError,
@@ -16,7 +17,13 @@ import { INVESTIGATOR_SYSTEM_PROMPT } from './prompts/investigator.prompts.js';
 
 export type InvestigationSnapshot = Awaited<
   ReturnType<TransactionsService['investigationSnapshot']>
->;
+> & {
+  dispute?: {
+    paypalDisputeId: string;
+    reason: string;
+    messages: DisputeMessage[];
+  } | null;
+};
 export interface InvestigationTrace {
   step: number;
   durationMs?: number;
@@ -49,7 +56,10 @@ export class InvestigatorEngine {
       {
         role: 'user',
         text: JSON.stringify({
-          task: 'Preparación preventiva INR. Investiga las fuentes y los faltantes.',
+          task: snapshot.dispute
+            ? 'Disputa INR abierta. Investiga las fuentes y redacta la respuesta al comprador.'
+            : 'Preparación preventiva INR. Investiga las fuentes y los faltantes.',
+          dispute: snapshot.dispute ?? null,
           commercialSources: transaction.orderEnrichment,
           sourceWarning:
             'Only persisted sources are accessible; no live commerce lookup tool.',
