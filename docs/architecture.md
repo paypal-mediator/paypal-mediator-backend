@@ -151,3 +151,13 @@ opt-in explícito y usa leases PostgreSQL, independientemente del pg-boss opcion
 Los informes `SHIPMENT_TRACKING_RECORD` conservan originales y eventos; no crean
 comprobantes de entrega ni autorizan presentaciones. El frontend anidado reutiliza
 el expediente y la vista de disputa. Ver [contrato y límites](shipment-tracking-17track.md).
+
+`mediation` coordina tres agentes sobre disputas PayPal existentes y conserva
+sus propios casos, políticas, mensajes, reservas de envío y transiciones.
+Reutiliza M01–M09 por sus interfaces públicas; no escribe evidencia ni estados
+PayPal ajenos. El comprador responde en PayPal; el frontend conectado representa
+los mensajes realmente recuperados y las entregas confirmadas. La autorización
+comercial permite automatizar casos ordinarios con revisión independiente M06;
+los casos difíciles se bloquean para revisión especializada. Un temporizador
+separado aplica vencimientos aun cuando haya inferencias en curso. Ver
+[contratos, activación y límites](mediation.md).

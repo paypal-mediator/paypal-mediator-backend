@@ -294,7 +294,17 @@ export class TransactionsService {
     actor: MerchantActor,
     id: string,
     input: UploadEvidenceFile,
+    unitOfWork?: Prisma.TransactionClient,
   ) {
+    if (unitOfWork) {
+      const row = await this.row(unitOfWork, actor.merchantId, id);
+      return this.evidence.uploadFile(
+        unitOfWork,
+        evidenceContext(row),
+        input,
+        actor.userId,
+      );
+    }
     return this.prisma.$transaction(
       async (tx) => {
         const row = await this.row(tx, actor.merchantId, id);

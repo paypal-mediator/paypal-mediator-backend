@@ -255,6 +255,8 @@ Modificados:
 - `.env.example`, `eslint.config.mjs` (el lint del backend excluye el repositorio
   frontend anidado, que tiene su propio lint).
 - `apps/api/test/http/http.spec.ts`: contrato de rutas OpenAPI.
+- `apps/api/test/unit/monitoring.spec.ts`: el filtro negativo usa un módulo
+  inexistente para mantener la comprobación al incorporarse M07 en el workspace.
 - `apps/api/prisma/schema.prisma`, `apps/api/src/app.module.ts`,
   `apps/api/src/common/config/environment.ts`.
 - `modules/integrations/integrations.service.ts`,
@@ -286,10 +288,10 @@ Validación local ejecutada el 11 de noviembre de 2026, con Node 24.22.3 y
 PostgreSQL 18.6 desechable:
 
 - `pnpm check`: aprobado; generación/validación Prisma, lint, formato, tipos,
-  **226 pruebas unitarias/HTTP** y build. Incluye 16 pruebas unitarias nuevas del
+  **357 pruebas unitarias/HTTP** y build. Incluye 16 pruebas unitarias nuevas del
   transporte/normalización de seguimiento y de lectura PayPal.
-- `pnpm test:db`: **140 pruebas aprobadas**, incluidas **28 de seguimiento**.
-  Validación del incremento aislado de seguimiento, sin cambios de mediación.
+- `pnpm test:db`: **158 pruebas aprobadas**, incluidas **28 de seguimiento**.
+  La suite completa también incluye los cambios concurrentes de mediación.
 - `pnpm db:deploy`: historial aplicado a una base vacía, incluidas las dos
   migraciones de esta entrega; repetición sin migraciones pendientes. Se usaron
   exclusivamente URLs locales de pruebas para migraciones y persistencia.

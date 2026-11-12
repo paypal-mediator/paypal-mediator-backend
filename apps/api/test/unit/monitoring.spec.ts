@@ -9,7 +9,7 @@ describe('M09 public contracts', () => {
       { limit: 0 },
       { beforeId: randomUUID() },
       { before: 'invalid' },
-      { module: 'M07' },
+      { module: 'M99' },
       { from: '2026-11-08T00:00:00Z', to: '2026-11-07T00:00:00Z' },
       { outcome: 'SUBMITTED' },
     ]) {

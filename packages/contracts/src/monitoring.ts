@@ -106,6 +106,28 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
         .strict(),
     })
     .strict(),
+  z.strictObject({
+    action: z.literal('MEDIATION_EVENT'),
+    details: z.strictObject({
+      event: z.enum([
+        'POLICY_UPDATED',
+        'STATE_CHANGED',
+        'HUMAN_REVIEW',
+        'ACTION',
+        'MESSAGE',
+        'DELIVERY',
+        'AGENT_RESULT',
+      ]),
+      code: z
+        .string()
+        .regex(/^[A-Z][A-Z0-9_]{0,127}$/)
+        .optional(),
+      contentHash: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    }),
+  }),
 ]);
 export const AuditModuleSchema = z.enum([
   'M01',
@@ -114,6 +136,7 @@ export const AuditModuleSchema = z.enum([
   'M04',
   'M05',
   'M06',
+  'M07',
 ]);
 export const AuditOutcomeSchema = z.enum([
   'STARTED',
@@ -135,6 +158,7 @@ export const AuditResourceSchema = z.enum([
   'VERIFICATION',
   'SUBMISSION',
   'SUBSCRIPTION',
+  'MEDIATION',
 ]);
 const counters = {
   durationMs: z.number().int().min(0).max(2147483647).nullable().default(null),
@@ -171,6 +195,7 @@ export const ActivityQuerySchema = z
     action: z
       .enum([
         'SETTINGS_UPDATED',
+        'MEDIATION_EVENT',
         ...AuditRecordSchema.options[1].shape.action.options,
       ])
       .optional(),

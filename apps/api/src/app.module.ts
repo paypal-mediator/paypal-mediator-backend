@@ -1,5 +1,6 @@
 import { ShipmentTrackingModule } from './modules/shipment-tracking/index.js';
 import { Module, type DynamicModule } from '@nestjs/common';
+import { MediationModule } from './modules/mediation/mediation.module.js';
 import type { Environment } from './common/config/environment.js';
 import { CoreModule } from './common/core.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -30,6 +31,7 @@ export class AppModule {
         VerifierModule,
         MonitoringModule,
         DisputesModule,
+        MediationModule,
         SubmissionsModule,
         BillingModule,
         JobsModule,

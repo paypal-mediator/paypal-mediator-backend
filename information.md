@@ -14,7 +14,7 @@ opcional. Se detectó que las tablas ERP ya modeladas carecían de migración; s
 añade una creación compatible junto a la persistencia de seguimiento.
 Ver [guía, rutas, configuración y pruebas](docs/shipment-tracking-17track.md).
 
-Validación local: `pnpm check` (226 pruebas), `pnpm test:db` (140; 28 de
+Validación local: `pnpm check` (357 pruebas), `pnpm test:db` (158; 28 de
 seguimiento), migraciones en PostgreSQL desechable y frontend (35 pruebas, lint,
 tipos y build) aprobados. Proveedores MOCK; sin créditos 17TRACK ni despliegue.
 
@@ -982,3 +982,18 @@ Al finalizar, informa archivos modificados, comandos de prueba y resultados real
 - Codex y AGENTS.md: https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex
 
 **Último principio:** ResolveAI *se prepara antes de que exista la disputa*, *investiga cuando el comprador abre el caso* y *solo envía evidencia real, trazable, verificada y autorizada*. El resultado oficial sigue perteneciendo a PayPal.
+
+## Mediación multiagente — incremento local, 2026-11-11
+
+Se implementó el flujo de mediación únicamente sobre disputas PayPal existentes:
+detección, conciliación por política comercial, demanda, valoración con citas y
+revisión independiente M06, expediente y cliente PayPal con allowlist no financiera.
+El frontend clonado incorpora conversación conectada y configuración por negocio;
+el comprador responde mediante PayPal. No se publicaron estos cambios.
+
+Validación local: `pnpm check` (362 pruebas unitarias/HTTP), `pnpm test:db`
+(166 pruebas en base nueva) y cobertura de mediación (162 pruebas del subconjunto,
+91,46% líneas y 82,62% ramas). Frontend: 36 pruebas, lint, tipos y build.
+Migraciones aplicadas y repetidas; reversión de tablas nuevas probada en otra
+base desechable. PayPal/LLM/JWKS son MOCK en estas pruebas. Ver
+[activación y límites](docs/mediation.md) y [reporte](docs/mediation-validation.md).

@@ -58,6 +58,13 @@ export const EnvironmentSchema = z.object({
   PAYPAL_ENV: z.literal('sandbox').default('sandbox'),
   TRANSACTION_WORKER_ENABLED: booleanFlag.default(false),
   DISPUTE_WORKER_ENABLED: booleanFlag.default(false),
+  MEDIATION_WORKER_ENABLED: booleanFlag.default(false),
+  MEDIATION_DETECTION_PER_MINUTE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1000)
+    .default(30),
   PAYPAL_CLIENT_ID: optionalString(z.string().trim().min(1).max(512)),
   PAYPAL_CLIENT_SECRET: optionalString(z.string().min(1).max(512)),
   PAYPAL_WEBHOOK_ID: optionalString(z.string().trim().min(1).max(512)),
@@ -158,6 +165,9 @@ export function parseEnvironment(input: Record<string, unknown>): Environment {
     DISPUTE_WORKER_ENABLED:
       input.DISPUTE_WORKER_ENABLED ??
       input.TRANSACTION_WORKER_ENABLED ??
+      (input.NODE_ENV === 'production' ? 'true' : 'false'),
+    MEDIATION_WORKER_ENABLED:
+      input.MEDIATION_WORKER_ENABLED ??
       (input.NODE_ENV === 'production' ? 'true' : 'false'),
   });
   if (!result.success) {

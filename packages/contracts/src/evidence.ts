@@ -52,6 +52,7 @@ export const EvidenceItemResponseSchema = z.object({
   sourceSystem: z.string(),
   externalReference: z.string(),
   retrievedAt: z.iso.datetime(),
+  recordedAt: z.iso.datetime().optional(),
   contentHash: z.string(),
   content: z.record(z.string(), z.unknown()),
   current: z.boolean(),

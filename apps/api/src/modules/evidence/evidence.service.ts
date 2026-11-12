@@ -5,7 +5,6 @@ import {
   type RegisterEvidence,
   UploadEvidenceFileSchema,
   EvidenceFileMetadataSchema,
-  MAX_EVIDENCE_FILE_BYTES,
   type UploadEvidenceFile,
 } from '@resolve-ai/contracts';
 import type { Prisma } from '../../generated/prisma/client.js';
@@ -16,6 +15,10 @@ import { currentEvidence, evaluateEvidence } from './evidence-readiness.js';
 import { EvidenceStorage, binaryHash } from './evidence-storage.js';
 import { PdfTextExtractor } from './pdf-text-extractor.js';
 import { AuditService } from '../monitoring/audit.service.js';
+import {
+  assertEvidenceFileSafety,
+  assertEvidenceFileFormat,
+} from './evidence-file-safety.js';
 
 interface EvidenceRecord {
   type:
@@ -89,19 +92,9 @@ export class EvidenceService {
   ) {
     const parsed = UploadEvidenceFileSchema.parse(input);
     const bytes = Buffer.from(parsed.dataBase64, 'base64');
-    const signatures = {
-      'application/pdf': Buffer.from('%PDF-'),
-      'image/png': Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-      'image/jpeg': Buffer.from([255, 216, 255]),
-    };
-    if (
-      !bytes.length ||
-      bytes.length > MAX_EVIDENCE_FILE_BYTES ||
-      bytes.toString('base64') !== parsed.dataBase64 ||
-      !bytes
-        .subarray(0, signatures[parsed.mediaType].length)
-        .equals(signatures[parsed.mediaType])
-    )
+    assertEvidenceFileSafety(bytes, parsed.mediaType);
+    assertEvidenceFileFormat(bytes, parsed.mediaType);
+    if (bytes.toString('base64') !== parsed.dataBase64)
       throw new ApiException(
         'EVIDENCE_FILE_INVALID',
         'Invalid file size, encoding or signature',
@@ -426,6 +419,7 @@ export class EvidenceService {
       items: dossier.items.map((item) => ({
         ...item,
         retrievedAt: item.retrievedAt.toISOString(),
+        recordedAt: item.createdAt.toISOString(),
         current: current.has(item.id),
         integrity:
           item.contentHash === contentHash(item.content) ? 'VALID' : 'INVALID',
