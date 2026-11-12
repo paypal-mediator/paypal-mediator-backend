@@ -161,7 +161,9 @@ export interface DisputeMessage {
   content: string;
 }
 
-export function parseDisputeMessages(payload: unknown): DisputeMessage[] | null {
+export function parseDisputeMessages(
+  payload: unknown,
+): DisputeMessage[] | null {
   const messages = z
     .object({ resource: z.object({ messages: z.array(z.unknown()).max(200) }) })
     .safeParse(payload);
