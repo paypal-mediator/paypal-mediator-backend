@@ -42,6 +42,7 @@ model Merchant {
   allowSubmissions        Boolean              @default(false) @map("allow_submissions")
   requireMerchantApproval Boolean              @default(true) @map("require_merchant_approval")
   members                 MerchantMember[]
+  paypalAccount           PayPalAccount?
   integration             MerchantIntegration?
   events                  MerchantEvent[]
   webhookEvents           WebhookEvent[]
@@ -748,4 +749,17 @@ model MediationDelivery {
   errorCode String? @map("error_code") @db.VarChar(128)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
   @@map("mediation_deliveries")
+}
+
+// M01: identifiers and consent only. Platform secrets remain in server configuration.
+model PayPalAccount {
+  merchantId String    @id @map("merchant_id") @db.Uuid
+  sellerId   String?   @unique @map("seller_id") @db.VarChar(13)
+  trackingId String    @unique @map("tracking_id") @db.Uuid
+  status     String    @default("PENDING") @db.VarChar(24)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  checkedAt  DateTime? @map("checked_at") @db.Timestamptz(3)
+  merchant   Merchant  @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@map("paypal_accounts")
 }

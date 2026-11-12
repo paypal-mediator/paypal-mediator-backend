@@ -10,7 +10,7 @@ export const PayPalWebhookEnvelopeSchema = z.looseObject({
     .string()
     .min(1)
     .max(128)
-    .regex(/^[A-Z0-9_.]+$/),
+    .regex(/^[A-Z0-9_.-]+$/),
   create_time: z.iso.datetime({ offset: true }),
   resource: z.record(z.string(), z.unknown()),
 });

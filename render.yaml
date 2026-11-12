@@ -47,6 +47,10 @@ services:
         sync: false
       - key: PAYPAL_WEBHOOK_ID
         sync: false
+      - key: PAYPAL_PARTNER_MERCHANT_ID
+        sync: false
+      - key: PAYPAL_ONBOARDING_RETURN_URL
+        value: https://paypal-mediator-frontend.onrender.com/
       - key: AI_PROVIDER
         value: nvidia
       - key: NVIDIA_API_KEY

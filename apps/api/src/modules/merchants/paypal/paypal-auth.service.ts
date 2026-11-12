@@ -1,4 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
+import { PrismaService } from '../../../common/database/prisma.service.js';
+import { ApiException } from '../../../common/http/api.exception.js';
 import { z } from 'zod';
 import {
   ENVIRONMENT,
@@ -39,7 +41,42 @@ export class PayPalAuthService {
   constructor(
     @Inject(ENVIRONMENT) private readonly environment: Environment,
     @Inject(PAYPAL_FETCH) private readonly fetcher: typeof fetch,
+    @Optional() @Inject(PrismaService) private readonly prisma?: PrismaService,
   ) {}
+
+  async merchantHeaders(merchantId: string): Promise<Record<string, string>> {
+    const account = await this.prisma?.payPalAccount.findUnique({
+      where: { merchantId },
+    });
+    if (
+      account?.status === 'CONNECTED' &&
+      account.sellerId &&
+      this.environment.PAYPAL_CLIENT_ID
+    ) {
+      const encode = (value: unknown) =>
+        Buffer.from(JSON.stringify(value)).toString('base64url');
+      return {
+        'PayPal-Auth-Assertion': `${encode({ alg: 'none' })}.${encode({ iss: this.environment.PAYPAL_CLIENT_ID, payer_id: account.sellerId })}.`,
+        ...(this.environment.PAYPAL_PARTNER_ATTRIBUTION_ID
+          ? {
+              'PayPal-Partner-Attribution-Id':
+                this.environment.PAYPAL_PARTNER_ATTRIBUTION_ID,
+            }
+          : {}),
+      };
+    }
+    if (
+      !account &&
+      merchantId === this.environment.MERCHANT_ID &&
+      !this.environment.PAYPAL_PARTNER_MERCHANT_ID
+    )
+      return {};
+    throw new ApiException(
+      'PAYPAL_NOT_CONFIGURED',
+      'Connect PayPal for this business before continuing',
+      409,
+    );
+  }
 
   // Server-module interface only. Tokens must never be exposed by controllers or agent tools.
   async getAccessToken(

@@ -35,6 +35,9 @@ describe('M01 protected routes without external configuration', () => {
     ['get', '/api/settings/integrations'],
     ['patch', '/api/merchants/me/settings'],
     ['post', '/api/settings/integrations/paypal/check'],
+    ['post', '/api/settings/integrations/paypal/connect'],
+    ['post', '/api/settings/integrations/paypal/complete'],
+    ['post', '/api/settings/integrations/paypal/disconnect'],
   ] as const)(
     'requires user authentication for %s %s',
     async (method, path) => {

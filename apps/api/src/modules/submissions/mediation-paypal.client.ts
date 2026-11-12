@@ -81,7 +81,7 @@ export type MediationPayPalAction =
 @Injectable()
 export class MediationPayPalClient {
   async document(merchantId: string, disputeId: string, reference: string) {
-    this.assertMerchant(merchantId);
+    const merchantHeaders = await this.auth.merchantHeaders(merchantId);
     try {
       const url = new URL(reference);
       if (
@@ -105,7 +105,10 @@ export class MediationPayPalClient {
       const response = await this.fetcher(url.href, {
         redirect: 'error',
         signal,
-        headers: { Authorization: `Bearer ${token.accessToken}` },
+        headers: {
+          ...merchantHeaders,
+          Authorization: `Bearer ${token.accessToken}`,
+        },
       });
       if (response.status !== 200 || !response.body) {
         await response.body?.cancel();
@@ -200,21 +203,16 @@ export class MediationPayPalClient {
       );
     return `${PAYPAL_SANDBOX_URL}/v1/customer/disputes/${id}${action ? `/${action}` : ''}`;
   }
-  private assertMerchant(merchantId: string) {
-    if (merchantId !== this.env.MERCHANT_ID)
-      throw new ApiException(
-        'PAYPAL_NOT_CONFIGURED',
-        'PayPal is not configured for this merchant',
-        409,
-      );
-  }
   async detail(merchantId: string, id: string) {
-    this.assertMerchant(merchantId);
+    const merchantHeaders = await this.auth.merchantHeaders(merchantId);
     const signal = AbortSignal.timeout(this.env.PAYPAL_TIMEOUT_MS);
     try {
       const token = await this.auth.getAccessToken(signal);
       const response = await this.fetcher(this.path(id), {
-        headers: { Authorization: `Bearer ${token.accessToken}` },
+        headers: {
+          ...merchantHeaders,
+          Authorization: `Bearer ${token.accessToken}`,
+        },
         signal,
         redirect: 'error',
       });
@@ -279,7 +277,7 @@ export class MediationPayPalClient {
     body: Record<string, unknown> | FormData,
     key: string,
   ) {
-    this.assertMerchant(merchantId);
+    const merchantHeaders = await this.auth.merchantHeaders(merchantId);
     this.path(detail.dispute_id, action);
     if (
       detail.seller_response_due_date &&
@@ -305,6 +303,7 @@ export class MediationPayPalClient {
       redirect: 'error',
       signal,
       headers: {
+        ...merchantHeaders,
         Authorization: `Bearer ${token.accessToken}`,
         'PayPal-Request-Id': key,
         ...(body instanceof FormData

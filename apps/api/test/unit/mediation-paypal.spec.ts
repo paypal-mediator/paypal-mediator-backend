@@ -30,6 +30,10 @@ function setup(
   fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json(raw)),
 ) {
   const auth = {
+    merchantHeaders: vi.fn(async (id: string) => {
+      if (id !== merchantId) throw new Error('PayPal is not configured');
+      return {};
+    }),
     getAccessToken: vi.fn().mockResolvedValue({ accessToken: 'MOCK_TOKEN' }),
   } as unknown as PayPalAuthService;
   return { client: new MediationPayPalClient(fetcher, auth, env), fetcher };

@@ -12,6 +12,7 @@ import {
   PayPalConnectionClient,
 } from './paypal/paypal-connection.client.js';
 import { PayPalAuthService } from './paypal/paypal-auth.service.js';
+import { PayPalOnboardingService } from './paypal/paypal-onboarding.service.js';
 
 @Module({
   imports: [AuditModule],
@@ -22,6 +23,7 @@ import { PayPalAuthService } from './paypal/paypal-auth.service.js';
     MerchantsService,
     PayPalConnectionClient,
     PayPalAuthService,
+    PayPalOnboardingService,
     { provide: PAYPAL_FETCH, useFactory: () => globalThis.fetch },
   ],
   exports: [

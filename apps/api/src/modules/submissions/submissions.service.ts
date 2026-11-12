@@ -220,6 +220,7 @@ export class SubmissionsService {
           redirect: 'error',
           signal,
           headers: {
+            ...(await this.auth.merchantHeaders(merchantId)),
             Authorization: `Bearer ${token.accessToken}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',

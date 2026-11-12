@@ -1,5 +1,9 @@
 # Organización del backend
 
+M01 también es propietario de `paypal_accounts` y del onboarding PayPal por
+negocio. Los clientes consumen cabeceras de vendedor mediante su interfaz pública;
+M02 resuelve vendedores de webhooks firmados. Ver [flujo y configuración](paypal-business-onboarding.md).
+
 ```text
 apps/api/
   prisma.config.ts           # Prisma CLI y conexión para migraciones

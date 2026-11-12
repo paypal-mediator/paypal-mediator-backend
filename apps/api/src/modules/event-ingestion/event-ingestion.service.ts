@@ -37,7 +37,10 @@ export class EventIngestionService {
     // parseWebhookBody guarantees the buffer exists; hashes precede any external call.
     const originalBody = rawBody!;
     const hashes = webhookHashes(event, originalBody);
-    const context = await this.merchants.getPayPalWebhookContext();
+    const context = await this.merchants.getPayPalWebhookContext(
+      event.resource,
+      event.event_type,
+    );
     try {
       await this.verifier.verify(event, headers, context.webhookId);
     } catch (error) {
@@ -54,6 +57,8 @@ export class EventIngestionService {
       });
       throw error;
     }
+    if (event.event_type === 'MERCHANT.PARTNER-CONSENT.REVOKED')
+      await this.merchants.revokePayPal(context.merchantId);
     const kind = ingestionJobKind(event.event_type);
     try {
       return await this.prisma.$transaction(async (tx) => {

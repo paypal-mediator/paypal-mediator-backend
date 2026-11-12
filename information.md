@@ -1,3 +1,38 @@
+## Confirmación de correo — URL Render corregida, 2026-11-12
+
+En Supabase Auth, Site URL todavía apuntaba a Vercel. Se guardó y verificó tras
+recarga `https://paypal-mediator-frontend.onrender.com` como URL principal, con
+redirecciones exactas `https://paypal-mediator-frontend.onrender.com/` y
+`http://localhost:3000/`; se eliminó la antigua redirección Vercel. El frontend
+local ahora envía `emailRedirectTo` con la raíz del origen actual en `signUp`.
+Frontend: 37 pruebas, lint, tipos y build aprobados. Navegador Chrome verificó
+el parámetro `redirect_to` con Supabase MOCK, sin cuentas ni correos nuevos.
+La configuración Supabase ya está activa; el cambio de código frontend sigue
+local hasta despliegue. Los enlaces enviados anteriormente pueden conservar
+la URL antigua.
+
+## Conexión PayPal por negocio — implementación local, 2026-11-12
+
+M01 incorpora onboarding Sandbox mediante Partner Referrals, verificación del
+vendedor y permisos directamente con PayPal, vinculación persistente por negocio,
+desconexión local y protección contra conexiones compartidas entre negocios.
+El frontend reemplaza la conexión simulada del wizard live y permite autorizar
+desde Integraciones. Pedidos, documentos y presentaciones identifican al vendedor
+con `PayPal-Auth-Assertion`; los webhooks partner exigen un vendedor inequívoco y
+los workers recorren conexiones de M01.
+
+Validación: `pnpm check` (380 pruebas), 20 migraciones aplicadas y repetidas en
+PostgreSQL desechable, `pnpm test:db` (172 pruebas), frontend con 37 pruebas,
+lint, tipos y build; navegador Chrome con PayPal MOCK. Posteriormente se configuró
+una aplicación Plataforma Sandbox real: OAuth 200, Partner Referrals 201 y
+webhook de cinco eventos. NestJS con identidad MOCK/PostgreSQL desechable y PayPal
+real confirmó `/paypal/connect` 201 y persistencia `PENDING`. Credenciales, partner
+ID, webhook y retorno están configurados localmente y guardados en Render con
+Save only; no se disparó despliegue ni se autorizó un vendedor. BN code es opcional
+en Sandbox y se omite su cabecera si no está asignado. Falta publicar el código
+y aplicar la migración para habilitarlo en la app remota.
+Ver [configuración, contratos y límites](docs/paypal-business-onboarding.md).
+
 ## Respaldo de rastreo 17TRACK — implementación local, 2026-11-11
 
 PayPal → ERP → 17TRACK v2.4 conserva las fuentes anteriores y agrega consultas de

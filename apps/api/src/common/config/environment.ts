@@ -68,6 +68,13 @@ export const EnvironmentSchema = z.object({
   PAYPAL_CLIENT_ID: optionalString(z.string().trim().min(1).max(512)),
   PAYPAL_CLIENT_SECRET: optionalString(z.string().min(1).max(512)),
   PAYPAL_WEBHOOK_ID: optionalString(z.string().trim().min(1).max(512)),
+  PAYPAL_PARTNER_MERCHANT_ID: optionalString(
+    z.string().regex(/^[A-Z0-9]{13}$/),
+  ),
+  PAYPAL_PARTNER_ATTRIBUTION_ID: optionalString(
+    z.string().trim().min(1).max(128),
+  ),
+  PAYPAL_ONBOARDING_RETURN_URL: optionalString(z.url()),
   PAYPAL_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),
   SEVENTEENTRACK_API_KEY: optionalString(z.string().trim().min(1).max(2048)),
   SEVENTEENTRACK_TIMEOUT_MS: z.coerce

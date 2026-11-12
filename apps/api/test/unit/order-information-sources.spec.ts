@@ -6,6 +6,7 @@ import { PayPalOrderSource } from '../../src/modules/transactions/sources/paypal
 import { PayPalAuthService } from '../../src/modules/merchants/index.js';
 import { parseEnvironment } from '../../src/common/config/environment.js';
 import { mockPayPalOrder } from '../fixtures/paypal-order.js';
+import { OrderSourceError } from '../../src/modules/transactions/sources/order-information-source.js';
 
 const row = {
   merchantId: '00000000-0000-4000-8000-000000000001',
@@ -110,6 +111,11 @@ describe('order adapters (explicit MOCK PayPal)', () => {
       ...overrides,
     });
     const auth = {
+      merchantHeaders: vi.fn(async (id: string) => {
+        if (id !== env.MERCHANT_ID)
+          throw new OrderSourceError('NOT_CONFIGURED');
+        return {};
+      }),
       getAccessToken: vi.fn().mockResolvedValue({ accessToken: 'MOCKTOKEN' }),
     };
     return {

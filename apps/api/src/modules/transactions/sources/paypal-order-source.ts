@@ -15,6 +15,7 @@ import {
   type OrderInformationSource,
 } from './order-information-source.js';
 import { normalizePayPalOrder } from './paypal-order-normalizer.js';
+import { ApiException } from '../../../common/http/api.exception.js';
 
 @Injectable()
 export class PayPalOrderSource implements OrderInformationSource {
@@ -30,32 +31,26 @@ export class PayPalOrderSource implements OrderInformationSource {
     return row.environment === 'sandbox' && !!row.paypalOrderId;
   }
   async fetch(row: Transaction) {
-    if (
-      row.merchantId !== this.env.MERCHANT_ID ||
-      !this.env.PAYPAL_CLIENT_ID ||
-      !this.env.PAYPAL_CLIENT_SECRET
-    )
+    if (!this.env.PAYPAL_CLIENT_ID || !this.env.PAYPAL_CLIENT_SECRET)
       throw new OrderSourceError('NOT_CONFIGURED');
     if (!row.paypalOrderId || !/^[A-Z0-9]{1,36}$/.test(row.paypalOrderId))
       throw new OrderSourceError('INVALID_PAYPAL_ORDER_ID');
     const original = await this.readJson(
       `/v2/checkout/orders/${row.paypalOrderId}`,
+      row.merchantId,
     );
     return { original, result: normalizePayPalOrder(original, row) };
   }
   // Read-only public interface; never adds/changes tracking information at PayPal.
   async getShipmentTracker(row: Transaction, trackingNumber: string) {
-    if (
-      row.merchantId !== this.env.MERCHANT_ID ||
-      !this.env.PAYPAL_CLIENT_ID ||
-      !this.env.PAYPAL_CLIENT_SECRET
-    )
+    if (!this.env.PAYPAL_CLIENT_ID || !this.env.PAYPAL_CLIENT_SECRET)
       throw new OrderSourceError('NOT_CONFIGURED');
     return this.readJson(
       `/v1/shipping/trackers/${encodeURIComponent(row.paypalCaptureId + '-' + trackingNumber)}`,
+      row.merchantId,
     );
   }
-  private async readJson(path: string) {
+  private async readJson(path: string, merchantId: string) {
     const signal = AbortSignal.timeout(this.env.PAYPAL_TIMEOUT_MS);
     try {
       let response: Response | undefined;
@@ -66,6 +61,7 @@ export class PayPalOrderSource implements OrderInformationSource {
           redirect: 'error',
           signal,
           headers: {
+            ...(await this.auth.merchantHeaders(merchantId)),
             Authorization: `Bearer ${token.accessToken}`,
             Accept: 'application/json',
           },
@@ -105,6 +101,8 @@ export class PayPalOrderSource implements OrderInformationSource {
         throw new OrderSourceError('PAYPAL_ORDER_INVALID_JSON');
       return original;
     } catch (error) {
+      if (error instanceof ApiException)
+        throw new OrderSourceError('NOT_CONFIGURED');
       if (error instanceof OrderSourceError) throw error;
       if (error instanceof PayPalAuthError)
         throw new OrderSourceError(

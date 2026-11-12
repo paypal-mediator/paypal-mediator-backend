@@ -2,6 +2,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  Optional,
   type OnModuleInit,
   type OnModuleDestroy,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import {
   type Environment,
 } from '../../common/config/environment.js';
 import { DisputesService } from './disputes.service.js';
+import { MerchantsService } from '../merchants/index.js';
 
 @Injectable()
 export class DisputesWorker implements OnModuleInit, OnModuleDestroy {
@@ -21,10 +23,16 @@ export class DisputesWorker implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(DisputesService) private readonly disputes: DisputesService,
     @Inject(ENVIRONMENT) private readonly environment: Environment,
+    @Optional()
+    @Inject(MerchantsService)
+    private readonly merchants?: MerchantsService,
   ) {}
 
   onModuleInit() {
-    if (this.environment.DISPUTE_WORKER_ENABLED && this.environment.MERCHANT_ID)
+    if (
+      this.environment.DISPUTE_WORKER_ENABLED &&
+      (this.environment.MERCHANT_ID || this.merchants)
+    )
       this.schedule(0);
   }
 
@@ -39,11 +47,14 @@ export class DisputesWorker implements OnModuleInit, OnModuleDestroy {
   private async tick() {
     let delay = 1000;
     try {
-      const result = await this.disputes.processNextDispute(
-        this.environment.MERCHANT_ID!,
-      );
-      if (result !== 'EMPTY') delay = 0;
-      if (result === 'FAILED') this.logger.warn('DISPUTE_JOB_REJECTED');
+      const ids = this.merchants
+        ? await this.merchants.paypalWorkerMerchants()
+        : [this.environment.MERCHANT_ID!];
+      for (const merchantId of ids) {
+        const result = await this.disputes.processNextDispute(merchantId);
+        if (result !== 'EMPTY') delay = 0;
+        if (result === 'FAILED') this.logger.warn('DISPUTE_JOB_REJECTED');
+      }
     } catch {
       // No payloads, connection strings or raw database errors in logs.
       this.logger.error('DISPUTE_WORKER_UNAVAILABLE');

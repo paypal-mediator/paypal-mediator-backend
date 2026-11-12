@@ -96,6 +96,9 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
     expect(Object.keys(response.body.paths)).toEqual([
       '/api/health',
       '/api/health/ready',
+      '/api/settings/integrations/paypal/connect',
+      '/api/settings/integrations/paypal/complete',
+      '/api/settings/integrations/paypal/disconnect',
       '/api/merchants/me',
       '/api/merchants/me/settings',
       '/api/settings/integrations',

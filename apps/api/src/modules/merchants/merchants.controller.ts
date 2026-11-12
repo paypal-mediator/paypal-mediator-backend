@@ -21,6 +21,7 @@ import {
   IntegrationsResponseSchema,
   MerchantListResponseSchema,
   CreateMerchantSchema,
+  PayPalOnboardingResponseSchema,
   type CreateMerchant,
   type UpdateMerchantSettings,
 } from '@resolve-ai/contracts';
@@ -34,6 +35,7 @@ import {
 import { MerchantsService } from './merchants.service.js';
 import { SupabaseAuthService } from './auth/supabase-auth.service.js';
 import type { Request } from 'express';
+import { PayPalOnboardingService } from './paypal/paypal-onboarding.service.js';
 
 @ApiTags('merchants')
 @ApiBearerAuth('supabase')
@@ -50,7 +52,39 @@ import type { Request } from 'express';
 export class MerchantsController {
   constructor(
     @Inject(MerchantsService) private readonly merchants: MerchantsService,
+    @Inject(PayPalOnboardingService)
+    private readonly onboarding: PayPalOnboardingService,
   ) {}
+
+  @Post('settings/integrations/paypal/connect')
+  @MerchantAdminOnly()
+  @ApiOperation({
+    summary: 'Start PayPal seller authorization for the selected business',
+  })
+  @ApiResponse({
+    status: 201,
+    schema: zodOpenApi(PayPalOnboardingResponseSchema),
+  })
+  connect(@Req() request: MerchantRequest) {
+    return this.onboarding.start(request.merchantActor);
+  }
+
+  @Post('settings/integrations/paypal/complete')
+  @MerchantAdminOnly()
+  @ApiOperation({ summary: 'Verify seller consent directly with PayPal' })
+  complete(@Req() request: MerchantRequest) {
+    return this.onboarding.complete(request.merchantActor);
+  }
+
+  @Post('settings/integrations/paypal/disconnect')
+  @MerchantAdminOnly()
+  @ApiOperation({
+    summary:
+      'Disable this business connection locally; revoke permissions separately in PayPal',
+  })
+  disconnect(@Req() request: MerchantRequest) {
+    return this.onboarding.disconnect(request.merchantActor);
+  }
 
   @Get('merchants/me')
   @ApiOperation({ summary: 'Read the authorized merchant, role and policy' })

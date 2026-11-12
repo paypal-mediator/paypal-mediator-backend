@@ -2,6 +2,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  Optional,
   type OnModuleInit,
   type OnModuleDestroy,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import {
   type Environment,
 } from '../../common/config/environment.js';
 import { MediationService } from './mediation.service.js';
+import { MerchantsService } from '../merchants/index.js';
 @Injectable()
 export class MediationWorker implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MediationWorker.name);
@@ -21,9 +23,15 @@ export class MediationWorker implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(MediationService) private readonly mediation: MediationService,
     @Inject(ENVIRONMENT) private readonly env: Environment,
+    @Optional()
+    @Inject(MerchantsService)
+    private readonly merchants?: MerchantsService,
   ) {}
   onModuleInit() {
-    if (this.env.MEDIATION_WORKER_ENABLED && this.env.MERCHANT_ID) {
+    if (
+      this.env.MEDIATION_WORKER_ENABLED &&
+      (this.env.MERCHANT_ID || this.merchants)
+    ) {
       this.schedule(0);
       this.scheduleExpiration();
     }
@@ -37,7 +45,10 @@ export class MediationWorker implements OnModuleInit, OnModuleDestroy {
   }
   private async tick() {
     try {
-      await this.mediation.tick(this.env.MERCHANT_ID!);
+      const ids = this.merchants
+        ? await this.merchants.paypalWorkerMerchants()
+        : [this.env.MERCHANT_ID!];
+      for (const id of ids) await this.mediation.tick(id);
     } catch {
       this.logger.warn('MEDIATION_WORKER_UNAVAILABLE');
     } finally {
@@ -53,7 +64,10 @@ export class MediationWorker implements OnModuleInit, OnModuleDestroy {
   }
   private async expire() {
     try {
-      await this.mediation.expireDue(this.env.MERCHANT_ID!);
+      const ids = this.merchants
+        ? await this.merchants.paypalWorkerMerchants()
+        : [this.env.MERCHANT_ID!];
+      for (const id of ids) await this.mediation.expireDue(id);
     } catch {
       this.logger.warn('MEDIATION_EXPIRATION_UNAVAILABLE');
     } finally {

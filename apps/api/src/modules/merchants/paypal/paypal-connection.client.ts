@@ -54,7 +54,7 @@ export class PayPalConnectionClient {
       .digest('hex');
   }
 
-  async check(): Promise<PayPalCheck> {
+  async check(merchantId?: string): Promise<PayPalCheck> {
     const result: PayPalCheck = {
       connectionStatus: 'UNAVAILABLE',
       disputesReadStatus: 'NOT_CHECKED',
@@ -67,6 +67,9 @@ export class PayPalConnectionClient {
     const signal = AbortSignal.timeout(this.environment.PAYPAL_TIMEOUT_MS);
     try {
       const token = await this.auth.getAccessToken(signal, true);
+      const merchantHeaders = merchantId
+        ? await this.auth.merchantHeaders(merchantId)
+        : {};
       result.paypalHttpStatus = token.httpStatus;
       result.paypalDebugId = token.debugId;
       result.connectionStatus = 'CONNECTED';
@@ -78,6 +81,7 @@ export class PayPalConnectionClient {
           redirect: 'error',
           signal,
           headers: {
+            ...merchantHeaders,
             Authorization: `Bearer ${token.accessToken}`,
             Accept: 'application/json',
           },

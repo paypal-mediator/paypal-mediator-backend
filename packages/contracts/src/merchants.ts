@@ -44,6 +44,12 @@ export const CreateMerchantSchema = z.strictObject({
 export type CreateMerchant = z.infer<typeof CreateMerchantSchema>;
 
 export const PayPalIntegrationSchema = z.object({
+  onboardingAvailable: z.boolean().optional(),
+  sellerId: z.string().nullable().optional(),
+  onboardingStatus: z
+    .enum(['PENDING', 'CONNECTED', 'DISCONNECTED'])
+    .nullable()
+    .optional(),
   provider: z.literal('PAYPAL'),
   environment: z.literal('sandbox'),
   credentialsConfigured: z.boolean(),
@@ -73,3 +79,8 @@ export const IntegrationsResponseSchema = z.object({
   paypal: PayPalIntegrationSchema,
 });
 export type IntegrationsResponse = z.infer<typeof IntegrationsResponseSchema>;
+
+export const PayPalOnboardingResponseSchema = z.object({
+  actionUrl: z.url(),
+  merchantId: z.uuid(),
+});
