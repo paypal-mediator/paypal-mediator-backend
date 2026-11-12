@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+/** Accepts Date object or ISO string, returns ISO string */
+const IsoDateTime = z.preprocess(
+  (val) => (val instanceof Date ? val.toISOString() : val),
+  z.string().datetime(),
+);
+
 export const PlanResponseSchema = z.object({
   id: z.uuid(),
   name: z.string().trim().min(1).max(120),
@@ -10,7 +16,7 @@ export const PlanResponseSchema = z.object({
   maxDisputes: z.number().int().nonnegative().nullable(),
   includesConciliation: z.boolean(),
   active: z.boolean(),
-  createdAt: z.iso.datetime(),
+  createdAt: IsoDateTime,
 });
 export type PlanResponse = z.infer<typeof PlanResponseSchema>;
 
@@ -19,8 +25,8 @@ export const SubscriptionResponseSchema = z.object({
   merchantId: z.uuid(),
   planId: z.uuid(),
   status: z.string(),
-  currentPeriodEnd: z.iso.datetime(),
-  createdAt: z.iso.datetime(),
+  currentPeriodEnd: IsoDateTime,
+  createdAt: IsoDateTime,
   plan: PlanResponseSchema,
 });
 export type SubscriptionResponse = z.infer<typeof SubscriptionResponseSchema>;

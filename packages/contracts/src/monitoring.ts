@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+/** Accepts Date object or ISO string, returns ISO string */
+const IsoDateTime = z.preprocess(
+  (val) => (val instanceof Date ? val.toISOString() : val),
+  z.string().datetime(),
+);
+
 // Deliberately closed metadata: never accept arbitrary logs, prompts or payloads.
 export const AuditRecordSchema = z.discriminatedUnion('action', [
   z
@@ -196,7 +202,7 @@ export const ActivityEventSchema = z.object({
   resourceId: z.uuid().nullable(),
   ...counters,
   record: AuditRecordSchema,
-  createdAt: z.iso.datetime(),
+  createdAt: IsoDateTime,
 });
 export type ActivityResponse = z.infer<typeof ActivityResponseSchema>;
 
@@ -206,8 +212,8 @@ export const MonitoringMetricsQuerySchema = z
   })
   .strict();
 export const MonitoringMetricsResponseSchema = z.object({
-  generatedAt: z.iso.datetime(),
-  since: z.iso.datetime(),
+  generatedAt: IsoDateTime,
+  since: IsoDateTime,
   scope: z.literal('AUDITED_EVENTS_SINCE_M09'),
   verdicts: z.array(
     z.object({
