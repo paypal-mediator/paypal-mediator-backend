@@ -83,7 +83,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'DISPUTE_NOT_LINKED',
-        'La disputa no está vinculada a una transacción de pago verificada.',
+        'The dispute is not linked to a verified payment transaction.',
       ),
     );
   }
@@ -98,7 +98,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'TRANSACTION_LINK_CONFLICT',
-        'El vínculo entre la disputa y la transacción no es confiable o está ausente.',
+        'The link between the dispute and the transaction is missing or unreliable.',
       ),
     );
   }
@@ -112,7 +112,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'EVIDENCE_NOT_VERIFIED',
-        'El Verifier no ha aprobado la evidencia (veredicto no es APPROVED).',
+        'The Verifier has not approved the evidence (verdict is not APPROVED).',
         input.verifiedEvidenceIds,
       ),
     );
@@ -123,7 +123,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'SUBMISSIONS_DISABLED',
-        'El comerciante no tiene habilitados los envíos de evidencia (allowSubmissions=false).',
+        'Evidence submissions are disabled for this merchant (allowSubmissions=false).',
       ),
     );
   }
@@ -133,7 +133,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'MERCHANT_APPROVAL_REQUIRED',
-        'Se requiere aprobación explícita del comerciante antes de enviar.',
+        'Explicit merchant approval is required before submitting.',
       ),
     );
   }
@@ -143,7 +143,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'PAYPAL_STATUS_NOT_ELIGIBLE',
-        `El estado de PayPal (${input.paypalStatus ?? 'desconocido'}) no permite proporcionar evidencia ahora.`,
+        `The PayPal status (${input.paypalStatus ?? 'unknown'}) does not allow providing evidence now.`,
       ),
     );
   }
@@ -153,7 +153,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'PAYPAL_STAGE_NOT_ELIGIBLE',
-        `La etapa de PayPal (${input.paypalStage ?? 'desconocida'}) no permite proporcionar evidencia ahora.`,
+        `The PayPal stage (${input.paypalStage ?? 'unknown'}) does not allow providing evidence now.`,
       ),
     );
   }
@@ -163,7 +163,7 @@ export function evaluateSubmissionGuard(input: {
     reasons.push(
       reason(
         'DUPLICATE_SUBMISSION',
-        'Ya existe un envío registrado para esta disputa.',
+        'A submission is already recorded for this dispute.',
       ),
     );
   }

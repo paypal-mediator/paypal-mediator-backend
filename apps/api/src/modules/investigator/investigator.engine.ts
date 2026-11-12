@@ -57,8 +57,8 @@ export class InvestigatorEngine {
         role: 'user',
         text: JSON.stringify({
           task: snapshot.dispute
-            ? 'Disputa INR abierta. Investiga las fuentes y redacta la respuesta al comprador.'
-            : 'Preparación preventiva INR. Investiga las fuentes y los faltantes.',
+            ? 'Open INR dispute. Investigate the sources and draft the reply to the buyer.'
+            : 'Preventive INR preparation. Investigate the sources and what is missing.',
           dispute: snapshot.dispute ?? null,
           commercialSources: transaction.orderEnrichment,
           sourceWarning:
