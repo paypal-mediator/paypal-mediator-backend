@@ -141,6 +141,9 @@ export const EnvironmentSchema = z.object({
     .min(1000)
     .max(120000)
     .default(60000),
+  // Master key para encriptar secretos ERP por merchant (32 bytes base64)
+  // Generar: node -e "require('libsodium-wrappers').ready.then(s => console.log(s.to_base64(s.randombytes_buf(32))))"
+  MASTER_ENCRYPTION_KEY: optionalString(z.string().trim().min(44).max(44)),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

@@ -12,8 +12,16 @@ import type {
 } from '@resolve-ai/contracts';
 import { BindAdapter } from './adapters/bind.adapter.js';
 import { MockErpAdapter } from './adapters/mock-erp.adapter.js';
+import { SiigoAdapter } from './adapters/siigo.adapter.js';
+import { OdooAdapter } from './adapters/odoo.adapter.js';
+import { ErpNextAdapter } from './adapters/erpnext.adapter.js';
 import type { ErpConnector } from './interfaces/erp-connector.interface.js';
 import { contentHash } from '../../common/data/content-hash.js';
+import {
+  encryptErpSecret,
+  decryptErpSecret,
+  type ErpSecretPayload,
+} from '../../common/crypto/secret-box.js';
 
 const SYSTEM_MERCHANT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -68,6 +76,9 @@ const CATALOG: Array<{
 
 const ADAPTERS: Record<string, ErpConnector> = {
   bind: new BindAdapter(),
+  'siigo-mx': new SiigoAdapter(),
+  odoo: new OdooAdapter(),
+  erpnext: new ErpNextAdapter(),
   'mock-erp': new MockErpAdapter(),
 };
 
@@ -149,8 +160,9 @@ export class IntegrationsService implements OnModuleInit {
       throw new Error('CONNECTION_NOT_FOUND');
     }
     const adapter = ADAPTERS[connection.provider];
+    const credentials = await this.getDecryptedSecret(connectionId);
     const capabilities = adapter
-      ? (await adapter.verifyConnection(connectionId)).capabilities
+      ? (await adapter.verifyConnection(credentials)).capabilities
       : [];
     return {
       connectionId: connection.id,
@@ -174,16 +186,30 @@ export class IntegrationsService implements OnModuleInit {
       throw new Error('UNSUPPORTED_PROVIDER');
     }
 
+    // Preparar payload para verificación
+    const tempCredentials: ErpSecretPayload = { apiKey };
+    if (baseUrl) tempCredentials.baseUrl = baseUrl;
+    if (provider === 'bind') tempCredentials.subscriptionKey = '';
+
     // Verificación mínima de conexión antes de persistir.
-    const tempConnectionId = `temp-${crypto.randomUUID()}`;
     try {
-      await adapter.verifyConnection(tempConnectionId);
+      await adapter.verifyConnection(tempCredentials);
     } catch (error) {
       this.logger.warn(
         `Connection verification failed for ${provider}: ${String(error)}`,
       );
       throw new Error('CONNECTION_VERIFICATION_FAILED', { cause: error });
     }
+
+    // Preparar payload según provider
+    const secretPayload: ErpSecretPayload = { apiKey };
+    if (baseUrl) secretPayload.baseUrl = baseUrl;
+    if (provider === 'bind') secretPayload.subscriptionKey = ''; // Opcional, se puede agregar luego
+
+    const encryptedPayload = await encryptErpSecret(
+      secretPayload,
+      this.environment,
+    );
 
     const connection = await this.prisma.erpConnection.create({
       data: {
@@ -197,7 +223,7 @@ export class IntegrationsService implements OnModuleInit {
         lastSyncError: null,
         secret: {
           create: {
-            encryptedPayload: apiKey, // En producción, cifrar con KMS/vault antes de guardar.
+            encryptedPayload,
             keyVersion: 1,
           },
         },
@@ -212,8 +238,14 @@ export class IntegrationsService implements OnModuleInit {
       resourceId: connection.id,
       outcome: 'SUCCEEDED',
       record: {
-        action: 'PAYPAL_CONNECTION_CHECKED',
-        details: {},
+        action: 'SETTINGS_UPDATED',
+        details: {
+          displayNameChanged: false,
+          allowInvestigations: false,
+          allowSubmissions: false,
+          requireMerchantApproval: true,
+          erpProvider: provider,
+        },
       },
     });
 
@@ -223,6 +255,22 @@ export class IntegrationsService implements OnModuleInit {
       provider: connection.provider,
       status: connection.status,
     };
+  }
+
+  /**
+   * Obtiene credenciales desencriptadas para un adapter.
+   * Lanza si no existe MASTER_ENCRYPTION_KEY o la conexión no existe.
+   */
+  private async getDecryptedSecret(
+    connectionId: string,
+  ): Promise<ErpSecretPayload> {
+    const secret = await this.prisma.erpSecret.findUnique({
+      where: { connectionId },
+    });
+    if (!secret) {
+      throw new Error('ERP_SECRET_NOT_FOUND');
+    }
+    return decryptErpSecret(secret.encryptedPayload, this.environment);
   }
 
   async disconnect(merchantId: string, connectionId: string) {
@@ -236,7 +284,8 @@ export class IntegrationsService implements OnModuleInit {
     const adapter = ADAPTERS[connection.provider];
     if (adapter) {
       try {
-        await adapter.disconnect(connectionId);
+        const credentials = await this.getDecryptedSecret(connectionId);
+        await adapter.disconnect(credentials);
       } catch {
         // No fallar la desconexión si el adaptador falla.
       }
@@ -479,9 +528,10 @@ export class IntegrationsService implements OnModuleInit {
       if (!adapter?.pullShipments) continue;
       let cursor: string | undefined;
       try {
+        const credentials = await this.getDecryptedSecret(connection.id);
         // Bounded incremental reads; existing ERP jobs remain responsible for full sync.
         for (let page = 0; page < 3; page++) {
-          const response = await adapter.pullShipments(connection.id, cursor);
+          const response = await adapter.pullShipments(credentials, cursor);
           for (const raw of response.records)
             if (
               raw &&
@@ -553,6 +603,9 @@ export class IntegrationsService implements OnModuleInit {
       throw new Error('UNSUPPORTED_PROVIDER');
     }
 
+    // Obtener credenciales desencriptadas
+    const credentials = await this.getDecryptedSecret(connectionId);
+
     let result: {
       records: unknown[];
       nextCursor?: string;
@@ -561,15 +614,15 @@ export class IntegrationsService implements OnModuleInit {
     try {
       if (resource === 'sales_orders') {
         result = await adapter.pullSalesOrders(
-          connectionId,
+          credentials,
           cursor ?? undefined,
         );
       } else if (resource === 'invoices') {
-        result = await adapter.pullInvoices(connectionId, cursor ?? undefined);
+        result = await adapter.pullInvoices(credentials, cursor ?? undefined);
       } else if (resource === 'shipments' && adapter.pullShipments) {
-        result = await adapter.pullShipments(connectionId, cursor ?? undefined);
+        result = await adapter.pullShipments(credentials, cursor ?? undefined);
       } else if (resource === 'payments' && adapter.pullPayments) {
-        result = await adapter.pullPayments!(connectionId, cursor ?? undefined);
+        result = await adapter.pullPayments!(credentials, cursor ?? undefined);
       } else {
         result = { records: [], nextCursor: undefined };
       }
