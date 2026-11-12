@@ -96,6 +96,28 @@ describe('ERP sync queue boundary (MOCK database/queue)', () => {
     );
   });
 
+  it('allows an error connection to retry and rejects concurrent syncing with an actionable conflict', async () => {
+    const { service, prisma, jobs, merchantId, connectionId } = setup();
+    prisma.erpConnection.findFirst.mockResolvedValue({
+      id: connectionId,
+      merchantId,
+      provider: 'mock-erp',
+      status: 'error',
+    });
+    expect((await service.sync(merchantId, connectionId)).ok).toBe(true);
+    jobs.enqueue.mockClear();
+    prisma.erpConnection.findFirst.mockResolvedValue({
+      id: connectionId,
+      merchantId,
+      provider: 'mock-erp',
+      status: 'syncing',
+    });
+    await expect(service.sync(merchantId, connectionId)).rejects.toMatchObject({
+      code: 'ERP_CONNECTION_NOT_READY',
+      status: 409,
+    });
+    expect(jobs.enqueue).not.toHaveBeenCalled();
+  });
   it.each(['customers', 'documents', 'payments', 'invalid'])(
     'rejects unsupported resource %s instead of reporting empty success',
     async (resource) => {

@@ -313,8 +313,12 @@ export class IntegrationsService implements OnModuleInit {
       throw new Error('CONNECTION_NOT_FOUND');
     }
 
-    if (connection.status !== 'connected') {
-      throw new Error('CONNECTION_NOT_READY');
+    if (!['connected', 'error', 'rate_limited'].includes(connection.status)) {
+      throw new ApiException(
+        'ERP_CONNECTION_NOT_READY',
+        'Connection is not ready for synchronization',
+        409,
+      );
     }
 
     const adapter = ADAPTERS[connection.provider];

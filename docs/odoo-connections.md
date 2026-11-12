@@ -10,6 +10,8 @@ El frontend muestra cada conexión individual, URL, estado y última sincronizac
 
 La sincronización usa pg-boss; una cola no disponible devuelve un error y no aparenta haber sincronizado. Las consultas vacías no prueban importación de documentos ni conciliación con PayPal.
 
-Validacion: pnpm check (400 pruebas), migraciones existentes aplicadas y repetidas en PostgreSQL desechable, pnpm test:db (175 pruebas). Frontend: 38 pruebas, lint, tipos y build. Navegador con API MOCK verifico dos conexiones y desconexion individual. Backend local con identidad MOCK, PostgreSQL desechable y API Odoo real verifico conectar/listar/desconectar, secreto cifrado, aislamiento entre equipos y rechazo a VIEWER; lecturas de pedidos, facturas y envios reales vacias. No se validaron documentos con operaciones reales.
+Validacion: pnpm check (401 pruebas), migraciones existentes aplicadas y repetidas en PostgreSQL desechable, pnpm test:db (175 pruebas). Frontend: 38 pruebas, lint, tipos y build. Navegador con API MOCK verifico dos conexiones y desconexion individual. Backend local con identidad MOCK, PostgreSQL desechable y API Odoo real verifico conectar/listar/desconectar, secreto cifrado, aislamiento entre equipos y rechazo a VIEWER; lecturas de pedidos, facturas y envios reales vacias. No se validaron documentos con operaciones reales.
 
 Pagos JSON-2 usa memo como referencia; se elimino el campo inexistente ref, verificado con la API real. El despliegue en Render conecto la instancia de prueba al equipo Heladeria Demo Donnet. Las credenciales solo se enviaron por el formulario autenticado y quedaron cifradas.
+
+Sync now admite reintentar conexiones en error o rate_limited; una sincronizacion ya en curso devuelve 409. La prueba de regresion verifica ambos estados.
