@@ -119,3 +119,8 @@ La base inicial se trabaja en `main`; las siguientes funcionalidades van en
 
 Referencias: [conexiones Prisma 7](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/databases-connections)
 y [Swagger NestJS](https://docs.nestjs.com/openapi/introduction).
+
+La mediación multiagente está implementada localmente para disputas PayPal
+existentes. Consulta [activación y contratos](docs/mediation.md),
+[JSON Schemas](docs/mediation-schemas.json) y
+[resultados de validación](docs/mediation-validation.md).

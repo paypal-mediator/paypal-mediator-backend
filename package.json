@@ -23,23 +23,26 @@
     "db:deploy": "pnpm --filter @resolve-ai/api exec prisma migrate deploy",
     "merchant:setup": "pnpm --filter @resolve-ai/api exec tsx --tsconfig tsconfig.json src/commands/setup-merchant.ts",
     "storage:setup": "pnpm --filter @resolve-ai/api exec tsx --tsconfig tsconfig.json src/commands/setup-evidence-storage.ts",
-    "check": "pnpm db:generate && pnpm db:validate && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm db:generate && pnpm db:validate && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
+    "test:mediation": "pnpm --filter @resolve-ai/contracts build && vitest run --config vitest.mediation.config.ts --coverage",
+    "mediation:schemas": "pnpm --filter @resolve-ai/contracts build && tsx apps/api/src/commands/export-mediation-schemas.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "jose": "6.2.15",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^6.0.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "dotenv": "^17.0.0",
     "eslint": "^10.14.0",
     "globals": "^16.0.0",
+    "jose": "6.2.15",
     "prettier": "^3.6.0",
     "prisma": "7.10.1",
     "supertest": "^7.1.0",
     "tsx": "^4.23.15",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.72.1",
-    "vitest": "5.1.0",
-    "dotenv": "^17.0.0"
+    "vitest": "5.1.0"
   }
 }

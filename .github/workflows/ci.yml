@@ -39,4 +39,5 @@ jobs:
       - run: pnpm check
       - run: pnpm db:deploy
       - run: pnpm test:db
+      - run: pnpm test:mediation
       - run: pnpm db:deploy

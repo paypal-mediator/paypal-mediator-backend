@@ -1,3 +1,23 @@
+## Respaldo de rastreo 17TRACK — implementación local, 2026-11-11
+
+PayPal → ERP → 17TRACK v2.4 conserva las fuentes anteriores y agrega consultas de
+respaldo cuando hay una guía y falta seguimiento suficiente. Incluye eventos,
+originales, expediente interno de disputa, registros/caché/leases persistentes,
+límites de consumo por negocio y webhooks firmados. El worker exige opt-in; sin
+`SEVENTEENTRACK_API_KEY` no hay consultas reales ni éxitos simulados. Una entrega
+reportada no crea prueba documental ni autoriza envíos de evidencia a PayPal.
+
+El frontend está disponible como repositorio anidado y reutiliza tarjetas de
+expediente/disputa. Los adaptadores ERP externos existentes conservan sus límites:
+Bind tiene lecturas vacías, MockERP no aporta envíos y pg-boss sigue siendo
+opcional. Se detectó que las tablas ERP ya modeladas carecían de migración; se
+añade una creación compatible junto a la persistencia de seguimiento.
+Ver [guía, rutas, configuración y pruebas](docs/shipment-tracking-17track.md).
+
+Validación local: `pnpm check` (357 pruebas), `pnpm test:db` (158; 28 de
+seguimiento), migraciones en PostgreSQL desechable y frontend (35 pruebas, lint,
+tipos y build) aprobados. Proveedores MOCK; sin créditos 17TRACK ni despliegue.
+
 > **Estado vigente — 11 de noviembre de 2026:** backend y frontend separados,
 > publicados en Render. Las notas del 6–7 de noviembre conservan el historial;
 > sus URLs y pendientes deben contrastarse con la actualización siguiente.
@@ -962,3 +982,18 @@ Al finalizar, informa archivos modificados, comandos de prueba y resultados real
 - Codex y AGENTS.md: https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex
 
 **Último principio:** ResolveAI *se prepara antes de que exista la disputa*, *investiga cuando el comprador abre el caso* y *solo envía evidencia real, trazable, verificada y autorizada*. El resultado oficial sigue perteneciendo a PayPal.
+
+## Mediación multiagente — incremento local, 2026-11-11
+
+Se implementó el flujo de mediación únicamente sobre disputas PayPal existentes:
+detección, conciliación por política comercial, demanda, valoración con citas y
+revisión independiente M06, expediente y cliente PayPal con allowlist no financiera.
+El frontend clonado incorpora conversación conectada y configuración por negocio;
+el comprador responde mediante PayPal. No se publicaron estos cambios.
+
+Validación local: `pnpm check` (362 pruebas unitarias/HTTP), `pnpm test:db`
+(166 pruebas en base nueva) y cobertura de mediación (162 pruebas del subconjunto,
+91,46% líneas y 82,62% ramas). Frontend: 36 pruebas, lint, tipos y build.
+Migraciones aplicadas y repetidas; reversión de tablas nuevas probada en otra
+base desechable. PayPal/LLM/JWKS son MOCK en estas pruebas. Ver
+[activación y límites](docs/mediation.md) y [reporte](docs/mediation-validation.md).

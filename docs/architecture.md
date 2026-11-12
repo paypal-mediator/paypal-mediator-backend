@@ -141,3 +141,23 @@ con contexto independiente. Es propietario de VerificationRun; no escribe result
 en InvestigationRun. Comparte solo el transporte AI exportado por InvestigatorModule.
 Ver [contrato y l?mites M06](m06-verifier.md). Este incremento no est? validado con
 pruebas ni aplicado a PostgreSQL; no implica implementaci?n de M07/M08.
+
+## Respaldo de seguimiento 17TRACK
+
+`shipment-tracking` coordina PayPal → ERP → 17TRACK mediante interfaces públicas
+de M03, M04, M07 e Integrations. Es propietario de trabajos, snapshots de
+seguimiento, registros 17TRACK y presupuestos de consumo. El worker requiere
+opt-in explícito y usa leases PostgreSQL, independientemente del pg-boss opcional.
+Los informes `SHIPMENT_TRACKING_RECORD` conservan originales y eventos; no crean
+comprobantes de entrega ni autorizan presentaciones. El frontend anidado reutiliza
+el expediente y la vista de disputa. Ver [contrato y límites](shipment-tracking-17track.md).
+
+`mediation` coordina tres agentes sobre disputas PayPal existentes y conserva
+sus propios casos, políticas, mensajes, reservas de envío y transiciones.
+Reutiliza M01–M09 por sus interfaces públicas; no escribe evidencia ni estados
+PayPal ajenos. El comprador responde en PayPal; el frontend conectado representa
+los mensajes realmente recuperados y las entregas confirmadas. La autorización
+comercial permite automatizar casos ordinarios con revisión independiente M06;
+los casos difíciles se bloquean para revisión especializada. Un temporizador
+separado aplica vencimientos aun cuando haya inferencias en curso. Ver
+[contratos, activación y límites](mediation.md).

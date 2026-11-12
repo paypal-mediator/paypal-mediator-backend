@@ -357,6 +357,153 @@ export class IntegrationsService implements OnModuleInit {
     return link;
   }
 
+  // Public shipment interface. Match exact payment/order/invoice references only.
+  // It never infers ownership from an email, amount, or an unreviewed suggestion.
+  async shipmentRecords(context: {
+    merchantId: string;
+    paypalCaptureId: string;
+    paypalOrderId: string | null;
+    merchantOrderReference: string | null;
+    invoiceId: string | null;
+    orderExternalId: string | null;
+  }) {
+    const { merchantId, paypalCaptureId } = context;
+    const links = await this.prisma.transactionLink.findMany({
+      where: {
+        merchantId,
+        paypalCaptureId,
+        OR: [
+          {
+            matchMethod: { in: ['invoice_id_exact', 'custom_id_exact'] },
+            confidence: 'high',
+          },
+          { reviewedBy: { not: null } },
+        ],
+      },
+      include: { record: { include: { connection: true } } },
+    });
+    const references = [
+      context.paypalOrderId,
+      context.merchantOrderReference,
+      context.invoiceId,
+      context.orderExternalId,
+    ].filter((x): x is string => Boolean(x));
+    const matches = (raw: Record<string, unknown>) =>
+      raw.paypalCaptureId === paypalCaptureId ||
+      [
+        'paypalOrderId',
+        'merchantOrderReference',
+        'orderExternalId',
+        'invoiceId',
+        'invoiceNumber',
+        'orderId',
+      ].some(
+        (k) =>
+          typeof raw[k] === 'string' && references.includes(raw[k] as string),
+      );
+    const rows = await this.prisma.externalRecord.findMany({
+      where: {
+        merchantId,
+        recordType: 'shipment',
+        OR: [
+          {
+            normalizedPayload: {
+              path: ['paypalCaptureId'],
+              equals: paypalCaptureId,
+            },
+          },
+          ...[
+            'paypalOrderId',
+            'merchantOrderReference',
+            'orderExternalId',
+            'invoiceId',
+            'invoiceNumber',
+            'orderId',
+          ].flatMap((field) =>
+            references.map((reference) => ({
+              normalizedPayload: { path: [field], equals: reference },
+            })),
+          ),
+        ],
+      },
+      include: { connection: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 1000,
+    });
+    const records: Array<{
+      original: Record<string, unknown>;
+      provider: string;
+      containsDemo: boolean;
+    }> = [];
+    const append = (raw: unknown, provider: string) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return;
+      const original = raw as Record<string, unknown>;
+      const shipments = Array.isArray(original.shipments)
+        ? original.shipments
+        : original.shipment &&
+            typeof original.shipment === 'object' &&
+            !Array.isArray(original.shipment)
+          ? [original.shipment]
+          : [original];
+      for (const item of shipments)
+        if (item && typeof item === 'object' && !Array.isArray(item))
+          records.push({
+            original: item as Record<string, unknown>,
+            provider,
+            containsDemo:
+              provider === 'mock-erp' ||
+              original.explicitMock === true ||
+              original.containsDemo === true ||
+              original.demo === true,
+          });
+    };
+    for (const link of links)
+      if (
+        link.record.connection.merchantId === merchantId &&
+        link.record.sourceHash === contentHash(link.record.normalizedPayload)
+      )
+        append(link.record.normalizedPayload, link.record.connection.provider);
+    for (const row of rows)
+      if (
+        row.connection.merchantId === merchantId &&
+        row.sourceHash === contentHash(row.normalizedPayload) &&
+        matches(row.normalizedPayload as Record<string, unknown>)
+      )
+        append(row.normalizedPayload, row.connection.provider);
+    const errors: string[] = [];
+    const connections = await this.prisma.erpConnection.findMany({
+      where: { merchantId, status: 'connected' },
+    });
+    for (const connection of connections) {
+      const adapter = ADAPTERS[connection.provider];
+      if (!adapter?.pullShipments) continue;
+      let cursor: string | undefined;
+      try {
+        // Bounded incremental reads; existing ERP jobs remain responsible for full sync.
+        for (let page = 0; page < 3; page++) {
+          const response = await adapter.pullShipments(connection.id, cursor);
+          for (const raw of response.records)
+            if (
+              raw &&
+              typeof raw === 'object' &&
+              !Array.isArray(raw) &&
+              matches(raw as Record<string, unknown>)
+            )
+              append(raw, connection.provider);
+          if (!response.nextCursor || response.nextCursor === cursor) break;
+          cursor = response.nextCursor;
+        }
+      } catch {
+        errors.push('ERP_SHIPMENTS_UNAVAILABLE');
+      }
+    }
+    return {
+      records,
+      errors,
+      connected: connections.length > 0 || links.length > 0,
+    };
+  }
+
   async getLinkedRecords(merchantId: string, paypalCaptureId: string) {
     const links = await this.prisma.transactionLink.findMany({
       where: { merchantId, paypalCaptureId },

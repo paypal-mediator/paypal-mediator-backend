@@ -27,6 +27,6 @@ import { ORDER_INFORMATION_SOURCES } from './sources/order-information-source.js
       useFactory: (paypal: PayPalOrderSource) => [paypal],
     },
   ],
-  exports: [TransactionsService, OrdersService],
+  exports: [TransactionsService, OrdersService, PayPalOrderSource],
 })
 export class TransactionsModule {}

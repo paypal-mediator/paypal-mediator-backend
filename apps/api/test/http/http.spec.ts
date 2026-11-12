@@ -120,6 +120,12 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/dashboard',
       '/api/disputes',
       '/api/disputes/{id}',
+      '/api/settings/mediation',
+      '/api/disputes/{id}/mediation',
+      '/api/disputes/{id}/mediation/refresh',
+      '/api/disputes/{id}/mediation/messages',
+      '/api/disputes/{id}/mediation/evidence/files',
+      '/api/disputes/{id}/mediation/actions',
       '/api/disputes/{id}/submit',
       '/api/billing/plans',
       '/api/billing/subscription',
@@ -132,6 +138,12 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/integrations/{connectionId}/disconnect',
       '/api/integrations/transactions/{captureId}/linked-records',
       '/api/integrations/disputes/{disputeId}/evidence-sources',
+      '/api/transactions/{id}/shipment-tracking',
+      '/api/transactions/{id}/shipment-tracking/resolve',
+      '/api/disputes/{id}/shipment-tracking',
+      '/api/disputes/{id}/shipment-tracking/resolve',
+      '/api/shipment-tracking/usage',
+      '/api/webhooks/17track',
     ]);
     await request(context.app.getHttpServer()).get('/api/docs/').expect(200);
   });

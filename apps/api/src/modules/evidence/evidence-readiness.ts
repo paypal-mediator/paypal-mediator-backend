@@ -57,6 +57,15 @@ export function evaluateEvidence(
     data: ReturnType<typeof DeliveryContentSchema.parse>;
   }> = [];
   for (const item of current) {
+    if (item.type === 'SHIPMENT_TRACKING_RECORD') {
+      if (item.contentHash !== contentHash(item.content))
+        conflict('TRACKING', 'SHIPMENT_TRACKING_INTEGRITY_MISMATCH');
+      const record = item.content as Record<string, unknown>;
+      if (Array.isArray(record.discrepancies) && record.discrepancies.length) {
+        conflict('TRACKING', 'SHIPMENT_TRACKING_DISCREPANCY');
+      }
+      continue;
+    }
     if (item.type === 'ORDER_SOURCE_RECORD') {
       if (item.contentHash !== contentHash(item.content))
         conflict('ORDER_RECORD', 'EVIDENCE_INTEGRITY_MISMATCH');
