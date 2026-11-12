@@ -156,6 +156,26 @@ export class TransactionsService {
     );
   }
 
+  // Authorized, read-only domain context for shipment tracking and evidence writers.
+  async trackingContext(
+    merchantId: string,
+    id: string,
+    tx: Prisma.TransactionClient = this.prisma,
+    lock = false,
+  ) {
+    if (lock) await lockMerchantOrders(tx, merchantId);
+    const row = await this.row(tx, merchantId, id);
+    return { row, evidence: evidenceContext(row) };
+  }
+  async trackingCandidates(merchantId?: string, after?: string) {
+    return this.prisma.transaction.findMany({
+      where: { merchantId, ...(after ? { id: { gt: after } } : {}) },
+      select: { id: true, merchantId: true },
+      orderBy: { id: 'asc' },
+      take: 100,
+    });
+  }
+
   async detail(merchantId: string, id: string) {
     return this.prisma.$transaction(
       async (tx) => {

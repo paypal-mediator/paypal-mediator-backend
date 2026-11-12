@@ -9,6 +9,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/generated/**',
       'coverage/**',
+      'paypal-mediator-frontend/**',
     ],
   },
   js.configs.recommended,

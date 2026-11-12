@@ -1,3 +1,4 @@
+import { ShipmentTrackingModule } from './modules/shipment-tracking/index.js';
 import { Module, type DynamicModule } from '@nestjs/common';
 import type { Environment } from './common/config/environment.js';
 import { CoreModule } from './common/core.module.js';
@@ -33,6 +34,7 @@ export class AppModule {
         BillingModule,
         JobsModule,
         IntegrationsModule,
+        ShipmentTrackingModule,
       ],
     };
   }

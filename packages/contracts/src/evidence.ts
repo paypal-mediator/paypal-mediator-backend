@@ -45,6 +45,7 @@ export const EvidenceItemResponseSchema = z.object({
     'PROOF_OF_DELIVERY',
     'DOCUMENT',
     'ORDER_SOURCE_RECORD',
+    'SHIPMENT_TRACKING_RECORD',
   ]),
   version: z.number().int(),
   sourceKind: z.enum(['PAYPAL', 'MERCHANT_INPUT', 'DEMO', 'CONNECTED_SYSTEM']),

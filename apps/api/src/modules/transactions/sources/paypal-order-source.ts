@@ -38,23 +38,38 @@ export class PayPalOrderSource implements OrderInformationSource {
       throw new OrderSourceError('NOT_CONFIGURED');
     if (!row.paypalOrderId || !/^[A-Z0-9]{1,36}$/.test(row.paypalOrderId))
       throw new OrderSourceError('INVALID_PAYPAL_ORDER_ID');
+    const original = await this.readJson(
+      `/v2/checkout/orders/${row.paypalOrderId}`,
+    );
+    return { original, result: normalizePayPalOrder(original, row) };
+  }
+  // Read-only public interface; never adds/changes tracking information at PayPal.
+  async getShipmentTracker(row: Transaction, trackingNumber: string) {
+    if (
+      row.merchantId !== this.env.MERCHANT_ID ||
+      !this.env.PAYPAL_CLIENT_ID ||
+      !this.env.PAYPAL_CLIENT_SECRET
+    )
+      throw new OrderSourceError('NOT_CONFIGURED');
+    return this.readJson(
+      `/v1/shipping/trackers/${encodeURIComponent(row.paypalCaptureId + '-' + trackingNumber)}`,
+    );
+  }
+  private async readJson(path: string) {
     const signal = AbortSignal.timeout(this.env.PAYPAL_TIMEOUT_MS);
     try {
       let response: Response | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
         const token = await this.auth.getAccessToken(signal, attempt === 1);
-        response = await this.fetcher(
-          `${PAYPAL_SANDBOX_URL}/v2/checkout/orders/${row.paypalOrderId}`,
-          {
-            method: 'GET',
-            redirect: 'error',
-            signal,
-            headers: {
-              Authorization: `Bearer ${token.accessToken}`,
-              Accept: 'application/json',
-            },
+        response = await this.fetcher(`${PAYPAL_SANDBOX_URL}${path}`, {
+          method: 'GET',
+          redirect: 'error',
+          signal,
+          headers: {
+            Authorization: `Bearer ${token.accessToken}`,
+            Accept: 'application/json',
           },
-        );
+        });
         if (response.status !== 401 || attempt === 1) break;
         await response.body?.cancel();
       }
@@ -88,7 +103,7 @@ export class PayPalOrderSource implements OrderInformationSource {
       ) as Record<string, unknown>;
       if (!original || Array.isArray(original) || typeof original !== 'object')
         throw new OrderSourceError('PAYPAL_ORDER_INVALID_JSON');
-      return { original, result: normalizePayPalOrder(original, row) };
+      return original;
     } catch (error) {
       if (error instanceof OrderSourceError) throw error;
       if (error instanceof PayPalAuthError)
