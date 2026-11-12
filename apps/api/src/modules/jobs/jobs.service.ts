@@ -1,141 +1,96 @@
-import { createRequire } from 'node:module';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PgBoss } from 'pg-boss';
+import { z } from 'zod';
 import type { Environment } from '../../common/config/environment.js';
 import { ENVIRONMENT } from '../../common/config/environment.js';
-import { PrismaService } from '../../common/database/prisma.service.js';
 import { AuditService } from '../monitoring/audit.service.js';
 
-const require = createRequire(import.meta.url);
-// pg-boss es CommonJS; importarlo mediante require para ESM.
-// El export es un objeto con export named `PgBoss`.
-// Definimos el tipo de la instancia (lo que devuelve `new PgBoss()`)
-interface PgBossInstance {
-  on: (event: 'error', listener: (error: unknown) => void) => void;
-  start: () => Promise<void>;
-  stop: () => Promise<void>;
-  createQueue: (name: string) => Promise<void>;
-  work: <T = unknown>(
-    name: string,
-    handler: (jobs: Array<{ id: string; data: T }>) => Promise<void>,
-  ) => Promise<string>;
-  send: (
-    name: string,
-    data: unknown,
-    options?: {
-      retries?: number;
-      delay?: number;
-      ttl?: number;
-      priority?: number;
-    },
-  ) => Promise<string>;
-}
-// El constructor es `require('pg-boss').PgBoss`
-type PgBossConstructor = new (connectionString: string) => PgBossInstance;
-
-const { PgBoss: Boss } = require('pg-boss') as { PgBoss: PgBossConstructor };
-
 export type JobHandler = (data: unknown) => Promise<void>;
-
 export interface JobOptions {
-  /** Retry count before the job is moved to the dead letter queue. */
+  /** Number of retries after the initial attempt. */
   retries?: number;
   /** Delay in milliseconds before the job becomes available. */
   delay?: number;
-  /** TTL in milliseconds after which the job expires. */
+  /** Processing timeout in milliseconds, rounded up to whole seconds. */
   ttl?: number;
-  /** Priority (higher = processed first). */
   priority?: number;
 }
+const JobContextSchema = z.object({ merchantId: z.uuid() });
 
-/**
- * pg-boss adapter backed by the same PostgreSQL instance as the application.
- *
- * Jobs are durably stored in PostgreSQL (`pgboss_*` tables) and processed by
- * worker(s) running inside this Node process. This replaces the ad-hoc
- * ingestion queue for workloads that need retries, delays or dead-letter
- * handling without adding Redis or another external broker.
- */
+/** Optional durable queue. Prisma ingestion workers remain independent. */
 @Injectable()
 export class JobsService {
   private readonly logger = new Logger(JobsService.name);
-  private boss?: PgBossInstance;
+  private boss?: PgBoss;
+  private connecting?: Promise<void>;
   private readonly handlers = new Map<string, JobHandler>();
 
   constructor(
     @Inject(ENVIRONMENT) private readonly environment: Environment,
-    @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
-  /**
-   * Connects to PostgreSQL and starts listening for all registered handlers.
-   * Safe to call multiple times (idempotent).
-   */
-  async connect() {
+  async connect(): Promise<void> {
+    if (this.connecting) return this.connecting;
     if (this.boss) return;
-    const connectionString = this.environment.DATABASE_URL;
-    this.logger.log('Connecting pg-boss to PostgreSQL');
+    this.connecting = this.start();
     try {
-      this.boss = new Boss(connectionString);
-      this.boss.on('error', (error) => {
-        this.logger.error(`pg-boss error: ${String(error)}`);
-      });
-      await this.boss.start();
+      await this.connecting;
+    } finally {
+      this.connecting = undefined;
+    }
+  }
 
-      // Subscribe to all handlers registered before connect.
+  private async start() {
+    const boss = new PgBoss(this.environment.DATABASE_URL);
+    boss.on('error', () => this.logger.error('PG_BOSS_ERROR'));
+    try {
+      await boss.start();
       for (const [name, handler] of this.handlers) {
-        await this.subscribe(name, handler);
+        await this.subscribe(boss, name, handler);
       }
+      this.boss = boss;
       this.logger.log('pg-boss connected');
-    } catch (error) {
-      // pg-boss is optional: the ingestion outbox in Prisma works without it.
-      this.logger.warn(`pg-boss connection failed: ${String(error)}`);
+    } catch {
+      await boss.stop().catch(() => this.logger.warn('PG_BOSS_STOP_FAILED'));
+      this.logger.warn('PG_BOSS_CONNECTION_FAILED');
     }
   }
 
   async disconnect() {
-    if (!this.boss) return;
-    await this.boss.stop();
+    await this.connecting;
+    const boss = this.boss;
     this.boss = undefined;
-    this.logger.log('pg-boss disconnected');
+    await boss?.stop();
   }
 
-  /**
-   * Registers a handler for a named job type. If pg-boss is already connected,
-   * subscribes immediately.
-   */
-  registerHandler(name: string, handler: JobHandler) {
+  async registerHandler(name: string, handler: JobHandler) {
+    if (this.handlers.has(name))
+      throw new Error('JOB_HANDLER_ALREADY_REGISTERED');
     this.handlers.set(name, handler);
-    if (this.boss) {
-      void this.subscribe(name, handler).catch((error: unknown) => {
-        this.logger.error(
-          `Failed to register pg-boss worker ${name}: ${String(error)}`,
-        );
-      });
+    if (this.connecting) {
+      await this.connecting;
+    } else if (this.boss) {
+      try {
+        await this.subscribe(this.boss, name, handler);
+      } catch (error) {
+        this.handlers.delete(name);
+        throw error;
+      }
     }
   }
 
-  private subscribe(name: string, handler: JobHandler) {
-    return this.boss!.createQueue(name).then(() =>
-      this.boss!.work(name, async (jobs) => {
-        for (const job of jobs) {
+  private async subscribe(boss: PgBoss, name: string, handler: JobHandler) {
+    await boss.createQueue(name);
+    await boss.work(name, async (jobs) => {
+      for (const job of jobs) {
+        const { merchantId } = JobContextSchema.parse(job.data);
+        try {
+          await handler(job.data);
+        } catch (error) {
           try {
-            await handler(job.data);
             await this.audit.append({
-              merchantId: null as unknown as string,
-              actorUserId: null,
-              actorKind: 'SYSTEM',
-              resourceType: 'INGESTION_JOB',
-              resourceId: job.id,
-              outcome: 'SUCCEEDED',
-              record: {
-                action: 'INGESTION_FINISHED',
-                details: { state: 'COMPLETED' },
-              },
-            });
-          } catch (error) {
-            await this.audit.append({
-              merchantId: null as unknown as string,
+              merchantId,
               actorUserId: null,
               actorKind: 'SYSTEM',
               resourceType: 'INGESTION_JOB',
@@ -143,40 +98,49 @@ export class JobsService {
               outcome: 'FAILED',
               record: {
                 action: 'INGESTION_FINISHED',
-                details: { state: 'FAILED', errorCode: 'JOB_ERROR' as const },
+                details: { state: 'FAILED', errorCode: 'JOB_ERROR' },
               },
             });
-            throw error;
+          } catch {
+            this.logger.error('JOB_FAILURE_AUDIT_FAILED');
           }
+          throw error;
         }
-      }),
-    );
+        await this.audit.append({
+          merchantId,
+          actorUserId: null,
+          actorKind: 'SYSTEM',
+          resourceType: 'INGESTION_JOB',
+          resourceId: job.id,
+          outcome: 'SUCCEEDED',
+          record: {
+            action: 'INGESTION_FINISHED',
+            details: { state: 'COMPLETED' },
+          },
+        });
+      }
+    });
   }
 
-  /**
-   * Enqueues a new job. Returns the pg-boss job id.
-   */
   async enqueue(
     name: string,
-    data: unknown,
+    data: object,
     options: JobOptions = {},
   ): Promise<string> {
-    if (!this.boss) {
-      throw new Error('pg-boss is not connected');
-    }
+    if (!this.boss) throw new Error('PG_BOSS_NOT_CONNECTED');
+    JobContextSchema.parse(data);
     const jobId = await this.boss.send(name, data, {
-      retries: options.retries ?? 3,
-      delay: options.delay ?? 0,
-      ttl: options.ttl,
-      priority: options.priority,
+      retryLimit: options.retries ?? 3,
+      startAfter: (options.delay ?? 0) / 1000,
+      ...(options.ttl === undefined
+        ? {}
+        : { expireInSeconds: Math.ceil(options.ttl / 1000) }),
+      ...(options.priority === undefined ? {} : { priority: options.priority }),
     });
-    this.logger.debug(`Enqueued job ${name} id=${jobId}`);
+    if (!jobId) throw new Error('JOB_NOT_ENQUEUED');
     return jobId;
   }
 
-  /**
-   * Returns true if pg-boss is connected.
-   */
   isConnected(): boolean {
     return Boolean(this.boss);
   }

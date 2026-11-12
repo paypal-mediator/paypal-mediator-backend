@@ -17,13 +17,12 @@ import { OdooAdapter } from './adapters/odoo.adapter.js';
 import { ErpNextAdapter } from './adapters/erpnext.adapter.js';
 import type { ErpConnector } from './interfaces/erp-connector.interface.js';
 import { contentHash } from '../../common/data/content-hash.js';
+import { ApiException } from '../../common/http/api.exception.js';
 import {
   encryptErpSecret,
   decryptErpSecret,
   type ErpSecretPayload,
 } from '../../common/crypto/secret-box.js';
-
-const SYSTEM_MERCHANT_ID = '00000000-0000-0000-0000-000000000000';
 
 const CATALOG: Array<{
   provider: ErpProvider;
@@ -94,7 +93,7 @@ export class IntegrationsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    this.jobs.registerHandler('ERP_SYNC', async (data) => {
+    await this.jobs.registerHandler('ERP_SYNC', async (data) => {
       await this.processErpSync(
         data as {
           connectionId: string;
@@ -326,23 +325,34 @@ export class IntegrationsService implements OnModuleInit {
       throw new Error('UNSUPPORTED_PROVIDER');
     }
 
-    const validResources = [
-      'customers',
+    const supportedResources = [
       'sales_orders',
       'invoices',
-      'payments',
-      'shipments',
-      'documents',
-    ] as const;
-    const resources: Array<(typeof validResources)[number]> = resource
-      ? validResources.includes(resource as (typeof validResources)[number])
-        ? [resource as (typeof validResources)[number]]
-        : ['sales_orders', 'invoices', 'shipments']
-      : ['sales_orders', 'invoices', 'shipments'];
+      ...(adapter.pullShipments ? ['shipments'] : []),
+      ...(adapter.pullPayments ? ['payments'] : []),
+    ];
+    if (resource && !supportedResources.includes(resource)) {
+      throw new ApiException(
+        'UNSUPPORTED_RESOURCE',
+        'Unsupported ERP resource',
+        400,
+      );
+    }
+    const resources = resource ? [resource] : supportedResources;
+    if (!this.jobs.isConnected()) {
+      throw new ApiException(
+        'ERP_QUEUE_UNAVAILABLE',
+        'ERP synchronization queue is unavailable',
+        503,
+      );
+    }
 
-    for (const res of resources) {
-      // Encolar job de sincronización en pg-boss para procesamiento asíncrono.
-      if (this.jobs.isConnected()) {
+    await this.prisma.erpConnection.update({
+      where: { id: connectionId },
+      data: { status: 'syncing', lastSyncError: null },
+    });
+    try {
+      for (const res of resources) {
         await this.jobs.enqueue(
           'ERP_SYNC',
           {
@@ -355,12 +365,17 @@ export class IntegrationsService implements OnModuleInit {
           { retries: 3, delay: 0 },
         );
       }
+    } catch {
+      await this.prisma.erpConnection.update({
+        where: { id: connectionId },
+        data: { status: 'error', lastSyncError: 'ERP_ENQUEUE_FAILED' },
+      });
+      throw new ApiException(
+        'ERP_ENQUEUE_FAILED',
+        'ERP synchronization could not be fully queued',
+        503,
+      );
     }
-
-    await this.prisma.erpConnection.update({
-      where: { id: connectionId },
-      data: { status: 'syncing' },
-    });
 
     return { ok: true, connectionId, resources };
   }
@@ -711,7 +726,7 @@ export class IntegrationsService implements OnModuleInit {
     });
 
     await this.audit.append({
-      merchantId: SYSTEM_MERCHANT_ID,
+      merchantId,
       actorUserId: null,
       actorKind: 'SYSTEM',
       resourceType: 'MERCHANT',
