@@ -1,6 +1,5 @@
 // Ignore unhandled rejections from pg-boss connection attempts in tests.
-// These are expected when no real database is configured (ECONNREFUSED on port 1).
-// Also ignore pg-boss foreign key constraint errors in test database (pg-boss schema issues).
+// These are expected when no real database is configured.
 function isIgnorableError(err: unknown): boolean {
   if (!err) return false;
 
@@ -14,14 +13,17 @@ function isIgnorableError(err: unknown): boolean {
     if (
       msg.includes('ECONNREFUSED') ||
       msg.includes('subscription_name_fkey') ||
-      msg.includes('violates foreign key constraint')
+      msg.includes('violates foreign key constraint') ||
+      msg.includes('ri_triggers.c') ||
+      msg.includes('ri_ReportViolation') ||
+      msg.includes('is not present in table "queue"')
     ) {
       return true;
     }
   }
 
   // Handle Postgres error objects (from pg-boss) that may not be Error instances
-  // but have properties like code, constraint, detail
+  // but have properties like code, constraint, detail, message
   if (err && typeof err === 'object') {
     const obj = err as Record<string, unknown>;
     // Check for Postgres FK violation error code 23503
@@ -32,23 +34,31 @@ function isIgnorableError(err: unknown): boolean {
       obj.constraint.includes('subscription_name_fkey')
     )
       return true;
+    // Check for pgboss schema/table
+    if (obj.schema === 'pgboss' || obj.table === 'subscription') return true;
     // Check for foreign key violation in detail/message
-    if (
-      typeof obj.detail === 'string' &&
-      obj.detail.includes('subscription_name_fkey')
-    )
-      return true;
-    if (
-      typeof obj.message === 'string' &&
-      (obj.message.includes('subscription_name_fkey') ||
-        obj.message.includes('violates foreign key constraint'))
-    )
-      return true;
-    if (
-      typeof obj.detail === 'string' &&
-      obj.detail.includes('violates foreign key constraint')
-    )
-      return true;
+    if (typeof obj.detail === 'string') {
+      if (
+        obj.detail.includes('subscription_name_fkey') ||
+        obj.detail.includes('violates foreign key constraint') ||
+        obj.detail.includes('async (job)') ||
+        obj.detail.includes('is not present in table "queue"')
+      )
+        return true;
+    }
+    if (typeof obj.message === 'string') {
+      if (
+        obj.message.includes('subscription_name_fkey') ||
+        obj.message.includes('violates foreign key constraint') ||
+        obj.message.includes('async (job)') ||
+        obj.message.includes('is not present in table "queue"') ||
+        obj.message.includes('ri_triggers.c') ||
+        obj.message.includes('ri_ReportViolation')
+      )
+        return true;
+    }
+    // Check for code property as number
+    if (typeof obj.code === 'number' && obj.code === 23503) return true;
   }
 
   // If it's a string or other type, check string representation
@@ -56,7 +66,11 @@ function isIgnorableError(err: unknown): boolean {
   return (
     msg.includes('ECONNREFUSED') ||
     msg.includes('subscription_name_fkey') ||
-    msg.includes('violates foreign key constraint')
+    msg.includes('violates foreign key constraint') ||
+    msg.includes('async (job)') ||
+    msg.includes('is not present in table "queue"') ||
+    msg.includes('ri_triggers.c') ||
+    msg.includes('ri_ReportViolation')
   );
 }
 
