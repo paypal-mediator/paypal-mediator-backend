@@ -1,4 +1,4 @@
-﻿import 'reflect-metadata';
+import 'reflect-metadata';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { OdooAdapter } from '../../src/modules/integrations/adapters/odoo.adapter.js';
 import { IntegrationsService } from '../../src/modules/integrations/integrations.service.js';
@@ -14,6 +14,33 @@ const credentials = {
 };
 afterEach(() => vi.unstubAllGlobals());
 describe('Odoo connections (MOCK external API)', () => {
+  it('reads payment memo from JSON-2 and preserves it as the normalized reference', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json([
+          {
+            id: 1,
+            name: 'PAY/1',
+            partner_id: [2, 'Demo'],
+            date: '2026-11-12',
+            amount: 12,
+            currency_id: [1, 'MXN'],
+            memo: 'ORDER-1',
+            write_date: '2026-11-12 00:00:00',
+          },
+        ]),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await new OdooAdapter().pullPayments(credentials);
+    expect(result.records[0]).toMatchObject({
+      reference: 'ORDER-1',
+      amount: '12',
+    });
+    const fields = JSON.parse(fetchMock.mock.calls[0]![1].body).fields;
+    expect(fields).toContain('memo');
+    expect(fields).not.toContain('ref');
+  });
   it('uses uid from the real context_get response shape and rejects invalid identity', async () => {
     vi.stubGlobal(
       'fetch',

@@ -234,7 +234,7 @@ export class OdooAdapter implements ErpConnector {
         date: string;
         amount: number;
         currency_id: OdooMany2One;
-        ref: string;
+        memo: string;
         write_date: string;
       }>
     >(credentials, 'account.payment', 'search_read', {
@@ -246,7 +246,7 @@ export class OdooAdapter implements ErpConnector {
         'date',
         'amount',
         'currency_id',
-        'ref',
+        'memo',
         'write_date',
       ],
       limit: 100,
@@ -261,7 +261,7 @@ export class OdooAdapter implements ErpConnector {
       date: p.date,
       amount: p.amount.toString(),
       currency: p.currency_id ? p.currency_id[1] : 'USD',
-      reference: p.ref,
+      reference: p.memo,
       writeDate: p.write_date,
     }));
 
