@@ -81,6 +81,7 @@ export const ConnectErpWithKeySchema = z.strictObject({
   provider: ErpProviderSchema,
   apiKey: CommerceReferenceSchema,
   baseUrl: z.string().url().optional(),
+  database: z.string().trim().min(1).max(255).optional(),
 });
 export type ConnectErpWithKey = z.infer<typeof ConnectErpWithKeySchema>;
 

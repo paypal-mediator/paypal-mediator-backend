@@ -33,9 +33,11 @@ import {
   type MatchMethod,
   type Confidence,
 } from '@resolve-ai/contracts';
+import { ApiException } from '../../common/http/api.exception.js';
 import { zodOpenApi } from '../../common/http/zod-openapi.js';
 import {
   MerchantAccessGuard,
+  MerchantAdminOnly,
   type MerchantRequest,
 } from '../merchants/index.js';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -85,6 +87,7 @@ export class IntegrationsController {
     };
   }
 
+  @MerchantAdminOnly()
   @Post(':provider/start')
   @ApiOperation({
     summary: 'Inicia el flujo de conexión de un proveedor ERP (OAuth u otro)',
@@ -104,16 +107,21 @@ export class IntegrationsController {
     if (body.provider !== provider) {
       throw new Error('PROVIDER_MISMATCH');
     }
-    // Para proveedores API Key (Bind, Siigo, etc.), el flujo se completa con connect-with-key.
-    // Para OAuth, aquí se generaría la URL de autorización.
+    if (provider !== 'odoo') {
+      throw new ApiException(
+        'ERP_PROVIDER_UNAVAILABLE',
+        'Only Odoo is available for new ERP connections',
+        400,
+      );
+    }
     return {
       provider,
       nextStep: 'connect-with-key',
-      message:
-        'Usa POST /api/integrations/:provider/connect-with-key para API Key, o completa el flujo OAuth si aplica.',
+      message: 'Provide your Odoo Online URL, database name and API key.',
     };
   }
 
+  @MerchantAdminOnly()
   @Post(':provider/connect-with-key')
   @ApiOperation({
     summary: 'Conecta un ERP usando API Key (Bind, Siigo México, Odoo, etc.)',
@@ -130,6 +138,7 @@ export class IntegrationsController {
       provider: string;
       apiKey: string;
       baseUrl?: string;
+      database?: string;
     },
   ) {
     if (body.provider !== provider) {
@@ -140,6 +149,7 @@ export class IntegrationsController {
       body.provider as ErpProvider,
       body.apiKey,
       body.baseUrl ?? undefined,
+      body.database,
     );
     const status = await this.integrations.getConnectionStatus(
       req.merchantActor.merchantId,
@@ -171,6 +181,7 @@ export class IntegrationsController {
     };
   }
 
+  @MerchantAdminOnly()
   @Post(':connectionId/sync')
   @ApiOperation({
     summary: 'Dispara una sincronización incremental de un ERP conectado',
@@ -198,6 +209,7 @@ export class IntegrationsController {
     );
   }
 
+  @MerchantAdminOnly()
   @Post(':connectionId/disconnect')
   @ApiOperation({
     summary: 'Desconecta un ERP y revoca su acceso',

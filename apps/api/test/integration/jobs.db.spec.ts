@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PgBoss } from 'pg-boss';
 import { createApp } from '../../src/application.js';
 import { PrismaService } from '../../src/common/database/prisma.service.js';
+import { encryptErpSecret } from '../../src/common/crypto/secret-box.js';
 import { JobsService } from '../../src/modules/jobs/jobs.service.js';
 import { IntegrationsService } from '../../src/modules/integrations/integrations.service.js';
 
@@ -39,11 +40,19 @@ describe('ERP_SYNC durable worker (real PostgreSQL, explicitly MOCK ERP)', () =>
     await prisma.merchant.create({
       data: { id: merchantId, displayName: 'MOCK ERP queue integration' },
     });
-    const connection = await integrations.connectWithKey(
-      merchantId,
-      'mock-erp',
-      'EXPLICIT_MOCK',
+    // Internal MOCK fixture: public connection creation intentionally accepts only Odoo.
+    const encryptedPayload = await encryptErpSecret(
+      { apiKey: 'EXPLICIT_MOCK' },
+      context.environment,
     );
+    const connection = await prisma.erpConnection.create({
+      data: {
+        merchantId,
+        provider: 'mock-erp',
+        status: 'connected',
+        secret: { create: { encryptedPayload, keyVersion: 1 } },
+      },
+    });
     connectionId = connection.id;
   }, 30000);
 

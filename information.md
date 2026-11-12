@@ -1,3 +1,7 @@
+## Odoo Online - conexiones por equipo, 2026-11-12
+
+Odoo es el unico ERP habilitado para nuevas conexiones. Settings > Connections permite agregar instancias por equipo y enviar URL, base de datos y API Key para verificacion real antes de cifrar y guardar. Se corrige context_get.uid y se restringen escrituras a ADMIN. Ver [alcance y operacion](docs/odoo-connections.md). No cambia el schema.
+
 ## Confirmación de correo — URL Render corregida, 2026-11-12
 
 En Supabase Auth, Site URL todavía apuntaba a Vercel. Se guardó y verificó tras

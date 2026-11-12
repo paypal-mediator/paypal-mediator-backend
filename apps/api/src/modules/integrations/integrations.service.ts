@@ -35,24 +35,6 @@ const CATALOG: Array<{
   authUrl?: string;
 }> = [
   {
-    provider: 'bind',
-    name: 'Bind ERP',
-    segment: 'Pequeña / mediana, México',
-    integrationType: 'api_key',
-    connectionExperience: 'Copiar API Key en configuración',
-    capabilities: ['customers', 'sales_orders', 'invoices'],
-    priority: 'P0',
-  },
-  {
-    provider: 'siigo-mx',
-    name: 'Siigo Nube México',
-    segment: 'Pequeña, México',
-    integrationType: 'api_key',
-    connectionExperience: 'Generar credenciales API',
-    capabilities: ['customers', 'sales_orders', 'invoices', 'payments'],
-    priority: 'P0',
-  },
-  {
     provider: 'odoo',
     name: 'Odoo',
     segment: 'Pequeña / mediana',
@@ -60,16 +42,6 @@ const CATALOG: Array<{
     connectionExperience: 'URL de instancia + API Key',
     capabilities: ['customers', 'sales_orders', 'invoices', 'shipments'],
     priority: 'P0',
-  },
-  {
-    provider: 'mock-erp',
-    name: 'MockERP (DEMO / MOCK)',
-    segment: 'Pruebas sin credenciales',
-    integrationType: 'api_key',
-    connectionExperience: 'Fixture etiquetado DEMO / MOCK',
-    capabilities: ['customers', 'sales_orders', 'invoices', 'shipments'],
-    priority: 'P0',
-    authUrl: undefined,
   },
 ];
 
@@ -179,31 +151,56 @@ export class IntegrationsService implements OnModuleInit {
     provider: ErpProvider,
     apiKey: string,
     baseUrl?: string,
+    database?: string,
   ) {
-    const adapter = ADAPTERS[provider];
-    if (!adapter) {
-      throw new Error('UNSUPPORTED_PROVIDER');
-    }
-
-    // Preparar payload para verificación
-    const tempCredentials: ErpSecretPayload = { apiKey };
-    if (baseUrl) tempCredentials.baseUrl = baseUrl;
-    if (provider === 'bind') tempCredentials.subscriptionKey = '';
-
-    // Verificación mínima de conexión antes de persistir.
-    try {
-      await adapter.verifyConnection(tempCredentials);
-    } catch (error) {
-      this.logger.warn(
-        `Connection verification failed for ${provider}: ${String(error)}`,
+    if (provider !== 'odoo') {
+      throw new ApiException(
+        'ERP_PROVIDER_UNAVAILABLE',
+        'Only Odoo is available for new ERP connections',
+        400,
       );
-      throw new Error('CONNECTION_VERIFICATION_FAILED', { cause: error });
     }
-
-    // Preparar payload según provider
-    const secretPayload: ErpSecretPayload = { apiKey };
-    if (baseUrl) secretPayload.baseUrl = baseUrl;
-    if (provider === 'bind') secretPayload.subscriptionKey = ''; // Opcional, se puede agregar luego
+    const adapter = ADAPTERS.odoo!;
+    if (!database?.trim() || !baseUrl) {
+      throw new ApiException(
+        'ODOO_CONFIGURATION_REQUIRED',
+        'Odoo URL and database are required',
+        400,
+      );
+    }
+    const url = new URL(baseUrl);
+    if (
+      url.protocol !== 'https:' ||
+      !/^[a-z0-9][a-z0-9-]*\.odoo\.com$/.test(url.hostname) ||
+      url.port ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      !['', '/'].includes(url.pathname)
+    ) {
+      throw new ApiException(
+        'ODOO_URL_INVALID',
+        'Use your HTTPS Odoo Online instance URL',
+        400,
+      );
+    }
+    baseUrl = url.origin;
+    const secretPayload: ErpSecretPayload = {
+      apiKey,
+      baseUrl,
+      database: database.trim(),
+    };
+    let verified;
+    try {
+      verified = await adapter.verifyConnection(secretPayload);
+    } catch {
+      throw new ApiException(
+        'ERP_CONNECTION_VERIFICATION_FAILED',
+        'Could not verify Odoo. Check the API key, database, permissions and API availability.',
+        422,
+      );
+    }
 
     const encryptedPayload = await encryptErpSecret(
       secretPayload,
@@ -214,7 +211,7 @@ export class IntegrationsService implements OnModuleInit {
       data: {
         merchantId,
         provider,
-        externalTenantId: null,
+        externalTenantId: verified.externalTenantId,
         baseUrl,
         status: 'connected',
         scopes: null,

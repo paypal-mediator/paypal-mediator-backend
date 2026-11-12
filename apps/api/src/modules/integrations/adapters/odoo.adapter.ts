@@ -50,11 +50,12 @@ export class OdooAdapter implements ErpConnector {
       method: 'POST',
       headers: this.getHeaders(credentials),
       body: JSON.stringify(payload),
+      redirect: 'error',
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(`Odoo ${model}.${method} ${response.status}: ${text}`);
+      throw new Error(`Odoo request failed (${response.status})`);
     }
 
     const data: unknown = await response.json();
@@ -72,14 +73,16 @@ export class OdooAdapter implements ErpConnector {
   async verifyConnection(credentials: ErpSecretPayload) {
     this.logger.log(`Verifying Odoo connection`);
     // Verificar obteniendo el usuario actual
-    const user = await this.call<{ id: number; name: string }>(
+    const user = await this.call<{ uid: number }>(
       credentials,
       'res.users',
       'context_get',
       { context: { lang: 'en_US' } },
     );
+    if (!Number.isInteger(user.uid) || user.uid <= 0)
+      throw new Error('Odoo returned an invalid user');
     return {
-      externalTenantId: `odoo_${credentials.database}_${user.id}`,
+      externalTenantId: `odoo_${credentials.database}_${user.uid}`,
       capabilities: [
         'customers',
         'sales_orders',
