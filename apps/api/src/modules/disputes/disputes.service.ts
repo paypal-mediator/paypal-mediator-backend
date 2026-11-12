@@ -325,6 +325,19 @@ export class DisputesService {
     return { status: 'LINKED', transactionId: match.id, reason: null };
   }
 
+  async trackingLinks(merchantId: string, transactionId?: string) {
+    return this.prisma.dispute.findMany({
+      where: {
+        merchantId,
+        transactionId: transactionId ?? { not: null },
+        linkStatus: 'LINKED',
+      },
+      select: { id: true, transactionId: true, lastEventAt: true },
+      orderBy: { lastEventAt: 'desc' },
+      take: 1000,
+    });
+  }
+
   async list(merchantId: string, query: DisputeQuery) {
     const where = {
       merchantId,

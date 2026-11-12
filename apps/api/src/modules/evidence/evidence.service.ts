@@ -22,6 +22,7 @@ interface EvidenceRecord {
     | 'PAYMENT_RECORD'
     | 'ORDER_RECORD'
     | 'ORDER_SOURCE_RECORD'
+    | 'SHIPMENT_TRACKING_RECORD'
     | 'TRACKING'
     | 'PROOF_OF_DELIVERY'
     | 'DOCUMENT';
@@ -49,6 +50,26 @@ export class EvidenceService {
       {
         ...record,
         type: 'ORDER_SOURCE_RECORD',
+        retrievedAt: new Date().toISOString(),
+      },
+      null,
+    );
+  }
+  // Tracking reports retain provider payloads and provenance. They are not PODs.
+  async recordShipmentTracking(
+    tx: Prisma.TransactionClient,
+    context: EvidenceContext,
+    record: Pick<
+      EvidenceRecord,
+      'sourceKind' | 'sourceSystem' | 'externalReference' | 'content'
+    >,
+  ) {
+    return this.append(
+      tx,
+      context,
+      {
+        ...record,
+        type: 'SHIPMENT_TRACKING_RECORD',
         retrievedAt: new Date().toISOString(),
       },
       null,

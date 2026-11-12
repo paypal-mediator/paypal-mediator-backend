@@ -71,6 +71,7 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
               'PAYMENT_RECORD',
               'ORDER_RECORD',
               'ORDER_SOURCE_RECORD',
+              'SHIPMENT_TRACKING_RECORD',
               'TRACKING',
               'PROOF_OF_DELIVERY',
               'DOCUMENT',

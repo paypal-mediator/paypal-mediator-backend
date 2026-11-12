@@ -203,6 +203,8 @@ model Transaction {
   verifications  VerificationRun[]
   investigations InvestigationRun[]
   orderSources   OrderSourceJob[]
+  shipmentTrackingJob ShipmentTrackingJob?
+  shipmentTrackingSnapshots ShipmentTrackingSnapshot[]
   disputes       Dispute[]
 
   @@unique([merchantId, environment, paypalCaptureId])
@@ -565,4 +567,90 @@ model TransactionLink {
   @@unique([merchantId, paypalCaptureId, recordId])
   @@index([merchantId, paypalCaptureId])
   @@map("transaction_links")
+}
+
+// Shipment tracking owns its jobs, observations, registration leases and budgets.
+model ShipmentTrackingJob {
+  transactionId String @id @map("transaction_id") @db.Uuid
+  merchantId String @map("merchant_id") @db.Uuid
+  input Json @default("{}")
+  status String @default("PENDING")
+  attempts Int @default(0)
+  failures Int @default(0)
+  leaseToken String? @map("lease_token") @db.Uuid
+  leaseExpiresAt DateTime? @map("lease_expires_at") @db.Timestamptz(3)
+  lastAttemptAt DateTime? @map("last_attempt_at") @db.Timestamptz(3)
+  nextAttemptAt DateTime? @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  lastDisputeEventAt DateTime? @map("last_dispute_event_at") @db.Timestamptz(3)
+  sourceAttempts Json @default("[]") @map("source_attempts")
+  providerAccountKey String? @map("provider_account_key") @db.VarChar(64)
+  errorCode String? @map("error_code") @db.VarChar(128)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  transaction Transaction @relation(fields: [transactionId, merchantId], references: [id, merchantId], onDelete: Cascade)
+  @@unique([transactionId, merchantId])
+  @@index([merchantId, nextAttemptAt])
+  @@map("shipment_tracking_jobs")
+}
+
+model ShipmentTrackingSnapshot {
+  id String @id @default(uuid()) @db.Uuid
+  merchantId String @map("merchant_id") @db.Uuid
+  transactionId String @map("transaction_id") @db.Uuid
+  source String
+  trackingNumber String @map("tracking_number") @db.VarChar(100)
+  carrierKey String @map("carrier_key") @db.VarChar(255)
+  contentHash String @map("content_hash") @db.VarChar(64)
+  observation Json
+  original Json
+  evidenceId String? @map("evidence_id") @db.Uuid
+  retrievedAt DateTime @default(now()) @map("retrieved_at") @db.Timestamptz(3)
+  transaction Transaction @relation(fields: [transactionId, merchantId], references: [id, merchantId], onDelete: Cascade)
+  @@unique([transactionId, source, trackingNumber, carrierKey, contentHash])
+  @@index([merchantId, transactionId, retrievedAt])
+  @@map("shipment_tracking_snapshots")
+}
+
+model TrackingRegistration {
+  id String @id @default(uuid()) @db.Uuid
+  merchantId String @map("merchant_id") @db.Uuid
+  accountKey String @map("account_key") @db.VarChar(64)
+  trackingNumber String @map("tracking_number") @db.VarChar(100)
+  requestedCarrier Int @default(0) @map("requested_carrier")
+  parametersHash String? @map("parameters_hash") @db.VarChar(64)
+  carrier Int?
+  origin Int?
+  status String @default("NEW")
+  leaseToken String? @map("lease_token") @db.Uuid
+  leaseExpiresAt DateTime? @map("lease_expires_at") @db.Timestamptz(3)
+  lastResult Json? @map("last_result")
+  lastCheckedAt DateTime? @map("last_checked_at") @db.Timestamptz(3)
+  failures Int @default(0)
+  nextAttemptAt DateTime? @map("next_attempt_at") @db.Timestamptz(3)
+  errorCode String? @map("error_code") @db.VarChar(128)
+  providerCode Int? @map("provider_code")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  @@unique([merchantId, accountKey, trackingNumber, requestedCarrier])
+  @@index([accountKey, trackingNumber, carrier])
+  @@map("tracking_registrations")
+}
+
+model TrackingUsage {
+  merchantId String @map("merchant_id") @db.Uuid
+  day String @db.VarChar(10)
+  requests Int @default(0)
+  registrationAttempts Int @default(0) @map("registration_attempts")
+  registrations Int @default(0)
+  queries Int @default(0)
+  failures Int @default(0)
+  webhooks Int @default(0)
+  @@id([merchantId, day])
+  @@map("tracking_usage")
+}
+
+model TrackingApiGate {
+  accountKey String @id @map("account_key") @db.VarChar(64)
+  nextRequestAt DateTime @map("next_request_at") @db.Timestamptz(3)
+  @@map("tracking_api_gates")
 }
