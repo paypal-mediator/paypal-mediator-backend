@@ -7,10 +7,11 @@ import { AuditService } from '../monitoring/audit.service.js';
 
 const require = createRequire(import.meta.url);
 // pg-boss es CommonJS; importarlo mediante require para ESM.
-// Definimos el tipo de la instancia (lo que devuelve `new Boss()`)
+// El export es un objeto con export named `PgBoss`.
+// Definimos el tipo de la instancia (lo que devuelve `new PgBoss()`)
 interface PgBossInstance {
   start: () => Promise<void>;
-  close: () => Promise<void>;
+  stop: () => Promise<void>;
   subscribe: <T = unknown>(
     name: string,
     handler: (job: { id: string; data: T }) => Promise<void>,
@@ -26,10 +27,10 @@ interface PgBossInstance {
     },
   ) => Promise<string>;
 }
-// El constructor que devuelve `require('pg-boss')`
+// El constructor es `require('pg-boss').PgBoss`
 type PgBossConstructor = new (connectionString: string) => PgBossInstance;
 
-const Boss = require('pg-boss') as PgBossConstructor;
+const { PgBoss: Boss } = require('pg-boss') as { PgBoss: PgBossConstructor };
 
 export type JobHandler = (data: unknown) => Promise<void>;
 
@@ -89,7 +90,7 @@ export class JobsService {
 
   async disconnect() {
     if (!this.boss) return;
-    await this.boss.close();
+    await this.boss.stop();
     this.boss = undefined;
     this.logger.log('pg-boss disconnected');
   }
