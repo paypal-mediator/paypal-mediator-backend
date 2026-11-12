@@ -3,6 +3,7 @@ import type {
   ErpConnector,
   ErpCapability,
   SyncPage,
+  ErpSecretPayload,
 } from '../interfaces/erp-connector.interface.js';
 
 // MockERP — Fixture explícitamente etiquetado DEMO / MOCK para pruebas de
@@ -12,8 +13,9 @@ export class MockErpAdapter implements ErpConnector {
   readonly provider = 'mock-erp';
   private readonly logger = new Logger(MockErpAdapter.name);
 
-  async verifyConnection(connectionId: string) {
-    this.logger.log(`MockERP verify ${connectionId}`);
+  async verifyConnection(_credentials: ErpSecretPayload) {
+    this.logger.log(`MockERP verify`);
+    void _credentials;
     return {
       externalTenantId: 'mock-erp-tenant',
       capabilities: [
@@ -25,8 +27,9 @@ export class MockErpAdapter implements ErpConnector {
     };
   }
 
-  async pullSalesOrders(): Promise<SyncPage> {
+  async pullSalesOrders(_credentials: ErpSecretPayload): Promise<SyncPage> {
     this.logger.log('MockERP pullSalesOrders');
+    void _credentials;
     return {
       records: [
         {
@@ -43,8 +46,9 @@ export class MockErpAdapter implements ErpConnector {
     };
   }
 
-  async pullInvoices(): Promise<SyncPage> {
+  async pullInvoices(_credentials: ErpSecretPayload): Promise<SyncPage> {
     this.logger.log('MockERP pullInvoices');
+    void _credentials;
     return {
       records: [
         {
@@ -59,15 +63,17 @@ export class MockErpAdapter implements ErpConnector {
     };
   }
 
-  async pullShipments(): Promise<SyncPage> {
+  async pullShipments(_credentials: ErpSecretPayload): Promise<SyncPage> {
     this.logger.log('MockERP pullShipments');
+    void _credentials;
     return {
       records: [],
       nextCursor: undefined,
     };
   }
 
-  async disconnect(connectionId: string): Promise<void> {
-    this.logger.log(`MockERP disconnect ${connectionId}`);
+  async disconnect(_credentials: ErpSecretPayload): Promise<void> {
+    this.logger.log(`MockERP disconnect`);
+    void _credentials;
   }
 }

@@ -11,6 +11,7 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
           allowInvestigations: z.boolean().optional(),
           allowSubmissions: z.boolean().optional(),
           requireMerchantApproval: z.literal(true).optional(),
+          erpProvider: z.string().optional(),
         })
         .strict(),
     })

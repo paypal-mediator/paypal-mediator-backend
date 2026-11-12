@@ -21,6 +21,7 @@
     "dotenv": "^17.0.0",
     "helmet": "^8.1.0",
     "jose": "6.2.15",
+    "libsodium-wrappers": "^0.8.4",
     "pdf-parse": "^2.4.5",
     "pg-boss": "^12.0.0",
     "reflect-metadata": "^0.2.2",
