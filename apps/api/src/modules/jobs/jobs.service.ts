@@ -12,9 +12,9 @@ const require = createRequire(import.meta.url);
 interface PgBossInstance {
   start: () => Promise<void>;
   stop: () => Promise<void>;
-  subscribe: <T = unknown>(
+  work: <T = unknown>(
     name: string,
-    handler: (job: { id: string; data: T }) => Promise<void>,
+    handler: (jobs: Array<{ id: string; data: T }>) => Promise<void>,
   ) => Promise<void>;
   send: (
     name: string,
@@ -79,7 +79,7 @@ export class JobsService {
 
       // Subscribe to all handlers registered before connect.
       for (const [name, handler] of this.handlers) {
-        void this.subscribe(name, handler);
+        await this.subscribe(name, handler);
       }
       this.logger.log('pg-boss connected');
     } catch (error) {
@@ -102,40 +102,46 @@ export class JobsService {
   registerHandler(name: string, handler: JobHandler) {
     this.handlers.set(name, handler);
     if (this.boss) {
-      void this.subscribe(name, handler);
+      void this.subscribe(name, handler).catch((error: unknown) => {
+        this.logger.error(
+          `Failed to register pg-boss worker ${name}: ${String(error)}`,
+        );
+      });
     }
   }
 
   private subscribe(name: string, handler: JobHandler) {
-    return this.boss!.subscribe(name, async (job: unknown) => {
-      try {
-        await handler((job as { data: unknown }).data);
-        await this.audit.append({
-          merchantId: null as unknown as string,
-          actorUserId: null,
-          actorKind: 'SYSTEM',
-          resourceType: 'INGESTION_JOB',
-          resourceId: (job as { id: string }).id,
-          outcome: 'SUCCEEDED',
-          record: {
-            action: 'INGESTION_FINISHED',
-            details: { state: 'COMPLETED' },
-          },
-        });
-      } catch (error) {
-        await this.audit.append({
-          merchantId: null as unknown as string,
-          actorUserId: null,
-          actorKind: 'SYSTEM',
-          resourceType: 'INGESTION_JOB',
-          resourceId: (job as { id: string }).id,
-          outcome: 'FAILED',
-          record: {
-            action: 'INGESTION_FINISHED',
-            details: { state: 'FAILED', errorCode: 'JOB_ERROR' as const },
-          },
-        });
-        throw error;
+    return this.boss!.work(name, async (jobs) => {
+      for (const job of jobs) {
+        try {
+          await handler(job.data);
+          await this.audit.append({
+            merchantId: null as unknown as string,
+            actorUserId: null,
+            actorKind: 'SYSTEM',
+            resourceType: 'INGESTION_JOB',
+            resourceId: job.id,
+            outcome: 'SUCCEEDED',
+            record: {
+              action: 'INGESTION_FINISHED',
+              details: { state: 'COMPLETED' },
+            },
+          });
+        } catch (error) {
+          await this.audit.append({
+            merchantId: null as unknown as string,
+            actorUserId: null,
+            actorKind: 'SYSTEM',
+            resourceType: 'INGESTION_JOB',
+            resourceId: job.id,
+            outcome: 'FAILED',
+            record: {
+              action: 'INGESTION_FINISHED',
+              details: { state: 'FAILED', errorCode: 'JOB_ERROR' as const },
+            },
+          });
+          throw error;
+        }
       }
     });
   }
