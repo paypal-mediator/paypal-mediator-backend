@@ -15,22 +15,20 @@ const credentials = {
 afterEach(() => vi.unstubAllGlobals());
 describe('Odoo connections (MOCK external API)', () => {
   it('reads payment memo from JSON-2 and preserves it as the normalized reference', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json([
-          {
-            id: 1,
-            name: 'PAY/1',
-            partner_id: [2, 'Demo'],
-            date: '2026-11-12',
-            amount: 12,
-            currency_id: [1, 'MXN'],
-            memo: 'ORDER-1',
-            write_date: '2026-11-12 00:00:00',
-          },
-        ]),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json([
+        {
+          id: 1,
+          name: 'PAY/1',
+          partner_id: [2, 'Demo'],
+          date: '2026-11-12',
+          amount: 12,
+          currency_id: [1, 'MXN'],
+          memo: 'ORDER-1',
+          write_date: '2026-11-12 00:00:00',
+        },
+      ]),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const result = await new OdooAdapter().pullPayments(credentials);
     expect(result.records[0]).toMatchObject({
