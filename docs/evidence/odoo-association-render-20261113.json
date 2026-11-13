@@ -1,0 +1,77 @@
+{
+  "checkedAt": "2026-11-13T08:01:37.568Z",
+  "teamId": "48308136-377f-425a-965e-f673f98a12fa",
+  "transactionId": "b8e14979-bf3d-47c0-9a02-836831c663ea",
+  "captureId": "7GD21860GA330880G",
+  "source": {
+    "providerId": "ODOO",
+    "status": "PARTIAL",
+    "association": "UNRESOLVED",
+    "missingFields": ["ORDER_RECORD", "ODOO_EXACT_REFERENCE_NOT_FOUND"],
+    "relatedRecordCount": 0,
+    "documentImport": {
+      "status": "NOT_REQUESTED",
+      "count": 0,
+      "issues": []
+    }
+  },
+  "linkedRecords": 0,
+  "readiness": {
+    "status": "ready",
+    "checks": {
+      "database": "up"
+    },
+    "timestamp": "2026-11-13T08:01:37.852Z"
+  },
+  "unauthenticatedStatus": 401,
+  "notice": "Real Render/Supabase API and existing Sandbox payment. Connected Odoo has zero records; no fictional association or document created. No Odoo writes or money movement.",
+  "database": {
+    "checkedAt": "2026-11-13T08:01:34.929Z",
+    "tlsVerified": true,
+    "connections": [
+      {
+        "id": "b40750f7-e418-4dff-b947-49539bde86ed",
+        "status": "connected",
+        "importedRecords": 0,
+        "matchesReadOnlyProbe": true
+      }
+    ],
+    "jobs": [
+      {
+        "provider_id": "PAYPAL",
+        "status": "FAILED",
+        "error_code": "PAYPAL_ORDER_HTTP_ERROR",
+        "association": null,
+        "missing_fields": null
+      },
+      {
+        "provider_id": "ODOO",
+        "status": "PARTIAL",
+        "error_code": null,
+        "association": "UNRESOLVED",
+        "missing_fields": ["ORDER_RECORD", "ODOO_EXACT_REFERENCE_NOT_FOUND"]
+      }
+    ],
+    "migration": [
+      {
+        "migration_name": "20261113030000_odoo_evidence_documents",
+        "finished": true
+      }
+    ]
+  },
+  "render": {
+    "serviceId": "srv-dbq6q2qjnfac73eual9g",
+    "deployId": "dep-dbrc6uh42hec73bepk1g",
+    "status": "live",
+    "commit": "9bcd974da2d68ed0e2ccd08768317c8c7f9fd600",
+    "finishedAt": "2026-11-13T08:01:22.580573Z"
+  },
+  "ci": {
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43389771649",
+    "unitHttpTests": 431,
+    "postgresTests": 201,
+    "mediationTests": 162
+  }
+}

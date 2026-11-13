@@ -1,5 +1,10 @@
 ## Asociación Odoo → M03/M04, 2026-11-13
 
+Publicado `9bcd974` en Render y migración aplicada. La API autenticada muestra
+ODOO como fuente del pago existente y, al no haber registros en la instancia,
+UNRESOLVED sin vínculos ni documentos ficticios. CI: 431 pruebas unitarias/HTTP,
+201 PostgreSQL y 162 de mediación. Ver [despliegue y evidencia](docs/deployment.md#asociación-odoo-publicada--13-de-noviembre-de-2026).
+
 Nueva fuente ODOO para relacionar pagos con pedidos, facturas, pagos ERP y envíos
 mediante referencias exactas y relaciones de la misma conexión. Incluye backfill
 de capturas, revisión periódica, enlaces transaccionales y originales privados

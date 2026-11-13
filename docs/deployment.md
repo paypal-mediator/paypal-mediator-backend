@@ -1,5 +1,32 @@
 # Backend público y webhook PayPal
 
+## Asociación Odoo publicada — 13 de noviembre de 2026
+
+Commit `9bcd974` enviado a main y confirmado Live en Render, despliegue
+`dep-dbrc6uh42hec73bepk1g`, terminado a las 08:01:22 UTC. La migración
+`20261113030000_odoo_evidence_documents` se aplicó al arranque; una consulta
+independiente con TLS/CA/hostname verificados confirmó su finalización y que
+la instancia Odoo conectada al equipo de prueba tiene cero registros importados.
+
+La lectura real de pedidos, facturas, pagos y envíos también devolvió cero.
+La primera consulta de facturas recibió 429 y una repetición individual respondió
+sin datos. No se modificó Odoo ni se crearon documentos o movimientos financieros.
+La API publicada con Supabase Auth real muestra la fuente ODOO del pago Sandbox
+existente, estado PARTIAL, asociación UNRESOLVED y motivo
+`ODOO_EXACT_REFERENCE_NOT_FOUND`, cero registros/enlaces y documentos no
+solicitados. Readiness responde 200/PostgreSQL up y sin sesión se obtiene 401.
+Esto valida la publicación y el tratamiento honesto de una instancia vacía;
+la asociación y los adjuntos con datos se validaron con proveedores MOCK y
+PostgreSQL real. El error previo de enriquecimiento del pedido PayPal
+`PAYPAL_ORDER_HTTP_ERROR` se conserva y no se ocultó con la fuente nueva.
+
+CI del commit aprobado: `pnpm check` (431 pruebas unitarias/HTTP), migraciones,
+`pnpm test:db` (201) y `pnpm test:mediation` (162). Las cifras locales anteriores
+434/221 incluían las invitaciones M01 aún sin commit; ese trabajo y el frontend
+se conservaron fuera de este incremento. Ver [CI](https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43389771649),
+[evidencia publicada](evidence/odoo-association-render-20261113.json) y
+[contrato y operación](odoo-payment-association.md).
+
 ## M02/M03 publicados y eventos registrados — 13 de noviembre de 2026
 
 Código `852628a` enviado a `main` junto con `b470806`. Render confirmó Live

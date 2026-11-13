@@ -1,5 +1,9 @@
 # Asociar pagos PayPal con registros Odoo
 
+Publicado en Render con `9bcd974`, migración aplicada y API real verificada.
+La instancia conectada sigue vacía: se muestra UNRESOLVED sin crear vínculos.
+Ver [despliegue y evidencia](deployment.md#asociación-odoo-publicada--13-de-noviembre-de-2026).
+
 ## Flujo
 
 M03 registra Odoo como fuente de pedidos junto con PayPal. Integrations conserva
