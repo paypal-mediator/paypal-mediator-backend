@@ -3,6 +3,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   ConciliationPolicySchema,
+  ConciliationOrderSourceSchema,
   ContactClassificationSchema,
   ContactReplyDraftSchema,
   type ConciliationPolicy,
@@ -95,7 +96,14 @@ export class ConciliationsService {
       payment!.merchantOrderReference ??
       payment!.paypalOrderId ??
       payment!.paypalCaptureId;
-    const linkedOrderId = order?.id ?? payment?.order?.id ?? null;
+    // Imported PayPal/ERP source snapshots are not merchant orders.
+    const paymentOrder = payment?.order;
+    const linkedOrderId =
+      order?.id ??
+      (paymentOrder &&
+      ['MERCHANT_INPUT', 'DEMO'].includes(paymentOrder.sourceKind)
+        ? paymentOrder.id
+        : null);
     const token = randomBytes(32).toString('hex');
     const count = await this.db.conciliationChat.count({
       where: {
@@ -177,6 +185,17 @@ export class ConciliationsService {
   }
   async view(merchantId: string, id: string) {
     const chat = await this.findChat(merchantId, id);
+    const order = chat.orderId
+      ? await this.orders.detail(merchantId, chat.orderId)
+      : chat.transactionId
+        ? (await this.transactions.detail(merchantId, chat.transactionId)).order
+        : null;
+    const orderSource = ConciliationOrderSourceSchema.parse({
+      kind: order?.sourceKind ?? 'UNKNOWN',
+      system: order?.sourceSystem ?? null,
+      checkoutOrigin: 'UNVERIFIED',
+      receiptLinkStatus: 'CHECKOUT_INTEGRATION_REQUIRED',
+    });
     const messages = await this.db.conciliationMessage.findMany({
       where: { chatId: id, merchantId },
       orderBy: { sequence: 'asc' },
@@ -192,6 +211,7 @@ export class ConciliationsService {
         category: chat.category,
         expiresAt: chat.expiresAt,
         revokedAt: chat.revokedAt,
+        orderSource,
       },
       messages,
     };
@@ -310,6 +330,7 @@ export class ConciliationsService {
                 chat.transactionId,
               )
             : null;
+        const contextOrder = order ?? payment?.order;
         draft = (
           await this.generator.structuredStep(
             [
@@ -323,8 +344,11 @@ export class ConciliationsService {
                   text,
                   language,
                   orderReference: chat.orderReference,
-                  order: order
-                    ? { items: order.items, orderedAt: order.orderedAt }
+                  order: contextOrder
+                    ? {
+                        items: contextOrder.items,
+                        orderedAt: contextOrder.orderedAt,
+                      }
                     : null,
                   payment: payment
                     ? {

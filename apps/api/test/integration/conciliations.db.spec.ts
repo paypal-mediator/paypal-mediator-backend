@@ -145,6 +145,12 @@ describe('preventive conciliation: real PostgreSQL/HTTP, MOCK identity and NLP/L
     const created = await link();
     await get(`/api/conciliations/${created.id}`, otherId).expect(404);
     const list = await get('/api/conciliations').expect(200);
+    const detail = await get(`/api/conciliations/${created.id}`).expect(200);
+    expect(detail.body.chat.orderSource).toMatchObject({
+      kind: 'DEMO',
+      checkoutOrigin: 'UNVERIFIED',
+      receiptLinkStatus: 'CHECKOUT_INTEGRATION_REQUIRED',
+    });
     expect(JSON.stringify(list.body)).not.toContain(created.token);
     expect(JSON.stringify(list.body)).not.toContain('tokenHash');
     await request(server())
@@ -179,6 +185,7 @@ describe('preventive conciliation: real PostgreSQL/HTTP, MOCK identity and NLP/L
     );
     expect(generationCount).toBe(before + 1);
     expect(sent.body.messages).toHaveLength(1);
+    expect(sent.body.orderSource).toBeUndefined();
     expect(JSON.stringify(sent.body)).not.toContain('MOCK draft');
     let view = (await get(`/api/conciliations/${created.id}`).expect(200)).body;
     const source = view.messages[0];

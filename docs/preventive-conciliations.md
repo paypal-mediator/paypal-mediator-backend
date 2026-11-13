@@ -30,6 +30,12 @@ La conversación puede resolverse o revocarse sin borrar el historial. Si se abr
 
 ## API y persistencia
 
+La interfaz del comerciante usa una tabla con búsqueda y filtros, seguida de una ruta de chat independiente `/conciliations/:id`, con el mismo estilo de Disputes. La asistencia y las reglas se configuran exclusivamente en los ajustes del equipo.
+
+El detalle privado devuelve `chat.orderSource`: identifica la procedencia registrada de la información (PayPal, sistema conectado, carga manual, DEMO o desconocida) mediante las interfaces públicas de M03. Los snapshots importados de PayPal/ERP no se tratan como pedidos manuales. Esta procedencia no demuestra qué checkout creó el pago; `checkoutOrigin=UNVERIFIED` conserva esa distinción. No se expone este contexto en el chat público.
+
+**Enlaces en recibos PayPal: pendientes de integración con el checkout.** Las conexiones del equipo se consultan y muestran, pero no existe un envío ni una inserción automática de enlaces en recibos. Los webhooks llegan tras el pago y [PayPal no admite modificar órdenes completadas](https://developer.paypal.com/api/orders/v2/orders-patch/). Hay que integrar el sistema que crea cada venta antes de completarla y verificar qué contenido muestra realmente PayPal; conectar la cuenta del comercio o detectar un ERP no acredita esa capacidad. El contrato devuelve `receiptLinkStatus=CHECKOUT_INTEGRATION_REQUIRED`. Los enlaces actuales se crean y comparten manualmente.
+
 Entradas Zod: `packages/contracts/src/conciliations.ts`. Código: `modules/conciliations`. Tablas propias: `conciliation_policies`, `conciliation_chats`, `conciliation_messages`; RLS habilitado sin políticas Data API para navegadores. La autorización de equipo se aplica en el backend. VIEWER solo lee; todas las operaciones administrativas requieren ADMIN. No se escriben tablas privadas de M03/M07.
 
 - `GET/PUT /api/conciliations/policy`

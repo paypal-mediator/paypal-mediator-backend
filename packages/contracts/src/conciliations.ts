@@ -60,6 +60,19 @@ export const ContactClassificationSchema = z.strictObject({
   source: z.enum(['FAST_FILTER', 'LOCAL_NLP', 'UNAVAILABLE']),
 });
 export type ContactClassification = z.infer<typeof ContactClassificationSchema>;
+export const ConciliationOrderSourceSchema = z.strictObject({
+  kind: z.enum([
+    'PAYPAL',
+    'CONNECTED_SYSTEM',
+    'MERCHANT_INPUT',
+    'DEMO',
+    'UNKNOWN',
+  ]),
+  system: z.string().nullable(),
+  // Data provenance does not prove which checkout created the PayPal payment.
+  checkoutOrigin: z.literal('UNVERIFIED'),
+  receiptLinkStatus: z.literal('CHECKOUT_INTEGRATION_REQUIRED'),
+});
 export const CreateContactLinkSchema = z
   .strictObject({
     orderId: z.uuid().optional(),
