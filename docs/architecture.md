@@ -129,7 +129,10 @@ configuración y límites de la validación externa.
 M02 recibe webhooks mediante M01 (contexto del merchant y OAuth público de
 módulo), verifica firmas con PayPal y guarda eventos/trabajos de forma atómica.
 M03 consume capturas mediante la interfaz pública `IngestionQueueService` de M02,
-que controla los locks y la transacción compartida; cada consumidor escribe solo
+así como trabajos `PAYMENT_ADJUSTED` para reembolsos y reversiones. M03 es
+propietario de `payment_adjustments` y de la proyección financiera de sus pagos;
+actualiza los registros documentales mediante la interfaz pública de M04.
+La cola de M02 controla los locks y la transacción compartida; cada consumidor escribe solo
 sus tablas. El worker de M03 se activa por configuración. M07 consume
 `DISPUTE_CHANGED` con la misma interfaz, mantiene estados PayPal y locales
 separados y solo vincula capturas de M03 por `seller_transaction_id`; no presenta

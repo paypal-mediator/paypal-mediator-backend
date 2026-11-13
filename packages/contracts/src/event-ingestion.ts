@@ -18,9 +18,68 @@ export type PayPalWebhookEnvelope = z.infer<typeof PayPalWebhookEnvelopeSchema>;
 
 export const IngestionJobKindSchema = z.enum([
   'TRANSACTION_CAPTURED',
+  'PAYMENT_ADJUSTED',
   'DISPUTE_CHANGED',
 ]);
 export type IngestionJobKind = z.infer<typeof IngestionJobKindSchema>;
+
+// Read identifiers only; never fetch a URL supplied by a webhook.
+export function paypalRefundCaptureId(
+  resource: Record<string, unknown>,
+): string | null {
+  const parsed = z
+    .object({
+      supplementary_data: z
+        .object({
+          related_ids: z
+            .object({ capture_id: z.string().optional() })
+            .optional(),
+        })
+        .optional(),
+      links: z
+        .array(
+          z.object({
+            rel: z.string(),
+            href: z.string(),
+            method: z.string().optional(),
+          }),
+        )
+        .max(32)
+        .optional(),
+    })
+    .safeParse(resource);
+  if (!parsed.success) return null;
+  const ids = new Set<string>();
+  const explicit = parsed.data.supplementary_data?.related_ids?.capture_id;
+  if (explicit) ids.add(explicit);
+  for (const link of parsed.data.links ?? []) {
+    if (link.rel !== 'up') continue;
+    try {
+      const url = new URL(link.href);
+      if (
+        url.protocol !== 'https:' ||
+        !['api-m.sandbox.paypal.com', 'api.sandbox.paypal.com'].includes(
+          url.hostname,
+        ) ||
+        url.port ||
+        url.username ||
+        url.password ||
+        url.search ||
+        url.hash
+      )
+        return null;
+      const match = /^\/v2\/payments\/captures\/([A-Za-z0-9_-]{1,255})$/.exec(
+        url.pathname,
+      );
+      if (!match) return null;
+      ids.add(match[1]!);
+    } catch {
+      return null;
+    }
+  }
+  const id = [...ids][0];
+  return ids.size === 1 && id && /^[A-Za-z0-9_-]{1,255}$/.test(id) ? id : null;
+}
 
 export const WebhookReceiptSchema = z.object({
   eventId: z.uuid(),

@@ -39,9 +39,40 @@ lint, formato, tipos, Prisma y build) y `pnpm test:db` aprobado (206 pruebas,
 y se repitió `pnpm db:deploy` sin pendientes. Esos totales incluyen el trabajo
 local previo de invitaciones M01; sus cambios se conservan fuera del commit M02.
 
-Los reembolsos, reversiones y capturas denegadas siguen fuera del procesamiento
-de negocio de este incremento: se conservan verificados como eventos ignorados.
-Su incorporación requiere definir también los estados y consumidores de M03.
+### Reembolsos y reversiones (M02 → M03)
+
+`PAYMENT.CAPTURE.REFUNDED` y `PAYMENT.CAPTURE.REVERSED` generan trabajos
+`PAYMENT_ADJUSTED`, consumidos por el worker M03 existente. Se admiten recursos
+`refund` de Payments v2 con estado `COMPLETED`, importes positivos exactos e ID
+del cobro original en `links[rel=up]` o `supplementary_data.related_ids.capture_id`.
+Los enlaces solo sirven para extraer el ID: no se descargan, deben apuntar al
+host Sandbox permitido y las referencias contradictorias se rechazan.
+
+En partner, un recurso sin vendedor se vincula mediante el evento original de
+captura ya verificado por M02. No se consulta una tabla privada de M03. Si ese
+evento aún no llegó, se responde 503 sin confirmar recepción para permitir otra
+entrega. Si hay varios equipos candidatos, un vendedor contradictorio o una
+referencia inválida, se rechaza. Una vez elegido el equipo, sigue siendo
+obligatoria la verificación de la firma de la entrega actual con PayPal.
+
+La migración `20261113020000_payment_adjustments` agrega el índice de capturas,
+amplía los tipos de trabajos, crea `payment_adjustments` privado con RLS y añade
+la proyección financiera a `transactions`. También encola eventos financieros
+verificados que antes se habían guardado como ignorados y no tenían trabajo.
+No modifica el cuerpo, hashes ni auditoría histórica de esos eventos.
+
+Ver [estado financiero y reglas M03](m03-transactions.md#reembolsos-y-reversiones--13-de-noviembre-de-2026).
+Las capturas denegadas/declinadas, reembolsos pendientes/fallidos y Payments v1
+siguen fuera de este incremento. No se ejecutan reembolsos ni movimientos de
+dinero desde esta API: se procesan avisos de movimientos ya realizados en PayPal.
+
+Para recibirlos en un entorno publicado, aplicar la migración, publicar el código
+y **añadir ambos eventos al webhook de la misma aplicación PayPal**, conservando
+las suscripciones existentes. El cambio local no modifica la configuración de
+PayPal ni acredita un reembolso/reversión Sandbox real.
+
+Referencias oficiales: [eventos de PayPal](https://developer.paypal.com/api/rest/webhooks/event-names/)
+y [schema Payments v2, callback capture_refunded](https://developer.paypal.com/api/payments/v2/schema.json).
 
 `POST /api/webhooks/paypal` recibe entregas de PayPal Sandbox. La ruta no usa
 el JWT del merchant: autentica cada evento mediante la API oficial de
@@ -101,6 +132,8 @@ una transacción, investigación o resolución de una disputa.
 | Tipo PayPal                 | Trabajo pendiente      | Consumidor |
 | --------------------------- | ---------------------- | ---------- |
 | `PAYMENT.CAPTURE.COMPLETED` | `TRANSACTION_CAPTURED` | M03        |
+| `PAYMENT.CAPTURE.REFUNDED`  | `PAYMENT_ADJUSTED`     | M03        |
+| `PAYMENT.CAPTURE.REVERSED`  | `PAYMENT_ADJUSTED`     | M03        |
 | `CUSTOMER.DISPUTE.CREATED`  | `DISPUTE_CHANGED`      | M07        |
 | `CUSTOMER.DISPUTE.UPDATED`  | `DISPUTE_CHANGED`      | M07        |
 | `CUSTOMER.DISPUTE.RESOLVED` | `DISPUTE_CHANGED`      | M07        |
@@ -136,7 +169,8 @@ Aplicar `pnpm db:deploy`. M01 debe tener merchant provisionado,
 Sandbox. Sin esa configuración el webhook falla cerrado.
 
 Registrar una URL pública HTTPS real terminada en `/api/webhooks/paypal` y
-suscribir los cuatro eventos de la tabla. No registrar localhost ni un dominio
+suscribir los eventos de la tabla; en partner conservar también
+`MERCHANT.PARTNER-CONSENT.REVOKED`. No registrar localhost ni un dominio
 ficticio. La API está publicada en Render y se verificaron entregas firmadas
 genuinas de PayPal Sandbox; ver [validación](validation.md). Las suites
 automatizadas usan cabeceras y

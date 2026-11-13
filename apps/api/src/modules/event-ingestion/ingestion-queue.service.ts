@@ -18,6 +18,8 @@ export class IngestionRejection extends Error {
     readonly code:
       | 'INVALID_CAPTURE'
       | 'CAPTURE_CONFLICT'
+      | 'INVALID_PAYMENT_ADJUSTMENT'
+      | 'PAYMENT_ADJUSTMENT_CONFLICT'
       | 'INVALID_DISPUTE'
       | 'DISPUTE_CONFLICT',
   ) {

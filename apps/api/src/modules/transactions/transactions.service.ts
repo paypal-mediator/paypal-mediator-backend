@@ -26,6 +26,8 @@ import {
 import { parseCapture } from './capture.js';
 import { OrderSourcesService } from './sources/order-sources.service.js';
 import { AuditService } from '../monitoring/audit.service.js';
+import { PaymentAdjustmentsService } from './payment-adjustments.service.js';
+import { PaymentMoney } from './payment-money.js';
 
 function response(
   row: TransactionWithOrder,
@@ -36,6 +38,14 @@ function response(
     amount: { currencyCode: row.currencyCode, value: row.amount.toFixed() },
     capturedAt: row.capturedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
+    financialSummary: {
+      returnedAmount: row.returnedAmount.toFixed(),
+      remainingAmount: row.adjustmentReviewRequired
+        ? null
+        : new PaymentMoney(row.amount).minus(row.returnedAmount).toFixed(),
+      requiresReview: row.adjustmentReviewRequired,
+      basis: 'VERIFIED_PAYPAL_WEBHOOKS',
+    },
     order: evidenceContext(row).order,
     orderEnrichment: sourceEnrichment(row),
     orderLink: {
@@ -61,6 +71,8 @@ export class TransactionsService {
     @Inject(EvidenceService) private readonly evidence: EvidenceService,
     @Inject(OrderSourcesService) private readonly sources: OrderSourcesService,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(PaymentAdjustmentsService)
+    private readonly adjustments: PaymentAdjustmentsService,
   ) {}
 
   async processNextCapture(merchantId: string) {
@@ -95,7 +107,13 @@ export class TransactionsService {
             existing.invoiceId !== capture.invoiceId
           )
             throw new IngestionRejection('CAPTURE_CONFLICT');
-          const linked = await reconcileOrder(tx, existing);
+          const linkedOrder = await reconcileOrder(tx, existing);
+          const linked =
+            (await this.adjustments.reconcile(
+              tx,
+              delivery.merchantId,
+              capture.paypalCaptureId,
+            )) ?? linkedOrder;
           await this.evidence.syncBase(tx, evidenceContext(linked));
           await this.sources.schedule(tx, linked);
           return { transactionId: existing.id };
@@ -108,7 +126,13 @@ export class TransactionsService {
             sourceEventId: delivery.eventId,
           },
         });
-        const linked = await reconcileOrder(tx, created);
+        const linkedOrder = await reconcileOrder(tx, created);
+        const linked =
+          (await this.adjustments.reconcile(
+            tx,
+            delivery.merchantId,
+            capture.paypalCaptureId,
+          )) ?? linkedOrder;
         await this.audit.append(
           {
             merchantId: delivery.merchantId,
@@ -126,6 +150,10 @@ export class TransactionsService {
         return { transactionId: created.id };
       },
     );
+  }
+
+  processNextAdjustment(merchantId: string) {
+    return this.adjustments.processNext(merchantId);
   }
 
   async list(merchantId: string, query: TransactionQuery) {

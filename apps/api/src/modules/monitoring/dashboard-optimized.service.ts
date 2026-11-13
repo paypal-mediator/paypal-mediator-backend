@@ -109,6 +109,7 @@ export class DashboardOptimizedService {
             merchantOrderReference: transaction.merchantOrderReference,
             invoiceId: transaction.invoiceId,
             status: transaction.status,
+            financialSummary: transaction.financialSummary,
             amount: transaction.amount,
             capturedAt: transaction.capturedAt,
             readiness: { status: transaction.readiness.status },

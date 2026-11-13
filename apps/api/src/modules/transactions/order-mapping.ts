@@ -232,6 +232,15 @@ export function evidenceContext(row: TransactionWithOrder): EvidenceContext {
     currencyCode: row.currencyCode,
     capturedAt: row.capturedAt.toISOString(),
     sourceEventId: row.sourceEventId,
+    ...(row.status !== 'COMPLETED'
+      ? {
+          financialSummary: {
+            status: row.status,
+            returnedAmount: row.returnedAmount.toFixed(),
+            requiresReview: row.adjustmentReviewRequired,
+          },
+        }
+      : {}),
     order,
     orders,
     orderRecordComplete:

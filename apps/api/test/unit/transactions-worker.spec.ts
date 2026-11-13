@@ -9,12 +9,14 @@ describe('M03 worker scheduling', () => {
   const merchantId = '00000000-0000-4000-8000-000000000001';
   const processNextCapture = vi.fn<TransactionsService['processNextCapture']>();
   const processNextOrderSource = vi.fn().mockResolvedValue('EMPTY');
+  const processNextAdjustment = vi.fn().mockResolvedValue('EMPTY');
   let worker: TransactionsWorker;
   function start(enabled: boolean, merchant: string | undefined = merchantId) {
     worker = new TransactionsWorker(
       {
         processNextCapture,
         processNextOrderSource,
+        processNextAdjustment,
       } as unknown as TransactionsService,
       parseEnvironment({
         DATABASE_URL: 'postgresql://localhost:1/MOCK',
@@ -28,6 +30,7 @@ describe('M03 worker scheduling', () => {
     vi.useFakeTimers();
     processNextCapture.mockReset();
     processNextCapture.mockResolvedValue('EMPTY');
+    processNextAdjustment.mockReset().mockResolvedValue('EMPTY');
   });
   afterEach(async () => {
     await worker?.onModuleDestroy();
@@ -45,6 +48,7 @@ describe('M03 worker scheduling', () => {
         {
           processNextCapture,
           processNextOrderSource,
+          processNextAdjustment,
         } as unknown as TransactionsService,
         parseEnvironment({
           DATABASE_URL: 'postgresql://localhost:1/MOCK',
@@ -55,12 +59,14 @@ describe('M03 worker scheduling', () => {
       worker.onModuleInit();
       await vi.advanceTimersByTimeAsync(5000);
       expect(processNextCapture).not.toHaveBeenCalled();
+      expect(processNextAdjustment).not.toHaveBeenCalled();
     },
   );
   it('scopes consumption to the configured merchant and waits when empty', async () => {
     start(true);
     await vi.advanceTimersByTimeAsync(0);
     expect(processNextCapture).toHaveBeenCalledWith(merchantId);
+    expect(processNextAdjustment).toHaveBeenCalledWith(merchantId);
     await vi.advanceTimersByTimeAsync(999);
     expect(processNextCapture).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);

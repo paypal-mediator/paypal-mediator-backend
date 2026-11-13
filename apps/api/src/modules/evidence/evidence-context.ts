@@ -11,6 +11,11 @@ export interface EvidenceContext {
   amount: string;
   capturedAt: string;
   sourceEventId: string;
+  financialSummary?: {
+    status: string;
+    returnedAmount: string;
+    requiresReview: boolean;
+  };
   order: TransactionResponse['order'];
   orders?: Array<NonNullable<TransactionResponse['order']>>;
   orderRecordComplete?: boolean;
@@ -26,5 +31,8 @@ export function paymentRecord(context: EvidenceContext) {
     currencyCode: context.currencyCode,
     capturedAt: context.capturedAt,
     sourceEventId: context.sourceEventId,
+    ...(context.financialSummary
+      ? { financialSummary: context.financialSummary }
+      : {}),
   };
 }

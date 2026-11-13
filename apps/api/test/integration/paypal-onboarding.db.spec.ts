@@ -7,6 +7,7 @@ import { PrismaService } from '../../src/common/database/prisma.service.js';
 import { PayPalAuthService } from '../../src/modules/merchants/index.js';
 import { MerchantsService } from '../../src/modules/merchants/merchants.service.js';
 import { createMockAuth } from '../fixtures/auth.js';
+import { paymentAdjustmentEvent } from '../fixtures/capture.js';
 import {
   mockTransmissionHeaders,
   mockWebhookEvent,
@@ -255,7 +256,11 @@ describe('PayPal seller onboarding: PostgreSQL and HTTP, MOCK PayPal and identit
               ...event.resource,
               disputed_transactions: [{ seller: { merchant_id: seller } }],
             }
-          : { ...event.resource, payee: { merchant_id: seller } };
+          : {
+              ...event.resource,
+              id: `${seller}-CAPTURE`,
+              payee: { merchant_id: seller },
+            };
         const receipt = await deliver({ ...event, resource }).expect(200);
         expect(
           await prisma.webhookEvent.findUniqueOrThrow({
@@ -266,7 +271,44 @@ describe('PayPal seller onboarding: PostgreSQL and HTTP, MOCK PayPal and identit
           (await deliver({ ...event, resource }).expect(200)).body.outcome,
         ).toBe('DUPLICATE');
       }
+      const refund = paymentAdjustmentEvent(
+        `${seller}-CAPTURE`,
+        `${seller}-REFUND`,
+      );
+      const receipt = await deliver(refund).expect(200);
+      expect(
+        await prisma.webhookEvent.findUniqueOrThrow({
+          where: { id: receipt.body.eventId },
+        }),
+      ).toMatchObject({ merchantId: team });
+      const forgedSeller = {
+        ...refund,
+        id: `MOCK-${randomUUID()}`,
+        resource: {
+          ...refund.resource,
+          merchant_id:
+            seller === 'SELLER1234567' ? 'SECOND1234567' : 'SELLER1234567',
+        },
+      };
+      await deliver(forgedSeller).expect(422);
     }
+    const earlyRefund = paymentAdjustmentEvent(
+      'MOCK-UNKNOWN-CAPTURE',
+      'MOCK-UNROUTABLE-REFUND',
+    );
+    await deliver(earlyRefund).expect(503);
+    signature = 'FAILURE';
+    const rejectedRefund = paymentAdjustmentEvent(
+      'SELLER1234567-CAPTURE',
+      'MOCK-BAD-SIGNATURE-REFUND',
+    );
+    await deliver(rejectedRefund).expect(401);
+    expect(
+      await prisma.webhookEvent.count({
+        where: { paypalEventId: rejectedRefund.id },
+      }),
+    ).toBe(0);
+    signature = 'SUCCESS';
     for (const resource of [
       {},
       { merchant_id: 'UNKNOWN' },

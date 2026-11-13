@@ -43,6 +43,7 @@ model Merchant {
   requireMerchantApproval Boolean              @default(true) @map("require_merchant_approval")
   members                 MerchantMember[]
   paypalAccount           PayPalAccount?
+  paymentAdjustments      PaymentAdjustment[]
   integration             MerchantIntegration?
   events                  MerchantEvent[]
   webhookEvents           WebhookEvent[]
@@ -155,6 +156,7 @@ model WebhookEvent {
   rawBody        String        @map("raw_body")
   payloadHash    String        @map("payload_hash") @db.VarChar(64)
   rawBodyHash    String        @map("raw_body_hash") @db.VarChar(64)
+  paypalResourceId String? @map("paypal_resource_id") @db.VarChar(255)
   receivedAt     DateTime      @default(now()) @map("received_at") @db.Timestamptz(3)
   merchant       Merchant      @relation(fields: [merchantId], references: [id], onDelete: Restrict)
   job            IngestionJob?
@@ -162,9 +164,11 @@ model WebhookEvent {
   disputeSource  Dispute?       @relation("DisputeSourceEvent")
   disputeEvents  DisputeEvent[]
   submissionEvents SubmissionEvent[]
+  paymentAdjustments PaymentAdjustment[]
 
   @@unique([merchantId, environment, paypalEventId])
   @@index([merchantId, receivedAt])
+  @@index([eventType, paypalResourceId, environment])
   @@map("webhook_events")
 }
 
@@ -192,6 +196,8 @@ model Transaction {
   merchantOrderReference String?  @map("merchant_order_reference") @db.VarChar(255)
   invoiceId              String?  @map("invoice_id") @db.VarChar(255)
   status                 String   @default("COMPLETED")
+  returnedAmount         Decimal @default(0) @map("returned_amount") @db.Decimal(38, 8)
+  adjustmentReviewRequired Boolean @default(false) @map("adjustment_review_required")
   currencyCode           String   @map("currency_code") @db.VarChar(3)
   amount                 Decimal  @db.Decimal(24, 8)
   capturedAt             DateTime @map("captured_at") @db.Timestamptz(3)
@@ -216,6 +222,28 @@ model Transaction {
   @@unique([id, merchantId])
   @@index([merchantId, createdAt, id])
   @@map("transactions")
+}
+
+// M03 owns immutable refund/reversal movements, including those received before a capture.
+model PaymentAdjustment {
+  id String @id @default(uuid()) @db.Uuid
+  merchantId String @map("merchant_id") @db.Uuid
+  environment String @default("sandbox")
+  paypalCaptureId String @map("paypal_capture_id") @db.VarChar(255)
+  paypalAdjustmentId String @map("paypal_adjustment_id") @db.VarChar(255)
+  kind String
+  currencyCode String @map("currency_code") @db.VarChar(3)
+  amount Decimal @db.Decimal(24, 8)
+  cumulativeReturnedAmount Decimal? @map("cumulative_returned_amount") @db.Decimal(24, 8)
+  occurredAt DateTime @map("occurred_at") @db.Timestamptz(3)
+  sourceEventId String @unique @map("source_event_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  sourceEvent WebhookEvent @relation(fields: [sourceEventId], references: [id], onDelete: Restrict)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@unique([merchantId, environment, paypalAdjustmentId], map: "payment_adjustments_merchant_env_adjustment_key")
+  @@index([merchantId, environment, paypalCaptureId], map: "payment_adjustments_merchant_env_capture_idx")
+  @@map("payment_adjustments")
 }
 
 model MerchantOrder {

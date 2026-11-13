@@ -1,3 +1,14 @@
+## M02/M03: reembolsos y reversiones, 2026-11-13
+
+Se procesan `PAYMENT.CAPTURE.REFUNDED` y `PAYMENT.CAPTURE.REVERSED` de Payments
+v2 mediante la cola M02 y movimientos persistentes de M03. El pago conserva su
+importe original y expone estado, total devuelto y saldo restante; duplicados,
+acumulados y entregas fuera de orden no duplican dinero. Conflictos de moneda o
+importe dejan revisión explícita. Requiere la migración
+`20261113020000_payment_adjustments`, despliegue y suscribir ambos eventos en
+PayPal. La implementación no ejecuta devoluciones. Ver
+[contrato y límites](docs/m03-transactions.md#reembolsos-y-reversiones--13-de-noviembre-de-2026).
+
 ## M02: recuperación y estado por equipo, 2026-11-13
 
 API autenticada para listar trabajos con paginación y consultar última recepción,

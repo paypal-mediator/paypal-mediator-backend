@@ -2,6 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   WebhookReceiptSchema,
   type WebhookReceipt,
+  type PayPalWebhookEnvelope,
+  paypalRefundCaptureId,
 } from '@resolve-ai/contracts';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../common/database/prisma.service.js';
@@ -37,10 +39,7 @@ export class EventIngestionService {
     // parseWebhookBody guarantees the buffer exists; hashes precede any external call.
     const originalBody = rawBody!;
     const hashes = webhookHashes(event, originalBody);
-    const context = await this.merchants.getPayPalWebhookContext(
-      event.resource,
-      event.event_type,
-    );
+    const context = await this.webhookContext(event);
     try {
       await this.verifier.verify(event, headers, context.webhookId);
     } catch (error) {
@@ -67,6 +66,11 @@ export class EventIngestionService {
             merchantId: context.merchantId,
             environment: 'sandbox',
             paypalEventId: event.id,
+            paypalResourceId:
+              typeof event.resource.id === 'string' &&
+              event.resource.id.length <= 255
+                ? event.resource.id
+                : null,
             eventType: event.event_type,
             eventCreatedAt: new Date(event.create_time),
             webhookId: context.webhookId,
@@ -155,6 +159,76 @@ export class EventIngestionService {
         outcome: 'DUPLICATE',
         jobId: existing.job?.id ?? null,
       });
+    }
+  }
+
+  private async webhookContext(event: PayPalWebhookEnvelope) {
+    if (ingestionJobKind(event.event_type) !== 'PAYMENT_ADJUSTED')
+      return this.merchants.getPayPalWebhookContext(
+        event.resource,
+        event.event_type,
+      );
+    const captureId = paypalRefundCaptureId(event.resource);
+    if (!captureId)
+      throw new ApiException(
+        'INVALID_REFUND_CAPTURE_REFERENCE',
+        'Refund must identify exactly one Sandbox capture',
+        422,
+      );
+    // M02 reads only its own verified envelopes. No fallback to an arbitrary team.
+    const origins = await this.prisma.webhookEvent.findMany({
+      where: {
+        eventType: 'PAYMENT.CAPTURE.COMPLETED',
+        paypalResourceId: captureId,
+        environment: 'sandbox',
+      },
+      distinct: ['merchantId'],
+      take: 2,
+      select: { merchantId: true, payload: true },
+    });
+    if (origins.length > 1)
+      throw new ApiException(
+        'PAYPAL_WEBHOOK_MERCHANT_UNKNOWN',
+        'Capture ownership is ambiguous',
+        422,
+      );
+    const hasIdentity = ['merchant_id', 'payee', 'disputed_transactions'].some(
+      (key) => key in event.resource,
+    );
+    if (!hasIdentity && origins[0]) {
+      const original = origins[0].payload as {
+        resource: Record<string, unknown>;
+      };
+      return this.merchants.getPayPalWebhookContext(
+        original.resource,
+        event.event_type,
+      );
+    }
+    try {
+      const context = await this.merchants.getPayPalWebhookContext(
+        event.resource,
+        event.event_type,
+      );
+      if (origins[0] && context.merchantId !== origins[0].merchantId)
+        throw new ApiException(
+          'PAYPAL_WEBHOOK_MERCHANT_UNKNOWN',
+          'Refund seller does not own this capture',
+          422,
+        );
+      return context;
+    } catch (error) {
+      if (
+        !hasIdentity &&
+        !origins.length &&
+        error instanceof ApiException &&
+        error.code === 'PAYPAL_WEBHOOK_MERCHANT_UNKNOWN'
+      )
+        throw new ApiException(
+          'PAYPAL_CAPTURE_ROUTING_PENDING',
+          'Original capture delivery is required before routing this refund; retry delivery',
+          503,
+        );
+      throw error;
     }
   }
 }

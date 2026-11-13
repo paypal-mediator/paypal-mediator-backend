@@ -11,12 +11,14 @@ import { EvidenceModule } from '../evidence/index.js';
 import { PayPalOrderSource } from './sources/paypal-order-source.js';
 import { OrderSourcesService } from './sources/order-sources.service.js';
 import { ORDER_INFORMATION_SOURCES } from './sources/order-information-source.js';
+import { PaymentAdjustmentsService } from './payment-adjustments.service.js';
 
 @Module({
   imports: [MerchantsModule, EventIngestionModule, EvidenceModule, AuditModule],
   controllers: [TransactionsController, OrdersController],
   providers: [
     TransactionsService,
+    PaymentAdjustmentsService,
     TransactionsWorker,
     OrdersService,
     PayPalOrderSource,

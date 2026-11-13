@@ -124,6 +124,10 @@ export function webhookHashes(event: PayPalWebhookEnvelope, rawBody: Buffer) {
 export function ingestionJobKind(eventType: string): IngestionJobKind | null {
   if (eventType === 'PAYMENT.CAPTURE.COMPLETED') return 'TRANSACTION_CAPTURED';
   if (
+    ['PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.REVERSED'].includes(eventType)
+  )
+    return 'PAYMENT_ADJUSTED';
+  if (
     [
       'CUSTOMER.DISPUTE.CREATED',
       'CUSTOMER.DISPUTE.UPDATED',

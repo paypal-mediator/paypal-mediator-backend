@@ -1,5 +1,57 @@
 # M03 — Transaction Manager
 
+## Reembolsos y reversiones — 13 de noviembre de 2026
+
+M03 consume `PAYMENT_ADJUSTED` mediante la cola pública de M02 y es propietario
+de `payment_adjustments`. Cada movimiento guarda el ID del recurso refund, el
+cobro original, importe/moneda exactos, acumulado reportado, fecha y evento de
+origen. La unicidad por equipo/entorno/recurso y un lock compartido con el
+consumidor de capturas evitan contabilizar dos veces avisos distintos del mismo
+movimiento. Importe, moneda, cobro o fecha contradictorios dejan el trabajo
+FAILED sin sobrescribir el movimiento anterior. Si el mismo recurso aparece
+como reembolso y reversión, se cuenta una sola vez y se conserva la clasificación
+REVERSAL. Los acumulados reportados pueden aumentar, nunca retroceder.
+
+El importe original de la captura se conserva. `status` puede ser COMPLETED,
+PARTIALLY_REFUNDED, REFUNDED, PARTIALLY_REVERSED, REVERSED o NEEDS_REVIEW. Si hay
+movimientos de ambos tipos, la clasificación de reversión tiene prioridad; el
+estado completo/parcial se refiere al total de dinero devuelto. La API de
+transacciones y el dashboard exponen `financialSummary` con `returnedAmount`,
+`remainingAmount`, `requiresReview` y base `VERIFIED_PAYPAL_WEBHOOKS`.
+
+El total devuelto es el mayor entre la suma de movimientos únicos conocidos y
+el acumulado reportado por PayPal; los acumulados no se suman. Esto permite
+recibir avisos fuera de orden y reflejar devoluciones anteriores cuyo aviso no
+está disponible, sin afirmar que se dispone de todo el historial. Una suma que
+excede el cobro o una moneda incompatible marca NEEDS_REVIEW y el saldo restante
+se devuelve null. Nunca se mezclan monedas ni se inventa un saldo corregido.
+
+Un movimiento anterior al procesamiento de la captura se conserva y se aplica
+cuando M03 la procesa. No crea una captura ficticia. En partner sigue siendo
+necesario poder resolver el equipo desde M01 o una entrega de captura verificada
+por M02; sin esa identidad, el webhook devuelve un error para una nueva entrega.
+
+Movimiento, proyección, versión PAYMENT_RECORD en M04 y auditoría M09 se
+confirman junto con el trabajo de M02. Un error revierte todo. Los cambios
+financieros crean una nueva revisión documental; los snapshots previos de los
+agentes conservan su revisión histórica. El checklist sigue midiendo cobertura
+documental, mientras `status` y `financialSummary` indican el estado financiero.
+No se ejecutan reembolsos, se modifican disputas ni se envía evidencia a PayPal.
+
+Validación local: `pnpm check` aprobado (430 pruebas unitarias/HTTP, lint,
+formato, tipos, Prisma y build); `pnpm test:db` aprobado (214 pruebas, 18
+archivos) en PostgreSQL desechable, con las 23 migraciones aplicadas y repetidas
+sin pendientes. Incluye la precisión completa de NUMERIC(24,8), concurrencia,
+rollback, acumulados, duplicados, revisiones M04 y routing partner. Los totales
+incluyen el trabajo local previo de invitaciones M01, conservado fuera de este
+commit. PayPal e identidad son MOCK explícitos; no hubo reembolsos reales,
+publicación ni migración de la base remota.
+
+La comparación `prisma migrate diff` no muestra diferencias en las tablas de
+este incremento. Conserva diferencias previas en planes, suscripciones,
+presentaciones y algunas claves foráneas de otros módulos; no se aplicaron
+correcciones automáticas sobre ellas.
+
 Capturas, registro de órdenes comerciales, vinculación y preparación documental
 por merchant dentro del backend NestJS. No crea pagos ni disputas. No hace llamadas
 nuevas a PayPal: consume exclusivamente eventos que M02 ya verificó y persistió.

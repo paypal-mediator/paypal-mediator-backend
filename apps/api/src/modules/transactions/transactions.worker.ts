@@ -55,6 +55,11 @@ export class TransactionsWorker implements OnModuleInit, OnModuleDestroy {
         const result = await this.transactions.processNextCapture(merchantId);
         if (result !== 'EMPTY') delay = 0;
         if (result === 'FAILED') this.logger.warn('CAPTURE_JOB_REJECTED');
+        const adjustment =
+          await this.transactions.processNextAdjustment(merchantId);
+        if (adjustment !== 'EMPTY') delay = 0;
+        if (adjustment === 'FAILED')
+          this.logger.warn('PAYMENT_ADJUSTMENT_REJECTED');
         const enrichment =
           await this.transactions.processNextOrderSource(merchantId);
         if (enrichment !== 'EMPTY') delay = 0;
