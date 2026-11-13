@@ -1,3 +1,42 @@
+## Estado vigente M07 y siguiente prioridad M08, 2026-11-13
+
+M07 está validado con pruebas locales y las correcciones de `debef05` están
+publicadas en Render. Conserva el pago vinculado ante referencias contradictorias
+y excluye conversaciones de eventos descartados por antigüedad. Validación local:
+`pnpm check` con 435 pruebas unitarias/HTTP y build; PostgreSQL desechable con
+223 pruebas y migraciones aplicadas/repetidas. El CI del commit limpio pasó
+432 pruebas unitarias/HTTP, 203 PostgreSQL y 162 del subconjunto de mediación;
+los totales locales incluyen invitaciones M01 previas que no se publicaron.
+Ver [validación M07](docs/m07-disputes.md) y
+[evidencia](docs/evidence/m07-sandbox-20261113.json).
+
+El usuario eligió continuar solo con pruebas locales de disputas y dejar Odoo
+fuera de la siguiente tarea. No hay una disputa genuina disponible del vendedor
+conectado; la recepción y el ciclo completo de una disputa Sandbox siguen
+pendientes de validación externa.
+
+**Siguiente prioridad: revisar y completar la validación local de M08**, que ya
+tiene implementación de Submission Guard y envío autorizado. No asumir que los
+siguientes controles están validados; revisar el código, corregir los faltantes
+y cubrirlos con pruebas:
+
+- [ ] Bloquear evidencia incompleta, contradictoria o modificada después de la
+      verificación M06. Prioridad: invalidar la verificación y aprobación previas
+      cuando cambie la revisión del expediente.
+- [ ] Exigir aprobación de un ADMIN autorizado para la versión exacta del
+      expediente y conservar las políticas de M01; la IA no puede autorizar envíos.
+- [ ] Evitar envíos duplicados, incluidos intentos concurrentes y reintentos.
+- [ ] Manejar errores, timeouts y respuestas inciertas de PayPal sin registrar
+      éxitos ficticios ni reenviar a ciegas.
+- [ ] Registrar cada intento, bloqueo y resultado en auditoría, con trazabilidad
+      de la revisión verificada y aprobada.
+- [ ] Validar casos permitidos y bloqueados con PostgreSQL de pruebas y PayPal
+      MOCK explícito. La presentación real `provide-evidence` queda pendiente
+      de una disputa Sandbox elegible y autorización del envío concreto.
+
+Esta actualización tiene precedencia sobre los pendientes históricos de M07/M08
+descritos más abajo. No acredita un envío real de evidencia a PayPal.
+
 ## Asociación Odoo → M03/M04, 2026-11-13
 
 Publicado `9bcd974` en Render y migración aplicada. La API autenticada muestra
@@ -242,7 +281,7 @@ desde Render verificados; descarga del archivo previo del usuario desde Storage
 con bytes idénticos. Issue #10 cerrado. Ver [validación publicada](docs/validation.md).
 
 > **Estado del documento:** contexto de producto, estado verificado del backend y especificación de los módulos pendientes. Los flujos futuros descritos abajo no implican que todo el MVP esté implementado.
-> **Versión:** 1.2 · **Actualizado:** 2026-11-11 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
+> **Versión:** 1.2 · **Actualizado:** 2026-11-13 · **Deadline del hackathon:** 2026-11-12, 14:00 CST (según la información proporcionada por el equipo).
 > **Alcance del repositorio:** únicamente backend. El frontend/M10 se desarrolla en otro repositorio.
 > **Objetivo de uso:** leer este documento y `AGENTS.md` al comenzar una sesión; contrastar las propuestas con el código y las pruebas existentes.
 
