@@ -121,6 +121,7 @@ describe('HTTP foundation (real Nest app, unavailable database)', () => {
       '/api/transactions/{transactionId}/investigations/{id}',
       '/api/transactions/{transactionId}/investigations/{investigationId}/verifications',
       '/api/transactions/{transactionId}/investigations/{investigationId}/verifications/{id}',
+      '/api/disputes/{id}/investigate',
       '/api/activity/metrics',
       '/api/activity',
       '/api/dashboard',

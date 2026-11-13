@@ -1,5 +1,13 @@
 # M06 — Verificación independiente INR
 
+Actualización local del 13 de noviembre: `StartVerification` admite `disputeId`
+para revisar el motivo y mensajes de un caso M07 concreto (`DISPUTE_INR`). La
+interfaz pública `submissionReview` exige la última revisión completa, aprobada,
+íntegra, vigente y sin DEMO; valida ID/evento del caso y originales actuales.
+Las revisiones `PREVENTIVE_INR` siguen sin habilitar presentaciones. La ruta
+M07 de investigación coordina una ronda M05/M06; M08 conserva la autorización.
+Ver [M08](m08-submissions.md). Este incremento no tiene prueba externa ni despliegue.
+
 Implementado y conectado a M05. Verificado localmente el 7 de noviembre de 2026
 con PayPal Sandbox, Supabase y NVIDIA reales. Migración aplicada en Supabase.
 M05/M06 están desplegados en Render con NVIDIA configurado. GET autenticados y POST

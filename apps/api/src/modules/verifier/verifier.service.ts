@@ -1,4 +1,5 @@
 import { AuditService } from '../monitoring/audit.service.js';
+import { DisputesService } from '../disputes/index.js';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   VerificationResponseSchema,
@@ -71,6 +72,7 @@ export class VerifierService {
     @Inject(VerifierEngine) private readonly engine: VerifierEngine,
     @Inject(ENVIRONMENT) private readonly env: Environment,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(DisputesService) private readonly disputes: DisputesService,
   ) {}
 
   async operationalMetrics(merchantId: string) {
@@ -80,6 +82,77 @@ export class VerifierService {
       _count: { _all: true },
     });
     return groups.map((g) => ({ status: g.status, count: g._count._all }));
+  }
+
+  // Public M06 boundary: preventive readiness never authorizes a dispute response.
+  async submissionReview(
+    merchantId: string,
+    transactionId: string,
+    disputeId: string,
+    lastEventAt: string,
+    verificationId?: string,
+  ) {
+    if (!verificationId) return null;
+    const row = await this.prisma.verificationRun.findFirst({
+      where: { merchantId, transactionId },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    if (!row || row.id !== verificationId) return null;
+    const current = await this.transactions.investigationSnapshot(
+      merchantId,
+      transactionId,
+    );
+    const review = this.present(row, current.dossier.revision);
+    const snapshot = row.snapshot as unknown as InvestigationSnapshot;
+    if (
+      review.status !== 'COMPLETED' ||
+      review.stale ||
+      review.containsDemo ||
+      review.result?.verdict !== 'APPROVED' ||
+      snapshot.dispute?.id !== disputeId ||
+      snapshot.dispute.lastEventAt !== lastEventAt ||
+      !review.result.verifiedEvidenceIds.length
+    )
+      return null;
+    if (
+      review.result.missingRequirements.length ||
+      review.result.contradictions.length ||
+      Object.values(review.result.checklist).some(
+        (check) => check.status !== 'PASS',
+      ) ||
+      review.result.claims.some(
+        (claim) => !['SUPPORTED', 'NON_FACTUAL'].includes(claim.status),
+      )
+    )
+      return null;
+    const ids = new Set(review.result.verifiedEvidenceIds);
+    if (
+      current.dossier.items.filter(
+        (item) =>
+          item.current && item.integrity === 'VALID' && ids.has(item.id),
+      ).length !== ids.size
+    )
+      return null;
+    const claims = review.result.claims.filter(
+      (claim) => claim.status === 'SUPPORTED',
+    );
+    if (
+      !claims.length ||
+      claims.some(
+        (claim) =>
+          !claim.evidenceIds.length ||
+          claim.evidenceIds.some((id) => !ids.has(id)),
+      )
+    )
+      return null;
+    const notes = claims.map((claim) => claim.statement).join('\n');
+    if (notes.length > 2000) return null;
+    return {
+      verificationId: row.id,
+      evidenceIds: [...ids],
+      notes,
+      evidenceRevision: row.evidenceRevision,
+    };
   }
 
   async verify(
@@ -110,10 +183,35 @@ export class VerifierService {
         'A completed current investigation is required',
         409,
       );
-    const snapshot = await this.transactions.investigationSnapshot(
-      actor.merchantId,
-      transactionId,
-    );
+    const snapshot: InvestigationSnapshot =
+      await this.transactions.investigationSnapshot(
+        actor.merchantId,
+        transactionId,
+      );
+    if (input.disputeId) {
+      const dispute = await this.disputes.detail(
+        actor.merchantId,
+        input.disputeId,
+      );
+      if (
+        dispute.link.status !== 'LINKED' ||
+        dispute.link.transactionId !== transactionId ||
+        dispute.reasonCategory !== 'ITEM_NOT_RECEIVED' ||
+        dispute.paypalStatus === 'RESOLVED'
+      )
+        throw new ApiException(
+          'DISPUTE_NOT_VERIFIABLE',
+          'An open linked INR dispute is required',
+          409,
+        );
+      snapshot.dispute = {
+        id: dispute.id,
+        paypalDisputeId: dispute.paypalDisputeId,
+        reason: dispute.paypalReason,
+        lastEventAt: dispute.lastEventAt,
+        messages: dispute.messages,
+      };
+    }
     snapshot.dossier.items = snapshot.dossier.items.filter(
       (item) => item.current,
     );
@@ -173,7 +271,16 @@ export class VerifierService {
           },
         },
       });
-      if (existing) return { row: existing, created: false };
+      if (existing) {
+        const stored = existing.snapshot as unknown as InvestigationSnapshot;
+        if ((stored.dispute?.id ?? null) !== (input.disputeId ?? null))
+          throw new ApiException(
+            'VERIFICATION_IDEMPOTENCY_CONFLICT',
+            'Idempotency key belongs to a different review scope',
+            409,
+          );
+        return { row: existing, created: false };
+      }
       // Serialized with acquisition: a different key or investigation cannot erase a rejection.
       const rejection = await tx.verificationRun.findFirst({
         where: {
@@ -464,7 +571,7 @@ export class VerifierService {
       stale: row.evidenceRevision !== currentRevision,
       containsDemo: snapshot.transaction.readiness.containsDemo,
       rejectionReview: snapshot.rejectionReview ?? null,
-      scope: 'PREVENTIVE_INR',
+      scope: snapshot.dispute ? 'DISPUTE_INR' : 'PREVENTIVE_INR',
       submissionAuthorized: false,
     });
   }

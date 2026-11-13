@@ -65,6 +65,7 @@ export const VerificationStepSchema = z.strictObject({
 });
 export const StartVerificationSchema = z.strictObject({
   idempotencyKey: z.uuid(),
+  disputeId: z.uuid().optional(),
   rejectionReview: RejectionReviewSchema.optional(),
 });
 export type StartVerification = z.infer<typeof StartVerificationSchema>;
@@ -90,7 +91,7 @@ export const VerificationResponseSchema = z.object({
     actorUserId: z.uuid(),
     reviewedAt: z.iso.datetime(),
   }).nullable(),
-  scope: z.literal('PREVENTIVE_INR'),
+  scope: z.enum(['PREVENTIVE_INR', 'DISPUTE_INR']),
   submissionAuthorized: z.literal(false),
   result: VerificationResultSchema.nullable(),
   trace: z.array(

@@ -19,10 +19,7 @@ type VerificationVerdict = 'APPROVED' | 'INCOMPLETE' | 'REJECTED';
 
 // PayPal states in which providing evidence is permitted.
 // These are documented in PayPal's Disputes API reference.
-const ELIGIBLE_PAYPAL_STATUSES = new Set([
-  'WAITING_FOR_SELLER_RESPONSE',
-  'UNDER_REVIEW',
-]);
+const ELIGIBLE_PAYPAL_STATUSES = new Set(['WAITING_FOR_SELLER_RESPONSE']);
 
 const ELIGIBLE_PAYPAL_STAGES = new Set(['INQUIRY', 'CHARGEBACK']);
 
@@ -67,6 +64,7 @@ export function evaluateSubmissionGuard(input: {
   verifiedEvidenceIds: string[];
   merchantAllowSubmissions: boolean | null | undefined;
   merchantRequireApproval: boolean | null | undefined;
+  merchantApproved?: boolean;
   paypalStatus: string | null | undefined;
   paypalStage: string | null | undefined;
   existingSubmission: boolean | null | undefined;
@@ -129,7 +127,10 @@ export function evaluateSubmissionGuard(input: {
   }
 
   // Rule 5: merchant approval required
-  if (input.merchantRequireApproval === true) {
+  if (
+    input.merchantRequireApproval !== false &&
+    input.merchantApproved !== true
+  ) {
     reasons.push(
       reason(
         'MERCHANT_APPROVAL_REQUIRED',
@@ -168,6 +169,13 @@ export function evaluateSubmissionGuard(input: {
     );
   }
 
+  if (input.verifiedEvidenceIds.length === 0)
+    reasons.push(
+      reason(
+        'VERIFIED_EVIDENCE_REQUIRED',
+        'At least one verified original is required.',
+      ),
+    );
   const verdict = reasons.length === 0 ? 'ALLOWED' : 'BLOCKED';
 
   return SubmissionGuardResultSchema.parse({ verdict, reasons });

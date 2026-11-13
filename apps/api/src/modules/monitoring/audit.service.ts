@@ -11,19 +11,22 @@ export class AuditService {
   async append(input: AuditWrite, tx: Prisma.TransactionClient = this.prisma) {
     const value = AuditWriteSchema.parse(input);
     const action = value.record.action;
-    const module = action.startsWith('MEDIATION_')
-      ? 'M07'
-      : action.startsWith('INVESTIGATION_')
-        ? 'M05'
-        : action.startsWith('VERIFICATION_')
-          ? 'M06'
-          : action.startsWith('EVIDENCE_')
-            ? 'M04'
-            : action.startsWith('WEBHOOK_') || action.startsWith('INGESTION_')
-              ? 'M02'
-              : action.startsWith('ORDER_') || action.startsWith('TRANSACTION_')
-                ? 'M03'
-                : 'M01';
+    const module = action.startsWith('SUBMISSION_')
+      ? 'M08'
+      : action.startsWith('MEDIATION_')
+        ? 'M07'
+        : action.startsWith('INVESTIGATION_')
+          ? 'M05'
+          : action.startsWith('VERIFICATION_')
+            ? 'M06'
+            : action.startsWith('EVIDENCE_')
+              ? 'M04'
+              : action.startsWith('WEBHOOK_') || action.startsWith('INGESTION_')
+                ? 'M02'
+                : action.startsWith('ORDER_') ||
+                    action.startsWith('TRANSACTION_')
+                  ? 'M03'
+                  : 'M01';
     return tx.auditEvent.create({ data: { ...value, module, action } });
   }
 

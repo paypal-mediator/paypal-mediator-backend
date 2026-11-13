@@ -22,7 +22,7 @@ export type SubmissionGuardReason = z.infer<typeof SubmissionGuardReasonSchema>;
 // Result of evaluating the Submission Guard before any PayPal call.
 export const SubmissionGuardResultSchema = z.strictObject({
   verdict: SubmissionGuardVerdictSchema,
-  reasons: z.array(SubmissionGuardReasonSchema).min(1).max(64),
+  reasons: z.array(SubmissionGuardReasonSchema).max(64),
 });
 export type SubmissionGuardResult = z.infer<typeof SubmissionGuardResultSchema>;
 
@@ -31,6 +31,8 @@ export const SubmissionStatusSchema = z.enum([
   'SUBMITTED',
   'BLOCKED',
   'FAILED',
+  'PENDING',
+  'UNKNOWN',
 ]);
 export type SubmissionStatus = z.infer<typeof SubmissionStatusSchema>;
 
@@ -52,6 +54,8 @@ export type SubmissionResult = z.infer<typeof SubmissionResultSchema>;
 // Request body for POST /api/disputes/:id/submit.
 export const SubmitRequestSchema = z.strictObject({
   idempotencyKey: z.uuid(),
+  verificationId: z.uuid().optional(),
+  approve: z.literal(true).optional(),
 });
 export type SubmitRequest = z.infer<typeof SubmitRequestSchema>;
 

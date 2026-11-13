@@ -6,14 +6,17 @@ import { InvestigatorModule } from '../investigator/index.js';
 import { VerifierEngine } from './verifier.engine.js';
 import { VerifierService } from './verifier.service.js';
 import { VerifierController } from './verifier.controller.js';
+import { DisputesModule } from '../disputes/index.js';
+import { DisputeWorkflowController } from './dispute-workflow.controller.js';
 @Module({
   imports: [
     MerchantsModule,
     TransactionsModule,
     InvestigatorModule,
     AuditModule,
+    DisputesModule,
   ],
-  controllers: [VerifierController],
+  controllers: [VerifierController, DisputeWorkflowController],
   providers: [VerifierEngine, VerifierService],
   exports: [VerifierService],
 })
