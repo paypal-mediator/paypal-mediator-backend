@@ -1,0 +1,29 @@
+{
+  "verifiedAt": "2026-11-13T02:07:18.333Z",
+  "environment": "sandbox",
+  "orderId": "1X243835AG084621L",
+  "status": "COMPLETED",
+  "captures": [
+    {
+      "id": "8W981738U01373155",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "USD",
+        "value": "1.00"
+      }
+    }
+  ],
+  "teamId": "7114cb66-9836-4237-b764-7e43235684cc",
+  "teamConnectionStatus": "NOT_CONFIGURED",
+  "registeredTeamTransactions": 0,
+  "paypalEventsHttpStatus": 200,
+  "paypalEvents": [],
+  "chatLinkPresentInOrder": false,
+  "buyerReceiptVisuallyInspected": false,
+  "buyerComplaintSent": false,
+  "limitations": [
+    "Buyer browser unavailable",
+    "Team PayPal connection NOT_CONFIGURED",
+    "Automatic chat link insertion into PayPal receipts is not implemented; no manual link substituted for this end-to-end test"
+  ]
+}
