@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-13T15:35:08.509Z",
+  "checkedAt": "2026-11-13T15:40:14.372Z",
   "environment": "sandbox",
   "sellerId": "U6K8ADS8D6REJ",
   "workerOverride": null,
@@ -20,7 +20,7 @@
     "checks": {
       "database": "up"
     },
-    "timestamp": "2026-11-13T15:35:08.602Z"
+    "timestamp": "2026-11-13T15:40:14.501Z"
   },
   "unauthenticatedStatus": 401,
   "paypalDisputes": [],
@@ -31,5 +31,31 @@
     "pageSize": 100
   },
   "realDisputeLifecycleVerified": false,
-  "limitation": "No genuine dispute exists for the connected seller. Buyer-side Sandbox action/consent is required to create one. Automated test payloads are explicit MOCK; they do not establish real PayPal dispute validation."
+  "limitation": "No genuine dispute exists for the connected seller. Buyer-side Sandbox action/consent is required to create one. Automated test payloads are explicit MOCK; they do not establish real PayPal dispute validation.",
+  "disputeValidationScope": "User selected local tests only; genuine Sandbox dispute lifecycle is deferred.",
+  "release": {
+    "commit": "debef050c08a9308ec035273ac14166009dbebc4",
+    "deployId": "dep-dbrittm8bjmc73bu10o0",
+    "status": "live",
+    "finishedAt": "2026-11-13T15:39:50.809596Z",
+    "ci": {
+      "conclusion": "success",
+      "headSha": "debef050c08a9308ec035273ac14166009dbebc4",
+      "status": "completed",
+      "url": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43454642312"
+    }
+  },
+  "localValidation": {
+    "check": {
+      "exitCode": 0,
+      "unitAndHttpTests": 435
+    },
+    "database": {
+      "migrationsApplied": 24,
+      "migrationsReapplied": true,
+      "tests": 223,
+      "exitCode": 0
+    },
+    "note": "Local workspace includes previously uncommitted M01 invitations. M01 changes are excluded from this release; clean-commit CI verifies the committed scope separately. No M07 schema migration was needed."
+  }
 }

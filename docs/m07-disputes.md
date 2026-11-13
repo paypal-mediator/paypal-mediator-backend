@@ -145,3 +145,12 @@ Ver [evidencia externa](evidence/m07-sandbox-20261113.json).
 Esto **no valida el ciclo real de una disputa**: hace falta abrir un caso desde
 el comprador Sandbox y comprobar su entrega, procesamiento, vínculo y detalle.
 No se sustituyó ese requisito con el simulador de webhooks ni con datos MOCK.
+El usuario eligió continuar únicamente con pruebas locales de disputas.
+`pnpm check` pasó con 435 pruebas unitarias/HTTP y build; `pnpm test:db`
+pasó con 223 pruebas sobre PostgreSQL desechable, aplicando y repitiendo las
+24 migraciones locales. Estos totales incluyen las invitaciones M01 que ya
+estaban sin commit; la publicación M07 excluye esos cambios y se valida por
+separado con el CI del commit limpio.
+El CI de `debef05` pasó con 432 pruebas unitarias/HTTP, 203 PostgreSQL y
+162 del subconjunto de mediación. Render publicó ese commit y el chequeo
+posterior confirmó readiness y autenticación; no se ejerció una disputa real.
