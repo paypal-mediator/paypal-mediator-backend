@@ -1,0 +1,77 @@
+{
+  "at": "2026-11-13T01:32:43.921Z",
+  "merchantId": "7114cb66-9836-4237-b764-7e43235684cc",
+  "orderId": "b18501d6-dfc6-4eb2-a110-3708d3ea9af7",
+  "chatId": "d6f6dad9-e565-4c30-a8e6-ad4f8ab31c9c",
+  "reference": "DEMO-CHAT-RELEASE-1794533555388",
+  "realServices": [
+    "Render frontend/backend",
+    "Supabase Auth/PostgreSQL",
+    "local NLP.js in Render",
+    "configured AI draft provider"
+  ],
+  "simulated": "DEMO order and buyer messages; no payment, real buyer or PayPal dispute",
+  "classification": {
+    "issue": "DEFECT",
+    "score": 1,
+    "margin": 1,
+    "source": "LOCAL_NLP",
+    "category": "COMPLAINT",
+    "modelVersion": "nlpjs-contact-v1"
+  },
+  "privateDraftCreated": true,
+  "approvedEditedReply": true,
+  "idempotentBuyer": true,
+  "idempotentApproval": true,
+  "finalVerifiedAt": "2026-11-13T01:50:32.394Z",
+  "backendCommit": "d728506b12470309a3b5d4fd8df6899950d08e09",
+  "frontendCommit": "719e2266ace2d079ea4e26c45abfdb01fc72fbab",
+  "backendDeploy": "dep-dbr6olu8bjmc73beib1g",
+  "frontendDeploy": "dep-dbr6omh42hec73b8pd40",
+  "readiness": 200,
+  "unauthenticated": 401,
+  "orderSource": {
+    "kind": "DEMO",
+    "system": "DEMO deployment verification; no real buyer or payment",
+    "checkoutOrigin": "UNVERIFIED",
+    "receiptLinkStatus": "CHECKOUT_INTEGRATION_REQUIRED"
+  },
+  "paymentSourceCheck": {
+    "transactionId": "c278811e-dfd2-47ab-8403-693a5d8337c1",
+    "kind": "PAYPAL",
+    "contextLoaded": true
+  },
+  "demoChatClosed": true,
+  "demoChatRevoked": true,
+  "revokedBuyerAccess": 410,
+  "browser": {
+    "publicFrontend": true,
+    "realBackend": true,
+    "apiMocks": false,
+    "checks": [
+      "mobile buyer send/reload",
+      "token fragment removal",
+      "merchant list/search/filters",
+      "row opens separate chat URL",
+      "chat reload and back",
+      "desktop/mobile no horizontal overflow",
+      "team settings and connection status"
+    ]
+  },
+  "knownLimitations": [
+    "Existing /api/activity responds 500; notifications show an error independently of chat",
+    "Automatic links in PayPal receipts require integration with the checkout that creates the payment; not implemented or claimed active"
+  ],
+  "ci": {
+    "status": "success",
+    "commit": "d728506b12470309a3b5d4fd8df6899950d08e09",
+    "url": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43347565134",
+    "checks": [
+      "pnpm check",
+      "pnpm db:deploy",
+      "pnpm test:db",
+      "pnpm test:mediation",
+      "pnpm db:deploy repeated"
+    ]
+  }
+}

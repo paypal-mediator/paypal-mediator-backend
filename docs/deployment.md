@@ -1,5 +1,15 @@
 # Backend público y webhook PayPal
 
+## Chat de conciliación publicado — 12 de noviembre de 2026
+
+Render confirmó `live` para backend `d728506` (despliegue `dep-dbr6olu8bjmc73beib1g`) y frontend `719e226` (`dep-dbr6omh42hec73b8pd40`). La migración `20261112020000_preventive_conciliations` se aplicó en Supabase mediante Prisma con TLS verificado; las tres tablas tienen RLS habilitado. Se conservaron dos entradas históricas adicionales de migración de la base, sin reescribirlas ni resetear datos.
+
+API real: readiness 200, acceso sin sesión 401, fuente de pedido privado identificada, acuse positivo sin borrador, NLP local y generador real con borrador privado, publicación del texto editado e idempotencia. Navegador Chrome de pruebas contra frontend/API publicados, sin mocks: comprador móvil, envío y recarga, lista con búsqueda/filtros, navegación al chat independiente, recarga/regreso y ajustes del equipo. Pedido y mensajes de comprador explícitamente DEMO; no se hizo ningún pago ni se contactó a compradores reales. Se resolvió/revocó el chat DEMO y se revocó el enlace adicional de prueba de un pago Sandbox con datos importados.
+
+Validación local: `pnpm check` (411 pruebas), migraciones aplicadas/repetidas en PostgreSQL desechable y `pnpm test:db` (183); frontend con 39 pruebas, lint, tipos y build. La activación de asistencia permanece en ajustes del equipo. La procedencia de la información distingue PayPal/ERP de pedidos manuales, pero el checkout originador sigue sin verificar: no se insertan automáticamente enlaces en recibos PayPal. También se observó HTTP 500 en `/api/activity`, que produce un aviso de notificaciones independiente de la conciliación.
+
+Ver [evidencia publicada](evidence/conciliations-render-20261112.json) y [flujo y límites](preventive-conciliations.md).
+
 ## Servicio creado el 11 de noviembre de 2026
 
 El workspace `My Workspace` contiene `paypal-mediator-backend` en Oregon,

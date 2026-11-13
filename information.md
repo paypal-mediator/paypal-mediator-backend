@@ -1,3 +1,7 @@
+## Chat de conciliacion publicado y UX revisada, 2026-11-12
+
+Backend `d728506` y frontend `719e226` confirmados Live en Render; migracion aplicada en Supabase con RLS. Tabla como Disputes, chat en ruta propia y asistencia/reglas en configuracion del equipo. Prueba real publicada con pedido/mensajes DEMO, Auth/PostgreSQL/NLP/generador reales: borrador privado, aprobacion editada, idempotencia y navegador desktop/movil. Enlaces de prueba revocados. Validacion: `pnpm check` 411 pruebas, `pnpm test:db` 183 y frontend 39, lint/tipos/build. La fuente de datos del pedido se identifica; no demuestra quien crea el checkout ni inserta enlaces automaticamente en recibos PayPal. `/api/activity` presenta un 500 previo independiente del chat. Ver [despliegue y limites](docs/deployment.md#chat-de-conciliación-publicado--12-de-noviembre-de-2026).
+
 ## Conciliacion preventiva - implementacion, 2026-11-12
 
 Nuevo modulo independiente de disputas: chat privado por pedido o pago, agente NLP.js local bilingue y generador de propuestas solo para preguntas/quejas. Confirmaciones positivas no cargan el modelo ni llaman al generador. Borradores privados, edicion/aprobacion del comerciante y reglas automaticas opcionales con textos aprobados en ambos idiomas. Incluye enlaces revocables, RLS, idempotencia y recuperacion manual. Ver [flujo, API, limites y pruebas](docs/preventive-conciliations.md). La migracion propia es `20261112020000_preventive_conciliations`; no se modifican tablas privadas de otros modulos.
