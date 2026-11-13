@@ -1,3 +1,7 @@
+## Bandeja de conciliaciones iniciadas por comprador, 2026-11-12
+
+Backend `2fb3824` y frontend `d0b7017` confirmados Live. Se elimina New conversation y el formulario del vendedor. La bandeja solo incluye conversaciones con al menos un mensaje BUYER; provisionar un enlace no abre un caso visible. Icono de burbuja de chat distinto del de Disputes en navegacion y ajustes. Verificado en API y navegador publicados, con 411 pruebas backend, 183 PostgreSQL y 39 frontend aprobadas; sin migracion nueva. Evidencia adicional en `docs/evidence/conciliations-render-20261112.json`.
+
 ## Chat de conciliacion publicado y UX revisada, 2026-11-12
 
 Backend `d728506` y frontend `719e226` confirmados Live en Render; migracion aplicada en Supabase con RLS. Tabla como Disputes, chat en ruta propia y asistencia/reglas en configuracion del equipo. Prueba real publicada con pedido/mensajes DEMO, Auth/PostgreSQL/NLP/generador reales: borrador privado, aprobacion editada, idempotencia y navegador desktop/movil. Enlaces de prueba revocados. Validacion: `pnpm check` 411 pruebas, `pnpm test:db` 183 y frontend 39, lint/tipos/build. La fuente de datos del pedido se identifica; no demuestra quien crea el checkout ni inserta enlaces automaticamente en recibos PayPal. `/api/activity` presenta un 500 previo independiente del chat. Ver [despliegue y limites](docs/deployment.md#chat-de-conciliación-publicado--12-de-noviembre-de-2026).

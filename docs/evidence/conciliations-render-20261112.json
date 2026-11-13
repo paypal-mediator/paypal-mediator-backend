@@ -73,5 +73,22 @@
       "pnpm test:mediation",
       "pnpm db:deploy repeated"
     ]
+  },
+  "buyerInitiatedInbox": {
+    "verifiedAt": "2026-11-13T01:58:38.805Z",
+    "backendCommit": "2fb382488b9eae9c0490f6a891c5a069b023babc",
+    "frontendCommit": "d0b70171c3e12df98efb6d8a9ecd8e09c5d63207",
+    "backendDeploy": "dep-dbr6spp42hec73b8tu0g",
+    "frontendDeploy": "dep-dbr6sd2vcj2c73eitd00",
+    "visibleConversations": 1,
+    "allVisibleConversationsHaveBuyerMessages": true,
+    "noSellerCreationButton": true,
+    "distinctConciliationIcon": true,
+    "browserVerified": true,
+    "localChecks": {
+      "unitHttp": 411,
+      "postgresql": 183,
+      "frontend": 39
+    }
   }
 }
