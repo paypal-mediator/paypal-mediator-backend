@@ -1,3 +1,7 @@
+## Pago Sandbox del vendedor conectado y queja de prueba, 2026-11-12
+
+Con la cuenta indicada por el usuario se verifico el equipo Heladeria Demo Donnet y su vendedor Sandbox conectado. Orden `3PE455400B6999217`, captura `7GD21860GA330880G`, 1 USD ficticio COMPLETED y transaccion `b8e14979-bf3d-47c0-9a02-836831c663ea` visible en el equipo correcto. El enlace no se genero dentro de la orden PayPal. Prueba separada: enlace tecnico provisionado por API para ese pago, primer mensaje del comprador "El producto llego roto", clasificacion COMPLAINT/DEFECT por NLP real y borrador del generador real PENDING, privado y oculto al comprador. Conversacion `adc2e62d-3dfc-48c1-9b07-f038c364e953` abierta para revision; sin respuesta del vendedor ni disputa PayPal. Esta prueba valida APIs publicadas, no la entrega del enlace en recibo ni una inspeccion visual nueva. Ver `docs/evidence/conciliation-connected-seller-sandbox-20261112.json`.
+
 ## Bandeja de conciliaciones iniciadas por comprador, 2026-11-12
 
 Backend `2fb3824` y frontend `d0b7017` confirmados Live. Se elimina New conversation y el formulario del vendedor. La bandeja solo incluye conversaciones con al menos un mensaje BUYER; provisionar un enlace no abre un caso visible. Icono de burbuja de chat distinto del de Disputes en navegacion y ajustes. Verificado en API y navegador publicados, con 411 pruebas backend, 183 PostgreSQL y 39 frontend aprobadas; sin migracion nueva. Evidencia adicional en `docs/evidence/conciliations-render-20261112.json`.

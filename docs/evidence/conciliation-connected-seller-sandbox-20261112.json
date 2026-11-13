@@ -1,0 +1,63 @@
+{
+  "verifiedAt": "2026-11-13T02:14:53.710Z",
+  "environment": "sandbox",
+  "orderId": "3PE455400B6999217",
+  "orderStatus": "COMPLETED",
+  "captures": [
+    {
+      "id": "7GD21860GA330880G",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "USD",
+        "value": "1.00"
+      }
+    }
+  ],
+  "teamId": "48308136-377f-425a-965e-f673f98a12fa",
+  "teamName": "Heladería Demo Donnet",
+  "sellerId": "U6K8ADS8D6REJ",
+  "payeeVerified": true,
+  "teamConnectionStatus": "CONNECTED",
+  "registeredTeamTransactions": 1,
+  "transactionId": "b8e14979-bf3d-47c0-9a02-836831c663ea",
+  "orderInformationSource": null,
+  "chatLinkPresentInOrder": false,
+  "buyerReceiptVisuallyInspected": false,
+  "buyerComplaintSent": true,
+  "paypalEventsHttpStatus": 200,
+  "paypalEvents": [],
+  "limitations": [
+    "Diagnostic buyer link was provisioned separately through authenticated API; not delivered in PayPal receipt",
+    "Automatic chat link insertion into PayPal receipts remains unimplemented",
+    "This diagnostic checked live APIs; no visual receipt or dashboard check was performed in this run"
+  ],
+  "diagnosticChat": {
+    "id": "adc2e62d-3dfc-48c1-9b07-f038c364e953",
+    "transactionId": "b8e14979-bf3d-47c0-9a02-836831c663ea",
+    "orderReference": "SANDBOX-DONNET-CHAT-1794535923356",
+    "linkProvisionedForDiagnostic": true,
+    "fromPayPalReceipt": false,
+    "firstMessageBy": "BUYER",
+    "complaintText": "El producto llegó roto",
+    "classification": {
+      "issue": "DEFECT",
+      "score": 1,
+      "margin": 1,
+      "source": "LOCAL_NLP",
+      "category": "COMPLAINT",
+      "modelVersion": "nlpjs-contact-v1"
+    },
+    "draftStatus": "PENDING",
+    "realPrivateDraftCreated": true,
+    "merchantInboxViaApiVerified": true,
+    "buyerReadVerified": true,
+    "draftHiddenFromBuyer": true,
+    "sellerReplySent": false,
+    "submittedVia": "PUBLIC_API",
+    "merchantUiVisuallyInspected": false,
+    "apiMocks": false,
+    "checkedAt": "2026-11-13T02:17:25.439Z"
+  },
+  "conversationCountBeforeDiagnostic": 0,
+  "conversationCountAfterDiagnostic": 1
+}
