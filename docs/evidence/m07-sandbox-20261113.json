@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-11-13T15:35:08.509Z",
+  "environment": "sandbox",
+  "sellerId": "U6K8ADS8D6REJ",
+  "workerOverride": null,
+  "transactionWorker": "true",
+  "oauthDisputeCreateScope": true,
+  "webhook": {
+    "id": "6D45716373290850N",
+    "url": "https://paypal-mediator-backend.onrender.com/api/webhooks/paypal",
+    "requiredEvents": [
+      "CUSTOMER.DISPUTE.CREATED",
+      "CUSTOMER.DISPUTE.UPDATED",
+      "CUSTOMER.DISPUTE.RESOLVED"
+    ],
+    "allRegistered": true
+  },
+  "readiness": {
+    "status": "ready",
+    "checks": {
+      "database": "up"
+    },
+    "timestamp": "2026-11-13T15:35:08.602Z"
+  },
+  "unauthenticatedStatus": 401,
+  "paypalDisputes": [],
+  "localDisputes": {
+    "items": [],
+    "total": 0,
+    "page": 1,
+    "pageSize": 100
+  },
+  "realDisputeLifecycleVerified": false,
+  "limitation": "No genuine dispute exists for the connected seller. Buyer-side Sandbox action/consent is required to create one. Automated test payloads are explicit MOCK; they do not establish real PayPal dispute validation."
+}

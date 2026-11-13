@@ -344,6 +344,85 @@ describe('M07: verified dispute deliveries → linked transactions → authorize
     expect(flipped.transactionId).not.toBe(secondTransaction.id);
   });
 
+  it('preserves the original link when a different capture is mixed with unknown references', async () => {
+    await deliver(
+      disputeEvent({ disputeId: 'PP-D-MIXED', eventId: 'MOCK-MIXED-CREATED' }),
+    );
+    expect(await nextDispute()).toBe('COMPLETED');
+    const original = await prisma.dispute.findFirstOrThrow({
+      where: { merchantId, paypalDisputeId: 'PP-D-MIXED' },
+    });
+    await deliver(
+      disputeEvent({
+        disputeId: 'PP-D-MIXED',
+        eventId: 'MOCK-MIXED-UPDATED',
+        eventType: 'CUSTOMER.DISPUTE.UPDATED',
+        sellerTransactionIds: ['MOCK-CAPTURE-2', 'MOCK-UNKNOWN'],
+        occurredAt: '2026-11-12T00:00:00Z',
+      }),
+    );
+    expect(await nextDispute()).toBe('COMPLETED');
+    expect(await disputes.detail(merchantId, original.id)).toMatchObject({
+      internalState: 'NEEDS_REVIEW',
+      link: {
+        status: 'CONFLICT',
+        transactionId: original.transactionId,
+        reason: 'TRANSACTION_REFERENCE_CHANGED',
+      },
+    });
+  });
+
+  it('keeps stale conversation snapshots in the timeline without exposing them as current messages', async () => {
+    await deliver(captureEvent('MOCK-CHAT-CAPTURE'));
+    expect(await transactions.processNextCapture(merchantId)).toBe('COMPLETED');
+    await deliver(
+      disputeEvent({
+        disputeId: 'PP-D-CHAT',
+        eventId: 'MOCK-CHAT-CREATED',
+        sellerTransactionIds: ['MOCK-CHAT-CAPTURE'],
+      }),
+    );
+    expect(await nextDispute()).toBe('COMPLETED');
+    await deliver(
+      disputeEvent({
+        disputeId: 'PP-D-CHAT',
+        eventId: 'MOCK-CHAT-UPDATED',
+        sellerTransactionIds: ['MOCK-CHAT-CAPTURE'],
+        eventType: 'CUSTOMER.DISPUTE.UPDATED',
+        status: 'WAITING_FOR_SELLER_RESPONSE',
+        occurredAt: '2026-11-12T00:00:00Z',
+      }),
+    );
+    expect(await nextDispute()).toBe('COMPLETED');
+    const stale = disputeEvent({
+      disputeId: 'PP-D-CHAT',
+      eventId: 'MOCK-CHAT-STALE',
+      sellerTransactionIds: ['MOCK-CHAT-CAPTURE'],
+      eventType: 'CUSTOMER.DISPUTE.UPDATED',
+      occurredAt: '2026-11-11T00:00:00Z',
+    });
+    Object.assign(stale.resource, {
+      messages: [{ posted_by: 'BUYER', content: 'Outdated snapshot' }],
+    });
+    await deliver(stale);
+    expect(await nextDispute()).toBe('COMPLETED');
+    const row = await prisma.dispute.findFirstOrThrow({
+      where: { merchantId, paypalDisputeId: 'PP-D-CHAT' },
+    });
+    const detail = await disputes.detail(merchantId, row.id);
+    expect(detail.messages).toEqual([]);
+    expect(
+      detail.events.some(
+        (event) =>
+          event.paypalEventId === 'MOCK-CHAT-STALE' &&
+          event.outcome === 'IGNORED_STALE',
+      ),
+    ).toBe(true);
+    expect(
+      await disputes.conversationForTransaction(merchantId, row.transactionId!),
+    ).toMatchObject({ messages: [] });
+  });
+
   it('marks malformed dispute jobs FAILED and continues with valid work', async () => {
     const malformed = disputeEvent({
       disputeId: 'PP-D-BAD',

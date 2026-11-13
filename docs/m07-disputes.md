@@ -65,6 +65,8 @@ tablas de M03.
   `TRANSACTION_REFERENCE_CHANGED`; se conserva el vínculo original.
 
 Un conflicto no descarta la disputa real: se conserva y se expone para revisión.
+La referencia original también se conserva cuando una actualización combina una
+captura distinta conocida con otras referencias desconocidas.
 
 ## Idempotencia y orden
 
@@ -75,12 +77,15 @@ idéntico al estado actual se guarda como `IGNORED_DUPLICATE` y actualiza
 detalle se ordena por `occurred_at`, por lo que un evento reordenado puede
 aparecer antes de los eventos aplicados; el resultado de cada evento queda
 explícito en `outcome`.
+Los snapshots de conversación de eventos `IGNORED_STALE` no se utilizan en el
+detalle ni en el contexto de agentes; siguen visibles como eventos del timeline.
 
 ## Worker
 
 `DISPUTE_WORKER_ENABLED` controla el consumidor. Si no se define, hereda
 `TRANSACTION_WORKER_ENABLED` (habilitado por defecto en producción y deshabilitado
-en desarrollo/pruebas). También requiere `MERCHANT_ID`. El worker vive en el mismo
+en desarrollo/pruebas). El worker recorre los merchants con cuenta PayPal
+conectada y agrega `MERCHANT_ID` cuando está configurado, sin duplicarlos. Vive en el mismo
 proceso NestJS, consulta cada segundo cuando no hay trabajo, drena sin espera
 cuando procesa uno y espera la operación activa al cerrar. Los errores se
 registran solo como `DISPUTE_WORKER_UNAVAILABLE`; no se registran payloads,
@@ -125,3 +130,18 @@ y las firmas son MOCK explícitos; NestJS y PostgreSQL son reales.
 Pendiente: validar con una disputa Sandbox genuina y un `provide-evidence`
 autorizado (M08). M07 no presenta evidencia, no cierra disputas en PayPal y no
 sustituye la aprobación humana.
+
+### Revisión del 13 de noviembre de 2026
+
+Se corrigieron dos regresiones: reemplazo del vínculo original ante referencias
+mixtas contradictorias y uso de mensajes de eventos descartados por antigüedad.
+Las pruebas PostgreSQL cubren ambos casos; el worker también tiene una prueba
+para equipos conectados sin `MERCHANT_ID` legado.
+
+La consulta autenticada del backend publicado y la API real de PayPal Sandbox
+devuelven cero disputas para el vendedor conectado. Se comprobaron readiness,
+rechazo sin autenticación y las tres suscripciones de disputa del webhook.
+Ver [evidencia externa](evidence/m07-sandbox-20261113.json).
+Esto **no valida el ciclo real de una disputa**: hace falta abrir un caso desde
+el comprador Sandbox y comprobar su entrega, procesamiento, vínculo y detalle.
+No se sustituyó ese requisito con el simulador de webhooks ni con datos MOCK.

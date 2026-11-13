@@ -311,17 +311,17 @@ export class DisputesService {
           };
 
     const match = matches[0]!;
-    if (unknown.length > 0)
-      return {
-        status: 'CONFLICT',
-        transactionId: match.id,
-        reason: 'UNKNOWN_TRANSACTION_REFERENCE',
-      };
     if (current && current.id !== match.id)
       return {
         status: 'CONFLICT',
         transactionId: current.id,
         reason: 'TRANSACTION_REFERENCE_CHANGED',
+      };
+    if (unknown.length > 0)
+      return {
+        status: 'CONFLICT',
+        transactionId: match.id,
+        reason: 'UNKNOWN_TRANSACTION_REFERENCE',
       };
     return { status: 'LINKED', transactionId: match.id, reason: null };
   }
@@ -385,7 +385,9 @@ export class DisputesService {
           events: row.events.map(eventResponse),
           messages: latestDisputeMessages([
             row.sourceEvent.payload,
-            ...row.events.map((event) => event.event.payload),
+            ...row.events
+              .filter((event) => event.outcome !== 'IGNORED_STALE')
+              .map((event) => event.event.payload),
           ]),
         });
       },
@@ -412,7 +414,9 @@ export class DisputesService {
       reason: row.paypalReason,
       messages: latestDisputeMessages([
         row.sourceEvent.payload,
-        ...row.events.map((event) => event.event.payload),
+        ...row.events
+          .filter((event) => event.outcome !== 'IGNORED_STALE')
+          .map((event) => event.event.payload),
       ]),
     };
   }

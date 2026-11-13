@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { parseEnvironment } from '../../src/common/config/environment.js';
 import { DisputesService } from '../../src/modules/disputes/index.js';
+import type { MerchantsService } from '../../src/modules/merchants/index.js';
 import { DisputesWorker } from '../../src/modules/disputes/disputes.worker.js';
 
 describe('M07 dispute worker scheduling', () => {
@@ -86,6 +87,28 @@ describe('M07 dispute worker scheduling', () => {
     expect(processNextDispute).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     expect(processNextDispute).toHaveBeenCalledTimes(2);
+  });
+
+  it('consumes connected teams without requiring a legacy MERCHANT_ID', async () => {
+    const otherMerchantId = '00000000-0000-4000-8000-000000000003';
+    const paypalWorkerMerchants = vi
+      .fn()
+      .mockResolvedValue([merchantId, otherMerchantId]);
+    worker = new DisputesWorker(
+      { processNextDispute } as unknown as DisputesService,
+      parseEnvironment({
+        DATABASE_URL: 'postgresql://localhost:1/MOCK',
+        DISPUTE_WORKER_ENABLED: 'true',
+      }),
+      { paypalWorkerMerchants } as unknown as MerchantsService,
+    );
+    worker.onModuleInit();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(paypalWorkerMerchants).toHaveBeenCalledTimes(1);
+    expect(processNextDispute.mock.calls).toEqual([
+      [merchantId],
+      [otherMerchantId],
+    ]);
   });
 
   it('avoids overlapping consumers and waits for the active operation on shutdown', async () => {
