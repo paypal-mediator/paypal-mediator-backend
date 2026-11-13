@@ -3,11 +3,21 @@
 Actualizado el **13 de noviembre de 2026** a partir del código del workspace,
 las guías de cada módulo y las evidencias de despliegue ya registradas.
 Implementado localmente, publicado y probado con proveedores reales son estados
-distintos. Esta actualización no acredita un despliegue nuevo.
+distintos. La publicación M07/M08 se verificó después de las pruebas locales.
 
 El contexto anterior se conserva como [historial](docs/information-history-20261113.md).
 Sus fechas, tecnologías propuestas, checklists y pendientes antiguos no sustituyen
 este estado. Las guías específicas conservan también notas históricas fechadas.
+
+**Publicación M07/M08 verificada:** commit `322eff4`, Render Live
+`dep-dbrljpbm8hqs739kcaug`. Las cuatro migraciones aparecen aplicadas en los logs
+de arranque; readiness 200/PostgreSQL up y lecturas autenticadas de disputas y
+actividad M08 200. Sin sesión, la ruta nueva de investigación devuelve 401.
+Ver [evidencia publicada](docs/evidence/m07-m08-render-20261113.json).
+El ciclo real de disputa y presentación PayPal continúa pendiente.
+CI del commit publicado aprobado: 459 pruebas unitarias/HTTP, 215 PostgreSQL,
+162 de mediación y repetición de migraciones sin pendientes.
+Ver [CI](https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43485103612).
 
 ## Producto y reglas
 
@@ -43,13 +53,13 @@ documental no representa probabilidad de ganar. PayPal decide el resultado ofici
 | M03 — Transaction Manager | Capturas, pedidos, readiness, fuentes Orders v2/Odoo, reembolsos/reversiones persistentes, saldo y revisión de inconsistencias. | La instancia Odoo consultada no tiene registros; asociación con datos reales pendiente. No inicia devoluciones. |
 | M04 — Evidence Vault | Originales privados, hashes, versiones, documentos, expedientes y fuentes PayPal/Odoo. Storage real verificado previamente. | Datos y documentos Odoo reales pendientes; los proveedores incompletos no deben presentarse como conectores terminados. |
 | M05 — Investigator | Investigación acotada, herramientas de lectura, borradores con citas, persistencia, idempotencia, recuperación y auditoría. | La prueba real previa terminó COMPLETED, pero faltaban pruebas de envío/entrega. No autoriza presentaciones. |
-| M06 — Verifier | Revisión independiente de originales, ocho dimensiones, integridad, caducidad documental y revisión explícita de rechazos. Nuevo alcance local `DISPUTE_INR`, vinculado a una disputa M07 concreta; `PREVENTIVE_INR` permanece separado. | La aprobación preventiva nunca habilita M08. Revisión de disputa y envío externo siguen pendientes de prueba real. |
-| M07 — Dispute Orchestrator | Ingesta `DISPUTE_CHANGED`, vinculación exacta por captura, aislamiento, conflictos, eventos fuera de orden, consultas y worker por equipos. Nuevo ciclo local M05 → M06 desde una disputa. | El ciclo nuevo ejecuta una ronda por solicitud; no es un workflow autónomo completo con todos los estados planeados. No se ha ejercido el ciclo real de una disputa Sandbox. |
-| M08 — PayPal Submission | Guard, ADMIN, aprobación explícita, revisión M06 del caso y revisión documental vigente. Reserva persistente, idempotencia por solicitud, bloqueo de concurrencia, lectura fresca de acciones PayPal y resultado auditable. | Incremento local sin publicar. El envío directo admite notas `OTHER` respaldadas por originales. Solicitudes de documentos específicos, adjuntos PayPal no revisados o contexto cambiado detienen el envío. Flujo real pendiente. |
+| M06 — Verifier | Revisión independiente de originales, ocho dimensiones, integridad, caducidad documental y revisión explícita de rechazos. Nuevo alcance publicado `DISPUTE_INR`, vinculado a una disputa M07 concreta; `PREVENTIVE_INR` permanece separado. | La aprobación preventiva nunca habilita M08. Revisión de disputa y envío externo siguen pendientes de prueba real. |
+| M07 — Dispute Orchestrator | Ingesta `DISPUTE_CHANGED`, vinculación exacta por captura, aislamiento, conflictos, eventos fuera de orden, consultas y worker por equipos. Nuevo ciclo publicado M05 → M06 desde una disputa. | El ciclo nuevo ejecuta una ronda por solicitud; no es un workflow autónomo completo con todos los estados planeados. No se ha ejercido el ciclo real de una disputa Sandbox. |
+| M08 — PayPal Submission | Guard, ADMIN, aprobación explícita, revisión M06 del caso y revisión documental vigente. Reserva persistente, idempotencia por solicitud, bloqueo de concurrencia, lectura fresca de acciones PayPal y resultado auditable. | Publicado en Render con 322eff4. El envío directo admite notas `OTHER` respaldadas por originales. Solicitudes de documentos específicos, adjuntos PayPal no revisados o contexto cambiado detienen el envío. Flujo real pendiente. |
 | M09 — Monitoring & Audit | Auditoría transaccional append-only, actividad, filtros, métricas, pasos y resultados de agentes. Los nuevos eventos de presentación se clasifican M08. | Hubo un HTTP 500 remoto en `/api/activity`; no se da por resuelto sin reproducción/verificación. |
 | M10 — Dashboard | Frontend separado publicado en Render, con transacciones, disputas, actividad, integraciones y conciliación preventiva según evidencias previas. | El frontend debe integrar el nuevo contrato de aprobación y mostrar PENDING/UNKNOWN. Este incremento no modifica ni valida ese repositorio. |
 
-## M07 → M06 → M08: incremento local del 13 de noviembre
+## M07 → M06 → M08: incremento publicado el 13 de noviembre
 
 `POST /api/disputes/:id/investigate` exige ADMIN, una disputa INR abierta y
 vinculada, políticas habilitadas y contexto coherente para M05. Recibe
@@ -144,7 +154,8 @@ Se han documentado previamente Auth/PostgreSQL/Storage reales, OAuth PayPal,
 pagos Sandbox ficticios capturados, webhooks genuinos de captura, vendedor
 conectado, agentes NVIDIA y chat preventivo. Odoo conectado sin registros no
 valida asociaciones documentales completas. Los cambios M07/M08 de esta sesión
-son locales: no se ha desplegado, migrado Supabase ni enviado evidencia a PayPal.
+se publicaron posteriormente en `322eff4`; los logs de arranque confirman las
+migraciones aplicadas. No se envió evidencia a PayPal.
 
 ## Pruebas pendientes del flujo real
 
@@ -180,7 +191,8 @@ MOCK locales no las sustituyen.
 - `pnpm check`: aprobado, 459 pruebas unitarias/HTTP, Prisma, lint, formato,
   tipos y build. La última ejecución completa terminó con código 0.
 - Migraciones: 27 aplicadas en PostgreSQL 18.6 desechable y repetidas sin
-  pendientes. Las cuatro nuevas migraciones M08 solo se aplicaron localmente.
+  pendientes. Las cuatro nuevas migraciones M08 también aparecen aplicadas en
+  los logs del despliegue publicado.
 - `pnpm test:db`: suite completa aprobada con 214 pruebas. Después se añadió
   la prueba HTTP del ciclo M07/M05/M06 y se habilitó RLS M08; la suite específica
   `submissions.db.spec.ts` pasó con 12 pruebas sobre el estado final. Sus pruebas
@@ -197,7 +209,8 @@ identificados. Las pruebas de despacho simulan la interfaz pública M06 califica
 los controles de esta interfaz se prueban por separado. La prueba HTTP del ciclo
 M07/M05/M06 conserva persistencia real y simula los motores IA con un resultado
 INCOMPLETE, sin inferencias externas ni envío. No se ejerció el flujo externo
-anterior, no se modificó Supabase ni se publicó código en Render.
+anterior. La publicación posterior en Render aplicó las migraciones y se
+verificó mediante su dashboard, logs y lecturas HTTP; no mediante SQL remoto.
 
 ## Guías de referencia
 

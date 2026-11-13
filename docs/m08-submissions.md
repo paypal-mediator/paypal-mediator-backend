@@ -1,7 +1,10 @@
 # M08 — Presentaciones e integración con M07
 
-Incremento local del 13 de noviembre de 2026. No publicado ni validado con
-una presentación real a PayPal. Estado vigente general: [information.md](../information.md).
+Incremento del 13 de noviembre de 2026, publicado en Render con `322eff4` y
+cuatro migraciones aplicadas según sus logs de arranque. Readiness y lecturas
+autenticadas verificadas; presentación real PayPal pendiente.
+Ver [evidencia publicada](evidence/m07-m08-render-20261113.json) y
+[estado vigente](../information.md).
 
 ## Flujo y contratos
 

@@ -1,0 +1,44 @@
+{
+  "checkedAt": "2026-11-13T18:43:40Z",
+  "commit": "322eff4dce6522bd5e4875cb8cd3462b877d4284",
+  "ci": {
+    "runId": 43485103612,
+    "url": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43485103612",
+    "conclusion": "success",
+    "unitAndHttpTests": 459,
+    "postgresTests": 215,
+    "mediationTests": 162,
+    "migrationRepeat": "No pending migrations to apply"
+  },
+  "render": {
+    "serviceId": "srv-dbq6q2qjnfac73eual9g",
+    "deployId": "dep-dbrljpbm8hqs739kcaug",
+    "status": "live",
+    "startedAt": "2026-11-13T18:41:41Z",
+    "liveObservedAt": "2026-11-13T18:43:10Z",
+    "source": "Authenticated Render dashboard and application startup logs"
+  },
+  "migrations": {
+    "verification": "Render startup logs show all four migrations applied before successful NestJS startup; no independent production SQL query was performed",
+    "applied": [
+      "20261113040000_submission_safety",
+      "20261113050000_submission_audit",
+      "20261113060000_submission_legacy_reconciliation",
+      "20261113070000_submission_rls"
+    ]
+  },
+  "http": {
+    "readinessStatus": 200,
+    "database": "up",
+    "unauthenticatedInvestigationStatus": 401,
+    "authenticatedMerchantsStatus": 200,
+    "authenticatedDisputesStatus": 200,
+    "authenticatedM08ActivityStatus": 200
+  },
+  "limits": [
+    "Authenticated checks were read-only using the existing frontend session",
+    "No investigation inference or evidence submission was triggered",
+    "The genuine PayPal dispute lifecycle remains pending",
+    "Existing frontend submodule changes were excluded from the release"
+  ]
+}

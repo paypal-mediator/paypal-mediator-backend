@@ -1,6 +1,6 @@
 # M07 — Dispute Orchestrator
 
-## Incremento local M07/M08 — 13 de noviembre de 2026
+## Incremento publicado M07/M08 — 13 de noviembre de 2026
 
 Se añade `POST /api/disputes/:id/investigate` para ADMIN: una ronda M05 → M06
 sobre una disputa INR abierta y vinculada, con idempotencia y detención ante
@@ -9,8 +9,10 @@ imports; DisputesService sigue siendo propietario de la ingesta y consulta.
 M08 consume esa interfaz pública y la revisión concreta M06 para la solicitud
 separada de aprobación/envío. No escribe las tablas ni el estado PayPal de M07.
 Ver [contrato y límites M08](m08-submissions.md) y [estado vigente](../information.md).
-El ciclo real con una disputa Sandbox continúa pendiente de prueba; este
-incremento es local y no acredita publicación ni presentación a PayPal.
+El ciclo real con una disputa Sandbox continúa pendiente de prueba. El incremento
+se publicó como `322eff4`, con CI aprobado y Render Live; los logs confirman las
+migraciones M08 y las lecturas autenticadas responden 200. Esto no acredita una
+presentación a PayPal. Ver [evidencia](evidence/m07-m08-render-20261113.json).
 
 ## Base de ingesta y consultas
 
