@@ -1,3 +1,14 @@
+## M02/M03 publicados y webhook actualizado, 2026-11-13
+
+Código `852628a` enviado a main y confirmado Live en Render. Migración de
+movimientos aplicada en Supabase y RLS verificado; invitaciones M01 locales
+excluidas. PayPal Sandbox confirmó por lectura los eventos REFUNDED y REVERSED,
+conservando las cinco suscripciones anteriores. API publicada autenticada 200
+con salud/trabajos por equipo y resumen financiero; sin sesión 401. CI aprobado:
+427 pruebas unitarias/HTTP, 194 PostgreSQL y 162 de mediación. No se inició
+ninguna devolución ni se acreditó una nueva entrega financiera firmada.
+Ver [despliegue y evidencia](docs/deployment.md#m02m03-publicados-y-eventos-registrados--13-de-noviembre-de-2026).
+
 ## M02/M03: reembolsos y reversiones, 2026-11-13
 
 Se procesan `PAYMENT.CAPTURE.REFUNDED` y `PAYMENT.CAPTURE.REVERSED` de Payments

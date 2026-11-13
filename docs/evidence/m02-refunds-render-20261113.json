@@ -1,0 +1,225 @@
+{
+  "baselineMigrations": [
+    {
+      "migration_name": "20261105000000_foundation",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261105010000_merchant_integrations",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106000000_event_ingestion",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106010000_transactions",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106020000_orders_evidence",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106030000_evidence_integrity",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106030000_evidence_documents",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106040000_evidence_document_provenance",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106050000_investigator_runs",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106060000_order_information_sources",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261107010000_verification_runs",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261107020000_monitoring_audit",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261107030000_monitoring_operations",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261106070000_disputes",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261108000000_submissions",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261109000000_billing_and_multicliente",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261109170000_multicliente_billing_constraints",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261111000000_shipment_tracking_fallback",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261111010000_erp_tracking_prerequisites",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261111010000_mediation",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261111020000_mediation_audit",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261112010000_paypal_accounts",
+      "finished": true,
+      "rolled_back": false
+    },
+    {
+      "migration_name": "20261112020000_preventive_conciliations",
+      "finished": true,
+      "rolled_back": false
+    }
+  ],
+  "notice": "Real Render, Supabase and PayPal Sandbox configuration checks. No refund or reversal initiated by this verification.",
+  "updatedAt": "2026-11-13T07:11:13.885Z",
+  "render": {
+    "serviceId": "srv-dbq6q2qjnfac73eual9g",
+    "deploys": [
+      {
+        "id": "dep-dbrbeh49v7es73a1f7vg",
+        "status": "live",
+        "commit": "852628a3f8b1cff838e47b4f45663535e1482627",
+        "finishedAt": "2026-11-13T07:08:51.515876Z"
+      },
+      {
+        "id": "dep-dbr6spp42hec73b8tu0g",
+        "status": "deactivated",
+        "commit": "2fb382488b9eae9c0490f6a891c5a069b023babc",
+        "finishedAt": "2026-11-13T01:58:02.269639Z"
+      },
+      {
+        "id": "dep-dbr6olu8bjmc73beib1g",
+        "status": "deactivated",
+        "commit": "d728506b12470309a3b5d4fd8df6899950d08e09",
+        "finishedAt": "2026-11-13T01:49:13.138003Z"
+      }
+    ]
+  },
+  "paypalWebhook": {
+    "environment": "sandbox",
+    "webhookId": "6D45716373290850N",
+    "url": "https://paypal-mediator-backend.onrender.com/api/webhooks/paypal",
+    "before": [
+      "CUSTOMER.DISPUTE.CREATED",
+      "CUSTOMER.DISPUTE.RESOLVED",
+      "CUSTOMER.DISPUTE.UPDATED",
+      "MERCHANT.PARTNER-CONSENT.REVOKED",
+      "PAYMENT.CAPTURE.COMPLETED"
+    ],
+    "after": [
+      "CUSTOMER.DISPUTE.CREATED",
+      "CUSTOMER.DISPUTE.RESOLVED",
+      "CUSTOMER.DISPUTE.UPDATED",
+      "MERCHANT.PARTNER-CONSENT.REVOKED",
+      "PAYMENT.CAPTURE.COMPLETED",
+      "PAYMENT.CAPTURE.REFUNDED",
+      "PAYMENT.CAPTURE.REVERSED"
+    ],
+    "verifiedByReadback": true
+  },
+  "publishedApi": {
+    "readiness": {
+      "status": "ready",
+      "checks": {
+        "database": "up"
+      },
+      "timestamp": "2026-11-13T07:09:47.770Z"
+    },
+    "unauthenticatedStatus": 401,
+    "authenticatedTeams": [
+      {
+        "teamId": "48308136-377f-425a-965e-f673f98a12fa",
+        "health": {
+          "lastReceivedAt": "2026-11-13T02:13:26.561Z",
+          "oldestQueuedAt": null,
+          "counts": {
+            "QUEUED": 0,
+            "FAILED": 0,
+            "COMPLETED": 1
+          }
+        },
+        "jobsVisible": 1,
+        "transactionsChecked": 1,
+        "financialSummaryPresent": true
+      }
+    ]
+  },
+  "database": {
+    "migration": [
+      {
+        "migration_name": "20261113020000_payment_adjustments",
+        "finished": true
+      }
+    ],
+    "rls": [
+      {
+        "relname": "payment_adjustments",
+        "relrowsecurity": true
+      }
+    ],
+    "returnedAmountColumn": [
+      {
+        "numeric_precision": 38,
+        "numeric_scale": 8
+      }
+    ],
+    "tlsVerified": true,
+    "uncommittedM01Applied": false
+  },
+  "ci": {
+    "commit": "852628a3f8b1cff838e47b4f45663535e1482627",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43383518492",
+    "unitHttpTests": 427,
+    "postgresTests": 194,
+    "mediationTests": 162,
+    "cleanLocalCheckPassed": true
+  }
+}

@@ -1,5 +1,36 @@
 # Backend público y webhook PayPal
 
+## M02/M03 publicados y eventos registrados — 13 de noviembre de 2026
+
+Código `852628a` enviado a `main` junto con `b470806`. Render confirmó Live
+para `852628a3f8b1cff838e47b4f45663535e1482627`, despliegue
+`dep-dbrbeh49v7es73a1f7vg`, terminado a las 07:08:51 UTC. El servicio usa
+`pnpm start:render`; la migración `20261113020000_payment_adjustments` quedó
+aplicada. Consulta independiente por TLS con CA y hostname verificados confirmó
+la migración finalizada, RLS en `payment_adjustments` y NUMERIC(38,8) para el
+total devuelto. La migración local de invitaciones M01 no se publicó ni aplicó.
+
+PayPal Sandbox: webhook `6D45716373290850N`, dirigido a
+`https://paypal-mediator-backend.onrender.com/api/webhooks/paypal`. Se añadieron
+`PAYMENT.CAPTURE.REFUNDED` y `PAYMENT.CAPTURE.REVERSED` mediante la API oficial;
+una lectura posterior confirmó los siete eventos, conservando capturas,
+disputas y revocación de consentimiento. Se usó la configuración efectiva de
+Render, sin cambiar credenciales ni iniciar movimientos de dinero.
+
+API publicada con Supabase Auth real: readiness 200/PostgreSQL up, listado de
+trabajos y salud M02 por equipo 200, transacciones 200 con `financialSummary`.
+Sin sesión, salud M02 devuelve 401. El equipo Sandbox conectado conservó su
+captura existente y no tenía trabajos pendientes o fallidos en esta comprobación.
+No se ejecutó un reembolso/reversión real ni se afirma una entrega financiera
+firmada nueva; la lógica financiera se cubre con PayPal MOCK/PostgreSQL real.
+
+CI del commit publicado aprobado: `pnpm check` (427 pruebas unitarias/HTTP),
+migraciones, `pnpm test:db` (194) y `pnpm test:mediation` (162). Un checkout
+limpio local del commit también aprobó `pnpm check` y build. Los conteos son
+menores que los del workspace anterior porque excluyen los cambios M01 locales
+que aún no tienen commit. Ver [CI](https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43383518492)
+y [evidencia sin secretos](evidence/m02-refunds-render-20261113.json).
+
 ## Chat de conciliación publicado — 12 de noviembre de 2026
 
 Render confirmó `live` para backend `d728506` (despliegue `dep-dbr6olu8bjmc73beib1g`) y frontend `719e226` (`dep-dbr6omh42hec73b8pd40`). La migración `20261112020000_preventive_conciliations` se aplicó en Supabase mediante Prisma con TLS verificado; las tres tablas tienen RLS habilitado. Se conservaron dos entradas históricas adicionales de migración de la base, sin reescribirlas ni resetear datos.
