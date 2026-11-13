@@ -1,6 +1,22 @@
 -- Existing duplicate memberships must be reviewed by the operator, never silently merged.
-CREATE UNIQUE INDEX "merchant_members_merchant_id_auth_user_id_key"
+CREATE UNIQUE INDEX IF NOT EXISTS "merchant_members_merchant_id_auth_user_id_key"
 ON "merchant_members"("merchant_id", "auth_user_id");
+-- Some deployed databases already enforce this invariant. Reuse only the exact
+-- valid unique index; a same-named incompatible index must stop the migration.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_index
+    WHERE indexrelid = 'public.merchant_members_merchant_id_auth_user_id_key'::regclass
+      AND indrelid = 'public.merchant_members'::regclass
+      AND indisunique AND indisvalid AND indisready
+      AND indpred IS NULL AND indexprs IS NULL AND indnkeyatts = 2
+      AND pg_get_indexdef(indexrelid, 1, true) = 'merchant_id'
+      AND pg_get_indexdef(indexrelid, 2, true) = 'auth_user_id'
+  ) THEN
+    RAISE EXCEPTION 'Membership uniqueness index has an unexpected definition';
+  END IF;
+END $$;
 
 CREATE TABLE "merchant_invitations" (
   "id" UUID PRIMARY KEY,
