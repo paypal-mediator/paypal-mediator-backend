@@ -1,5 +1,31 @@
 # Backend público y webhook PayPal
 
+## Invitaciones M01 publicadas — 13 de noviembre de 2026
+
+Backend `ea7328c`, despliegue `dep-dbrpsiui0phs73b4o4q0`, y frontend `ed42d78`,
+despliegue `dep-dbrprceq1p3s73e2tqkg`, confirmados Live. El servidor usa
+`INVITATION_APP_URL=https://paypal-mediator-frontend.onrender.com`.
+
+Producción ya tenía el índice único correcto de membresías. El primer despliegue
+se detuvo al intentar crearlo; se ajustó la migración para verificar y reutilizar
+ese índice. Se completó el SQL exacto probado y se concilió su historial con
+`prisma migrate resolve --applied`, sin cambiar las membresías existentes.
+Una consulta PostgreSQL independiente con TLS verificado confirmó migración,
+checksum del archivo y RLS. CI aprobado: 462 pruebas unitarias/HTTP, 235
+PostgreSQL, 162 de mediación y migraciones repetidas. La compatibilidad de la
+migración también se probó con índice existente, índice incompatible y duplicados.
+
+Pruebas publicadas con dos cuentas existentes y un equipo QA: creación,
+revocación, rechazo, aceptación concurrente idempotente, aislamiento del correo,
+restricciones VIEWER y ausencia de elevación de un miembro activo. Chrome sin
+mocks confirmó creación y aceptación desde el enlace, equipo seleccionado,
+recarga y permisos en escritorio y móvil. Frontend: 40 pruebas, lint, tipos y build.
+
+Resend aún no está configurado en la última lectura de Render: el estado es
+`NOT_CONFIGURED`, los enlaces y el dashboard funcionan, y no se acredita envío
+ni recepción de correo. Configuración y límites en [invitaciones](team-invitations.md).
+Ver [evidencia](evidence/team-invitations-render-20261113.json).
+
 ## M07/M08 publicados — 13 de noviembre de 2026
 
 Commit `322eff4dce6522bd5e4875cb8cd3462b877d4284` enviado a main y confirmado

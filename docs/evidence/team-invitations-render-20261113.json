@@ -1,0 +1,128 @@
+{
+  "checkedAt": "2026-11-13T23:34:49.547Z",
+  "teamId": "719d8a91-161d-4857-a30f-f7483079981b",
+  "realAuth": true,
+  "realPublishedBackend": true,
+  "realDatabase": true,
+  "checks": [
+    "Wrong recipient gets 404; revoked invitation cannot be accepted",
+    "Recipient can decline; declined invitation cannot be accepted",
+    "Account inbox and invitation URL work; concurrent acceptance is idempotent; membership is VIEWER; VIEWER cannot manage invitations",
+    "An ADMIN invitation does not elevate an existing active VIEWER membership",
+    "Joined team appears exactly once; authenticated invitation audit query succeeds"
+  ],
+  "invitationId": "012f876f-f6dc-423c-a74c-f5a38a5e0d5d",
+  "shareUrl": "https://paypal-mediator-frontend.onrender.com/?teamInvitation=012f876f-f6dc-423c-a74c-f5a38a5e0d5d",
+  "deliveryStatus": "NOT_CONFIGURED",
+  "auditItemCount": 8,
+  "readiness": {
+    "status": "ready",
+    "checks": {
+      "database": "up"
+    },
+    "timestamp": "2026-11-13T23:35:04.301Z"
+  },
+  "emailDeliveryVerified": false,
+  "notice": "Existing owned confirmed accounts and a labeled QA team; no fake success, no PayPal operations. Provider acceptance/inbox delivery are checked separately.",
+  "browser": {
+    "checkedAt": "2026-11-13T23:35:15.613Z",
+    "browser": "isolated headless Chrome",
+    "frontend": "https://paypal-mediator-frontend.onrender.com",
+    "backend": "https://paypal-mediator-backend.onrender.com/api",
+    "apiMocks": false,
+    "checks": [
+      {
+        "viewport": "1440x1000",
+        "adminCreated": true,
+        "invitationId": "d0f544dc-3503-485d-a9e7-2b61ad3432f5",
+        "linkAccepted": true,
+        "correctTeamSelected": true,
+        "selectionSurvivesReload": true,
+        "viewerControlsHidden": true,
+        "horizontalOverflow": false,
+        "pageExceptions": 0
+      },
+      {
+        "viewport": "390x844",
+        "adminCreated": true,
+        "invitationId": "981ebc4f-f530-4cb0-a9f1-03b77209d083",
+        "linkAccepted": true,
+        "correctTeamSelected": true,
+        "selectionSurvivesReload": true,
+        "viewerControlsHidden": true,
+        "horizontalOverflow": false,
+        "pageExceptions": 0
+      }
+    ]
+  },
+  "release": {
+    "backend": {
+      "serviceId": "srv-dbq6q2qjnfac73eual9g",
+      "deployId": "dep-dbrpsiui0phs73b4o4q0",
+      "status": "live",
+      "commit": "ea7328c3c702b5304ec3a4098a4838ab8867dfaf",
+      "finishedAt": "2026-11-13T23:34:35.537339Z"
+    },
+    "frontend": {
+      "serviceId": "srv-dbq78idg1s2s739mmlrg",
+      "deployId": "dep-dbrprceq1p3s73e2tqkg",
+      "status": "live",
+      "commit": "ed42d78aa306c6d82d7b003674ced4bc4e387771",
+      "finishedAt": "2026-11-13T23:31:36.67407Z"
+    }
+  },
+  "database": {
+    "tlsVerified": true,
+    "migration": "20261113010000_merchant_invitations",
+    "checksumMatchesRepository": true,
+    "finishedAt": "2026-11-13T23:33:13.154Z",
+    "rlsEnabled": true,
+    "qaTeamActiveMemberships": [
+      {
+        "role": "VIEWER",
+        "count": 1
+      },
+      {
+        "role": "ADMIN",
+        "count": 1
+      }
+    ],
+    "recovery": "Production already had the exact valid unique membership index. Migration now verifies/reuses it. The failed attempt was reconciled via Prisma after applying the exact tested migration; no existing membership data was changed."
+  },
+  "validation": {
+    "backendCheck": {
+      "tests": 462,
+      "build": true,
+      "exitCode": 0
+    },
+    "postgres": {
+      "tests": 235,
+      "migrationsAppliedAndRepeated": 28,
+      "exitCode": 0
+    },
+    "migrationCompatibility": [
+      "fresh database",
+      "existing valid unique index",
+      "incompatible index rejected",
+      "duplicate memberships rejected"
+    ],
+    "frontend": {
+      "tests": 40,
+      "lint": true,
+      "typecheck": true,
+      "build": true
+    },
+    "ci": {
+      "conclusion": "success",
+      "headSha": "ea7328c3c702b5304ec3a4098a4838ab8867dfaf",
+      "status": "completed",
+      "url": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43527658485"
+    }
+  },
+  "mailConfiguration": {
+    "provider": "disabled",
+    "senderConfigured": false,
+    "resendKeyConfigured": false
+  },
+  "finalVerifiedAt": "2026-11-13T23:37:11.574Z"
+}

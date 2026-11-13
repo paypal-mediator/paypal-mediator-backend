@@ -19,6 +19,16 @@ CI del commit publicado aprobado: 459 pruebas unitarias/HTTP, 215 PostgreSQL,
 162 de mediación y repetición de migraciones sin pendientes.
 Ver [CI](https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43485103612).
 
+**Invitaciones M01 publicadas y verificadas:** backend `ea7328c`, frontend
+`ed42d78`, ambos Render Live. API real y Chrome de escritorio/móvil confirmaron
+crear, revocar, rechazar, aceptar y seleccionar el equipo, persistir la selección
+al recargar y restringir VIEWER. Dos cuentas existentes con correo confirmado
+participaron en un equipo QA identificado. Migración y RLS comprobados con TLS
+verificado; checksum igual al repositorio. CI: 462 pruebas unitarias/HTTP,
+235 PostgreSQL y 162 de mediación; frontend: 40 pruebas, lint, tipos y build.
+El correo permanece `NOT_CONFIGURED` hasta configurar Resend en Render; no se
+ha confirmado envío ni recepción de correo. Ver [evidencia](docs/evidence/team-invitations-render-20261113.json).
+
 ## Producto y reglas
 
 ResolveAI prepara expedientes de pagos PayPal y ayuda al vendedor a investigar

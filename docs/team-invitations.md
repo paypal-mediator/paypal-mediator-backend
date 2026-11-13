@@ -75,3 +75,23 @@ La creación de cuenta confirma su correo mediante Supabase. En el mismo navegad
 se conserva temporalmente el ID de invitación; en otro dispositivo se debe abrir
 de nuevo el enlace o usar Join a team. No se amplía la lista de redirecciones de
 Supabase para aceptar destinos arbitrarios.
+
+## Publicación y verificación — 13 de noviembre de 2026
+
+Backend `ea7328c` y frontend `ed42d78` publicados en Render. Verificación real
+con dos cuentas existentes y confirmadas en un equipo QA: crear, revocar,
+rechazar, aceptar concurrentemente, listar una sola membresía y conservar el
+rol VIEWER ante otra invitación ADMIN. El rol VIEWER no puede crear ni listar
+invitaciones del equipo. El enlace exige el destinatario correcto; otro correo
+recibe 404 y las invitaciones revocadas/rechazadas no permiten aceptar.
+
+Chrome de escritorio y móvil ejerció el frontend publicado sin mocks: creación,
+aceptación por enlace, selección automática del equipo, selección tras recargar
+y ocultación de controles ADMIN al VIEWER. La suite local usa proveedores MOCK
+explícitos; las verificaciones publicadas usan Supabase Auth y PostgreSQL reales.
+El correo queda pendiente de credenciales y remitente Resend en Render.
+
+La migración tolera un índice único de membresías ya existente solo si su
+definición es correcta. Nunca elimina el índice ni fusiona miembros duplicados.
+CI: 462 pruebas unitarias/HTTP, 235 PostgreSQL y 162 de mediación; frontend:
+40 pruebas, lint, tipos y build. Ver [evidencia publicada](evidence/team-invitations-render-20261113.json).
