@@ -269,7 +269,8 @@ export class TransactionsService {
     );
   }
 
-  processNextOrderSource(merchantId: string) {
+  async processNextOrderSource(merchantId: string) {
+    await this.sources.backfillPollingSources(merchantId);
     return this.sources.processNext(merchantId);
   }
   orderSourceMetrics(merchantId: string) {

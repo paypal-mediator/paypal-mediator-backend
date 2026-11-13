@@ -90,7 +90,40 @@ export class EvidenceService {
     input: UploadEvidenceFile,
     actorUserId: string,
   ) {
-    const parsed = UploadEvidenceFileSchema.parse(input);
+    return this.persistFile(
+      tx,
+      context,
+      UploadEvidenceFileSchema.parse(input),
+      actorUserId,
+    );
+  }
+
+  // Server-only provenance: no HTTP schema accepts CONNECTED_SYSTEM file uploads.
+  async importConnectedFile(
+    tx: Prisma.TransactionClient,
+    context: EvidenceContext,
+    input: Omit<UploadEvidenceFile, 'sourceKind'>,
+  ) {
+    const validated = UploadEvidenceFileSchema.parse({
+      ...input,
+      sourceKind: 'MERCHANT_INPUT',
+    });
+    return this.persistFile(
+      tx,
+      context,
+      { ...validated, sourceKind: 'CONNECTED_SYSTEM' },
+      null,
+    );
+  }
+
+  private async persistFile(
+    tx: Prisma.TransactionClient,
+    context: EvidenceContext,
+    parsed: Omit<UploadEvidenceFile, 'sourceKind'> & {
+      sourceKind: EvidenceRecord['sourceKind'];
+    },
+    actorUserId: string | null,
+  ) {
     const bytes = Buffer.from(parsed.dataBase64, 'base64');
     assertEvidenceFileSafety(bytes, parsed.mediaType);
     assertEvidenceFileFormat(bytes, parsed.mediaType);

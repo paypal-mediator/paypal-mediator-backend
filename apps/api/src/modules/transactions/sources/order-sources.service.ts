@@ -28,7 +28,9 @@ export class OrderSourcesService {
       throw new Error('DUPLICATE_ORDER_PROVIDER');
   }
   async schedule(tx: Prisma.TransactionClient, row: Transaction) {
-    for (const source of this.sources.filter((s) => s.supports(row)))
+    for (const source of this.sources.filter((s) => s.supports(row))) {
+      if (source.available && !(await source.available(row.merchantId, tx)))
+        continue;
       await tx.orderSourceJob.upsert({
         where: {
           transactionId_providerId: {
@@ -45,6 +47,41 @@ export class OrderSourcesService {
         },
         update: {},
       });
+    }
+  }
+
+  async backfillPollingSources(merchantId: string) {
+    for (const source of this.sources.filter((s) => s.pollIntervalMs)) {
+      if (source.available && !(await source.available(merchantId))) continue;
+      await this.prisma.$transaction(async (tx) => {
+        await lockMerchantOrders(tx, merchantId);
+        const rows = await tx.transaction.findMany({
+          where: {
+            merchantId,
+            orderSources: { none: { providerId: source.providerId } },
+          },
+          take: 100,
+          orderBy: { id: 'asc' },
+        });
+        for (const row of rows.filter((r) => source.supports(r)))
+          await tx.orderSourceJob.upsert({
+            where: {
+              transactionId_providerId: {
+                transactionId: row.id,
+                providerId: source.providerId,
+              },
+            },
+            create: {
+              transactionId: row.id,
+              merchantId,
+              providerId: source.providerId,
+              sourceKind: source.sourceKind,
+              sourceSystem: source.sourceSystem,
+            },
+            update: {},
+          });
+      });
+    }
   }
   async operationalMetrics(merchantId: string) {
     const groups = await this.prisma.orderSourceJob.groupBy({
@@ -108,6 +145,12 @@ export class OrderSourcesService {
             { status: 'PENDING' },
             { status: 'FAILED', nextAttemptAt: { lte: now } },
             { status: 'FETCHING', leaseExpiresAt: { lte: now } },
+            {
+              status: {
+                in: ['COMPLETE', 'PARTIAL', 'CONFLICT', 'NOT_CONFIGURED'],
+              },
+              nextAttemptAt: { lte: now },
+            },
           ],
         },
         orderBy: { createdAt: 'asc' },
@@ -164,6 +207,13 @@ export class OrderSourcesService {
             where: { id: job.transactionId },
             include: { merchantOrder: true, orderSources: true },
           });
+          await source.commit?.(row, fetched, tx);
+          for (const file of fetched.files ?? [])
+            await this.evidence.importConnectedFile(
+              tx,
+              evidenceContext(row),
+              file,
+            );
           const receipt = await this.evidence.recordOrderSource(
             tx,
             evidenceContext(row),
@@ -192,6 +242,9 @@ export class OrderSourcesService {
               contentHash: contentHash(result),
               evidenceId: receipt.evidenceId,
               lastSucceededAt: new Date(),
+              nextAttemptAt: source.pollIntervalMs
+                ? new Date(Date.now() + source.pollIntervalMs)
+                : null,
               errorCode: null,
               httpStatus: 200,
               leaseToken: null,
@@ -224,7 +277,7 @@ export class OrderSourcesService {
           });
           await this.evidence.syncBase(tx, evidenceContext(updated));
         },
-        { timeout: 15000 },
+        { timeout: 60000 },
       );
       return 'PROCESSED';
     } catch (error) {
@@ -242,8 +295,9 @@ export class OrderSourcesService {
             httpStatus: safe.httpStatus,
             leaseToken: null,
             leaseExpiresAt: null,
-            nextAttemptAt:
-              safe.retryable && job.attempts < 5
+            nextAttemptAt: source?.pollIntervalMs
+              ? new Date(Date.now() + source.pollIntervalMs)
+              : safe.retryable && job.attempts < 5
                 ? new Date(
                     Date.now() + Math.min(300000, 1000 * 2 ** job.attempts),
                   )

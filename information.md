@@ -1,3 +1,13 @@
+## Asociación Odoo → M03/M04, 2026-11-13
+
+Nueva fuente ODOO para relacionar pagos con pedidos, facturas, pagos ERP y envíos
+mediante referencias exactas y relaciones de la misma conexión. Incluye backfill
+de capturas, revisión periódica, enlaces transaccionales y originales privados
+existentes, sin generar documentos ni modificar Odoo. Requiere la migración
+`20261113030000_odoo_evidence_documents`. La lectura real devolvió cero registros;
+la asociación y los documentos se prueban con proveedores MOCK/PostgreSQL real.
+Ver [contrato, operación y límites](docs/odoo-payment-association.md).
+
 ## M02/M03 publicados y webhook actualizado, 2026-11-13
 
 Código `852628a` enviado a main y confirmado Live en Render. Migración de

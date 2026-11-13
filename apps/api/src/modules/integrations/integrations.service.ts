@@ -287,7 +287,13 @@ export class IntegrationsService implements OnModuleInit {
       }
     }
 
-    await this.prisma.erpConnection.delete({ where: { id: connectionId } });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM erp_connections WHERE id=${connectionId}::uuid AND merchant_id=${merchantId}::uuid FOR UPDATE`;
+      await tx.transactionLink.deleteMany({
+        where: { merchantId, record: { merchantId, connectionId } },
+      });
+      await tx.erpConnection.delete({ where: { id: connectionId } });
+    });
 
     await this.audit.append({
       merchantId,
@@ -439,7 +445,14 @@ export class IntegrationsService implements OnModuleInit {
         paypalCaptureId,
         OR: [
           {
-            matchMethod: { in: ['invoice_id_exact', 'custom_id_exact'] },
+            matchMethod: {
+              in: [
+                'invoice_id_exact',
+                'custom_id_exact',
+                'odoo_reference_exact',
+                'odoo_relation_exact',
+              ],
+            },
             confidence: 'high',
           },
           { reviewedBy: { not: null } },
@@ -614,6 +627,8 @@ export class IntegrationsService implements OnModuleInit {
       throw new Error('CONNECTION_NOT_FOUND');
     }
 
+    if (connection.provider !== provider)
+      throw new Error('ERP_PROVIDER_MISMATCH');
     const adapter = ADAPTERS[provider];
     if (!adapter) {
       throw new Error('UNSUPPORTED_PROVIDER');
@@ -739,6 +754,32 @@ export class IntegrationsService implements OnModuleInit {
       },
     });
 
+    if (result.nextCursor) {
+      if (result.nextCursor === cursor)
+        throw new Error('ERP_CURSOR_DID_NOT_ADVANCE');
+      try {
+        await this.jobs.enqueue('ERP_SYNC', {
+          connectionId,
+          merchantId,
+          provider,
+          resource,
+          cursor: result.nextCursor,
+        });
+      } catch {
+        await this.prisma.erpConnection.update({
+          where: { id: connectionId },
+          data: {
+            status: 'error',
+            lastSyncError: 'ERP_NEXT_PAGE_ENQUEUE_FAILED',
+          },
+        });
+        throw new ApiException(
+          'ERP_NEXT_PAGE_ENQUEUE_FAILED',
+          'Odoo page imported but continuation could not be queued; retry synchronization',
+          503,
+        );
+      }
+    }
     return { processed: result.records.length, nextCursor: result.nextCursor };
   }
 }

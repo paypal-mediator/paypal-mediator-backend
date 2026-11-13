@@ -73,6 +73,10 @@ Cada carpeta contendrá su módulo NestJS y su interfaz pública; añadir
 subcarpetas según el volumen. Importar servicios exportados por su módulo
 propietario y no escribir tablas privadas de otros módulos.
 `CoreModule` comparte `PrismaService` y `ENVIRONMENT`.
+M03 consume Odoo mediante `OdooRecordsService`, exportado por Integrations.
+Integrations escribe sus vínculos dentro de la unidad de trabajo compartida;
+M03 conserva el snapshot normalizado y M04 los originales privados. Ver
+[asociación y límites](odoo-payment-association.md).
 Los contratos HTTP se exportan desde `@resolve-ai/contracts`; los contratos
 de dominio de `information.md` siguen siendo propuestas.
 

@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-11-13T07:48:04.260Z",
+  "readOnly": true,
+  "resources": [
+    {
+      "resource": "sales_orders",
+      "ok": true,
+      "records": 0,
+      "morePages": false
+    },
+    {
+      "resource": "payments",
+      "ok": true,
+      "records": 0,
+      "morePages": false
+    },
+    {
+      "resource": "shipments",
+      "ok": true,
+      "records": 0,
+      "morePages": false
+    },
+    {
+      "resource": "invoices",
+      "ok": true,
+      "records": 0,
+      "morePages": false
+    }
+  ],
+  "notice": "Real Odoo reads only. No records or files created, changed or deleted.",
+  "initialInvoiceRead": {
+    "status": 429,
+    "retriedSeparately": true,
+    "finalStatus": 200
+  }
+}

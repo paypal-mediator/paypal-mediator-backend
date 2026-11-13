@@ -133,7 +133,12 @@ function sourceOrders(row: TransactionWithOrder) {
     const job = row.orderSources!.find(
       (j) => j.providerId === record.providerId,
     )!;
-    if (!record.data?.order) return [];
+    if (
+      !record.data?.order ||
+      (record.providerId === 'ODOO' &&
+        ['FAILED', 'NOT_CONFIGURED'].includes(record.status))
+    )
+      return [];
     const order = record.data.order;
     return [
       SourceOrderResponseSchema.parse({
@@ -152,12 +157,36 @@ export function evidenceContext(row: TransactionWithOrder): EvidenceContext {
   const enrichment = sourceEnrichment(row);
   const sources = sourceOrders(row);
   const orders = [...(manual ? [manual] : []), ...sources];
+  const complete = (record: (typeof enrichment.records)[number]) => {
+    const candidate = record.data?.order;
+    return Boolean(
+      candidate?.orderedAt &&
+      candidate.currencyCode &&
+      candidate.totalAmount !== null &&
+      candidate.items.length &&
+      candidate.items.every(
+        (item) =>
+          item.description &&
+          item.quantity !== null &&
+          item.unitAmount !== null,
+      ),
+    );
+  };
   const matched = [...enrichment.records]
     .sort(
       (a, b) =>
+        Number(complete(b)) - Number(complete(a)) ||
         Number(b.providerId === 'PAYPAL') - Number(a.providerId === 'PAYPAL'),
     )
-    .find((r) => r.data?.association === 'MATCHED' && r.data.order);
+    .find(
+      (r) =>
+        r.data?.association === 'MATCHED' &&
+        r.data.order &&
+        !(
+          r.providerId === 'ODOO' &&
+          ['FAILED', 'NOT_CONFIGURED'].includes(r.status)
+        ),
+    );
   const order =
     manual ?? sources.find((o) => o.providerId === matched?.providerId) ?? null;
   let orderLinkError =

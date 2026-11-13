@@ -63,6 +63,30 @@ export const OrderSourceResultSchema = z.strictObject({
   association: z.enum(['MATCHED', 'UNRESOLVED', 'CONFLICT']),
   missingFields: z.array(z.string().max(128)).max(512),
   issues: z.array(z.string().max(128)).max(100),
+  relatedRecords: z
+    .array(
+      z.strictObject({
+        recordId: z.uuid(),
+        connectionId: z.uuid(),
+        recordType: z.enum(['sales_order', 'invoice', 'payment', 'shipment']),
+        externalId: CommerceReferenceSchema,
+        reference: CommerceReferenceSchema.nullable(),
+        amount: SourceMoneySchema.nullable(),
+        trackingNumber: CommerceReferenceSchema.nullable(),
+        carrier: CommerceReferenceSchema.nullable(),
+        shippedAt: z.iso.datetime().nullable(),
+        matchMethod: z.enum(['odoo_reference_exact', 'odoo_relation_exact']),
+      }),
+    )
+    .max(100)
+    .optional(),
+  documentImport: z
+    .strictObject({
+      status: z.enum(['IMPORTED', 'NOT_FOUND', 'UNAVAILABLE', 'NOT_REQUESTED']),
+      count: z.number().int().min(0).max(3),
+      issues: z.array(z.string().max(128)).max(10),
+    })
+    .optional(),
 });
 export type OrderSourceResult = z.infer<typeof OrderSourceResultSchema>;
 export const OrderEnrichmentSchema = z.object({

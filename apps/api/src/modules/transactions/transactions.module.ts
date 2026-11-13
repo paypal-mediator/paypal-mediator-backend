@@ -12,9 +12,17 @@ import { PayPalOrderSource } from './sources/paypal-order-source.js';
 import { OrderSourcesService } from './sources/order-sources.service.js';
 import { ORDER_INFORMATION_SOURCES } from './sources/order-information-source.js';
 import { PaymentAdjustmentsService } from './payment-adjustments.service.js';
+import { IntegrationsModule } from '../integrations/integrations.module.js';
+import { OdooOrderSource } from './sources/odoo-order-source.js';
 
 @Module({
-  imports: [MerchantsModule, EventIngestionModule, EvidenceModule, AuditModule],
+  imports: [
+    MerchantsModule,
+    EventIngestionModule,
+    EvidenceModule,
+    AuditModule,
+    IntegrationsModule,
+  ],
   controllers: [TransactionsController, OrdersController],
   providers: [
     TransactionsService,
@@ -22,11 +30,15 @@ import { PaymentAdjustmentsService } from './payment-adjustments.service.js';
     TransactionsWorker,
     OrdersService,
     PayPalOrderSource,
+    OdooOrderSource,
     OrderSourcesService,
     {
       provide: ORDER_INFORMATION_SOURCES,
-      inject: [PayPalOrderSource],
-      useFactory: (paypal: PayPalOrderSource) => [paypal],
+      inject: [PayPalOrderSource, OdooOrderSource],
+      useFactory: (paypal: PayPalOrderSource, odoo: OdooOrderSource) => [
+        paypal,
+        odoo,
+      ],
     },
   ],
   exports: [TransactionsService, OrdersService, PayPalOrderSource],

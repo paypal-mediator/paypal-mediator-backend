@@ -41,6 +41,8 @@ export type ErpConnectionStatus = z.infer<typeof ErpConnectionStatusSchema>;
 export const MatchMethodSchema = z.enum([
   'invoice_id_exact',
   'custom_id_exact',
+  'odoo_reference_exact',
+  'odoo_relation_exact',
   'corroborated',
   'suggested',
 ]);

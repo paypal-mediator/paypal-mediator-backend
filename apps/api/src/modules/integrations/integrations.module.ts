@@ -9,18 +9,20 @@ import { MockErpAdapter } from './adapters/mock-erp.adapter.js';
 import { SiigoAdapter } from './adapters/siigo.adapter.js';
 import { OdooAdapter } from './adapters/odoo.adapter.js';
 import { ErpNextAdapter } from './adapters/erpnext.adapter.js';
+import { OdooRecordsService } from './odoo-records.service.js';
 
 @Module({
   imports: [AuditModule, JobsModule, MerchantsModule],
   controllers: [IntegrationsController],
   providers: [
     IntegrationsService,
+    OdooRecordsService,
     BindAdapter,
     MockErpAdapter,
     SiigoAdapter,
     OdooAdapter,
     ErpNextAdapter,
   ],
-  exports: [IntegrationsService],
+  exports: [IntegrationsService, OdooRecordsService],
 })
 export class IntegrationsModule {}

@@ -1,5 +1,9 @@
 # Odoo Online por equipo
 
+La asociación con pagos, pedidos, facturas y envíos usa la fuente ODOO de M03;
+los originales existentes se importan mediante M04. Requiere la migración
+`20261113030000_odoo_evidence_documents`. Ver [flujo, referencias y límites](odoo-payment-association.md).
+
 Connections ofrece PayPal y Odoo; Odoo es el único ERP disponible para nuevas conexiones. Los adaptadores anteriores permanecen internos para compatibilidad y pruebas, sin aparecer en el catálogo público.
 
 Un administrador conecta una instancia con `POST /api/integrations/odoo/connect-with-key` y `{ provider: "odoo", apiKey, baseUrl, database }`. Se admiten orígenes HTTPS de una instancia `*.odoo.com`, sin rutas, puertos personalizados ni credenciales en la URL. Odoo autohospedado queda fuera de esta versión. La API externa debe estar habilitada en el plan o prueba de Odoo.
