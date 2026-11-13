@@ -5,14 +5,17 @@ import { EventIngestionController } from './event-ingestion.controller.js';
 import { EventIngestionService } from './event-ingestion.service.js';
 import { PayPalWebhookVerifier } from './paypal-webhook.verifier.js';
 import { IngestionQueueService } from './ingestion-queue.service.js';
+import { IngestionOperationsController } from './ingestion-operations.controller.js';
+import { IngestionOperationsService } from './ingestion-operations.service.js';
 
 @Module({
   imports: [MerchantsModule, AuditModule],
-  controllers: [EventIngestionController],
+  controllers: [EventIngestionController, IngestionOperationsController],
   providers: [
     EventIngestionService,
     PayPalWebhookVerifier,
     IngestionQueueService,
+    IngestionOperationsService,
   ],
   exports: [EventIngestionService, IngestionQueueService],
 })

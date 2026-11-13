@@ -264,6 +264,37 @@ describe('M03: verified M02 deliveries → captures → authorized HTTP (real Po
     ).toMatchObject({ status: 'FAILED', errorCode: 'CAPTURE_CONFLICT' });
   });
 
+  it('recovers the rejected savepoint job through HTTP and processes the capture exactly once', async () => {
+    const adminId = randomUUID();
+    await prisma.merchantMember.create({
+      data: { merchantId, authUserId: adminId, role: 'ADMIN' },
+    });
+    const adminToken = await issuer.token(adminId);
+    const job = await prisma.ingestionJob.findFirstOrThrow({
+      where: {
+        event: {
+          merchantId,
+          payload: { path: ['resource', 'id'], equals: 'MOCK-SAVEPOINT' },
+        },
+      },
+    });
+    await request(context.app.getHttpServer())
+      .post(`/api/event-ingestion/jobs/${job.id}/retry`)
+      .auth(adminToken, { type: 'bearer' })
+      .send({})
+      .expect(200);
+    expect(await next()).toBe('COMPLETED');
+    expect(await next()).toBe('EMPTY');
+    expect(
+      await prisma.transaction.count({ where: { sourceEventId: job.eventId } }),
+    ).toBe(1);
+    await request(context.app.getHttpServer())
+      .post(`/api/event-ingestion/jobs/${job.id}/retry`)
+      .auth(adminToken, { type: 'bearer' })
+      .send({})
+      .expect(409);
+  });
+
   it('isolates detail/list by merchant and validates pagination/IDs', async () => {
     const row = await prisma.transaction.findFirstOrThrow({
       where: { merchantId },

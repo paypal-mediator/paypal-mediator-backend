@@ -7,6 +7,10 @@ import { PrismaService } from '../../src/common/database/prisma.service.js';
 import { PayPalAuthService } from '../../src/modules/merchants/index.js';
 import { MerchantsService } from '../../src/modules/merchants/merchants.service.js';
 import { createMockAuth } from '../fixtures/auth.js';
+import {
+  mockTransmissionHeaders,
+  mockWebhookEvent,
+} from '../fixtures/paypal-webhook.js';
 
 describe('PayPal seller onboarding: PostgreSQL and HTTP, MOCK PayPal and identity', () => {
   const merchantId = randomUUID(),
@@ -21,7 +25,9 @@ describe('PayPal seller onboarding: PostgreSQL and HTTP, MOCK PayPal and identit
     trackingId = '',
     confirmed = true,
     returnedTracking = '',
-    scopes = true;
+    scopes = true,
+    sellerId = 'SELLER1234567',
+    signature = 'SUCCESS';
   const fetcher = vi.fn<typeof fetch>();
   beforeAll(async () => {
     issuer = await createMockAuth();
@@ -47,8 +53,10 @@ describe('PayPal seller onboarding: PostgreSQL and HTTP, MOCK PayPal and identit
           ],
         });
       }
+      if (url.endsWith('/verify-webhook-signature'))
+        return Response.json({ verification_status: signature });
       const seller = {
-        merchant_id: 'SELLER1234567',
+        merchant_id: sellerId,
         tracking_id: returnedTracking || trackingId,
       };
       if (url.includes('?tracking_id=')) return Response.json(seller);
@@ -223,6 +231,81 @@ describe('PayPal seller onboarding: PostgreSQL and HTTP, MOCK PayPal and identit
         })
       ).status,
     ).toBe('PENDING');
+  });
+  it('routes signed captures and disputes to two independent teams and revokes only the signed seller', async () => {
+    sellerId = 'SECOND1234567';
+    await post('connect', other).expect(201);
+    await post('complete', other).expect(201);
+    const deliver = (event: object) =>
+      request(context.app.getHttpServer())
+        .post('/api/webhooks/paypal')
+        .set(mockTransmissionHeaders)
+        .send(event);
+    for (const [team, seller] of [
+      [merchantId, 'SELLER1234567'],
+      [other, 'SECOND1234567'],
+    ]) {
+      for (const kind of [
+        'PAYMENT.CAPTURE.COMPLETED',
+        'CUSTOMER.DISPUTE.CREATED',
+      ]) {
+        const event = mockWebhookEvent(kind);
+        const resource = kind.startsWith('CUSTOMER.DISPUTE')
+          ? {
+              ...event.resource,
+              disputed_transactions: [{ seller: { merchant_id: seller } }],
+            }
+          : { ...event.resource, payee: { merchant_id: seller } };
+        const receipt = await deliver({ ...event, resource }).expect(200);
+        expect(
+          await prisma.webhookEvent.findUniqueOrThrow({
+            where: { id: receipt.body.eventId },
+          }),
+        ).toMatchObject({ merchantId: team });
+        expect(
+          (await deliver({ ...event, resource }).expect(200)).body.outcome,
+        ).toBe('DUPLICATE');
+      }
+    }
+    for (const resource of [
+      {},
+      { merchant_id: 'UNKNOWN' },
+      { merchant_id: 'SELLER1234567', payee: { merchant_id: 'SECOND1234567' } },
+    ]) {
+      await deliver({ ...mockWebhookEvent(), resource }).expect(422);
+    }
+    const revoked = {
+      ...mockWebhookEvent('MERCHANT.PARTNER-CONSENT.REVOKED'),
+      resource: { merchant_id: 'SECOND1234567' },
+    };
+    signature = 'FAILURE';
+    await deliver(revoked).expect(401);
+    expect(
+      (
+        await prisma.payPalAccount.findUniqueOrThrow({
+          where: { merchantId: other },
+        })
+      ).status,
+    ).toBe('CONNECTED');
+    signature = 'SUCCESS';
+    await deliver(revoked).expect(200);
+    expect(
+      (
+        await prisma.payPalAccount.findUniqueOrThrow({
+          where: { merchantId: other },
+        })
+      ).status,
+    ).toBe('DISCONNECTED');
+    expect(
+      (await prisma.payPalAccount.findUniqueOrThrow({ where: { merchantId } }))
+        .status,
+    ).toBe('CONNECTED');
+    expect((await deliver(revoked).expect(200)).body.outcome).toBe('DUPLICATE');
+    await deliver({
+      ...mockWebhookEvent(),
+      resource: { merchant_id: 'SECOND1234567' },
+    }).expect(422);
+    sellerId = 'SELLER1234567';
   });
   it('disconnects locally and prevents authorization replay and API access', async () => {
     await post('disconnect').expect(201);

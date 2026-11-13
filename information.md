@@ -1,3 +1,12 @@
+## M02: recuperación y estado por equipo, 2026-11-13
+
+API autenticada para listar trabajos con paginación y consultar última recepción,
+pendientes y fallos por equipo. Solo ADMIN puede reencolar un trabajo FAILED;
+el cambio y la auditoría M09 son atómicos y la concurrencia no duplica trabajos.
+No cambia el schema. Ver [rutas, pruebas y límites](docs/m02-event-ingestion.md).
+La validación de este incremento usa PostgreSQL desechable y PayPal/identidad
+MOCK; no acredita publicación ni una prueba nueva con dos vendedores reales.
+
 ## Pago Sandbox del vendedor conectado y queja de prueba, 2026-11-12
 
 Con la cuenta indicada por el usuario se verifico el equipo Heladeria Demo Donnet y su vendedor Sandbox conectado. Orden `3PE455400B6999217`, captura `7GD21860GA330880G`, 1 USD ficticio COMPLETED y transaccion `b8e14979-bf3d-47c0-9a02-836831c663ea` visible en el equipo correcto. El enlace no se genero dentro de la orden PayPal. Prueba separada: enlace tecnico provisionado por API para ese pago, primer mensaje del comprador "El producto llego roto", clasificacion COMPLAINT/DEFECT por NLP real y borrador del generador real PENDING, privado y oculto al comprador. Conversacion `adc2e62d-3dfc-48c1-9b07-f038c364e953` abierta para revision; sin respuesta del vendedor ni disputa PayPal. Esta prueba valida APIs publicadas, no la entrega del enlace en recibo ni una inspeccion visual nueva. Ver `docs/evidence/conciliation-connected-seller-sandbox-20261112.json`.

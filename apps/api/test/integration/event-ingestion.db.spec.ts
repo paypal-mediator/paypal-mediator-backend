@@ -5,6 +5,7 @@ import request from 'supertest';
 import { WebhookReceiptSchema } from '@resolve-ai/contracts';
 import { createApp } from '../../src/application.js';
 import { PrismaService } from '../../src/common/database/prisma.service.js';
+import { AuditService } from '../../src/modules/monitoring/audit.service.js';
 import { createMockAuth } from '../fixtures/auth.js';
 import {
   mockTransmissionHeaders,
@@ -108,6 +109,130 @@ describe('M01 ↔ M02 communication over HTTP and real PostgreSQL (MOCK PayPal/J
   const eventCount = (paypalEventId: string) =>
     prisma.webhookEvent.count({ where: { merchantId, paypalEventId } });
 
+  it('isolates operations by team, restricts retries to admins and audits a concurrent retry once', async () => {
+    const receipt = (await deliver(mockWebhookEvent()).expect(200)).body;
+    const viewer = randomUUID();
+    const otherTeam = randomUUID();
+    await prisma.merchantMember.create({
+      data: { merchantId, authUserId: viewer, role: 'VIEWER' },
+    });
+    await prisma.merchant.create({
+      data: {
+        id: otherTeam,
+        displayName: 'MOCK other team',
+        members: { create: { authUserId: userId, role: 'ADMIN' } },
+      },
+    });
+    const viewerToken = await issuer.token(viewer);
+    const server = context.app.getHttpServer();
+    const retry = (token: string, team = merchantId) =>
+      request(server)
+        .post(`/api/event-ingestion/jobs/${receipt.jobId}/retry`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('X-Merchant-Id', team)
+        .send({});
+    try {
+      await request(server).get('/api/event-ingestion/health').expect(401);
+      await retry(viewerToken).expect(403);
+      await retry(userToken, otherTeam).expect(404);
+      await retry(userToken).expect(409);
+      await prisma.ingestionJob.update({
+        where: { id: receipt.jobId },
+        data: {
+          status: 'FAILED',
+          errorCode: 'INVALID_CAPTURE',
+          finishedAt: new Date(),
+        },
+      });
+      const auditFailure = vi
+        .spyOn(context.app.get(AuditService), 'append')
+        .mockRejectedValueOnce(new Error('MOCK_AUDIT_FAILURE'));
+      await retry(userToken).expect(500);
+      auditFailure.mockRestore();
+      expect(
+        await prisma.ingestionJob.findUniqueOrThrow({
+          where: { id: receipt.jobId },
+        }),
+      ).toMatchObject({ status: 'FAILED', errorCode: 'INVALID_CAPTURE' });
+      const results = await Promise.all([retry(userToken), retry(userToken)]);
+      expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+      expect(
+        await prisma.auditEvent.count({
+          where: {
+            merchantId,
+            resourceId: receipt.jobId,
+            action: 'INGESTION_RETRIED',
+          },
+        }),
+      ).toBe(1);
+      const job = await prisma.ingestionJob.findUniqueOrThrow({
+        where: { id: receipt.jobId },
+      });
+      expect(job).toMatchObject({
+        status: 'QUEUED',
+        errorCode: null,
+        finishedAt: null,
+      });
+      const empty = await request(server)
+        .get('/api/event-ingestion/jobs')
+        .set('Authorization', `Bearer ${userToken}`)
+        .set('X-Merchant-Id', otherTeam)
+        .expect(200);
+      expect(empty.body.items).toEqual([]);
+      const health = await request(server)
+        .get('/api/event-ingestion/health')
+        .set('Authorization', `Bearer ${userToken}`)
+        .set('X-Merchant-Id', otherTeam)
+        .expect(200);
+      expect(health.body).toEqual({
+        lastReceivedAt: null,
+        oldestQueuedAt: null,
+        counts: { QUEUED: 0, FAILED: 0, COMPLETED: 0 },
+      });
+      await deliver(mockWebhookEvent()).expect(200);
+      const list = await request(server)
+        .get('/api/event-ingestion/jobs?limit=1')
+        .set('Authorization', `Bearer ${viewerToken}`)
+        .expect(200);
+      expect(list.body.items).toHaveLength(1);
+      expect(list.body.items[0].event).not.toHaveProperty('payload');
+      expect(list.body.nextCursor).not.toBeNull();
+      const page = await request(server)
+        .get('/api/event-ingestion/jobs')
+        .query({ limit: 1, ...list.body.nextCursor })
+        .set('Authorization', `Bearer ${viewerToken}`)
+        .expect(200);
+      expect(page.body.items).toHaveLength(1);
+      expect(page.body.items[0].id).not.toBe(list.body.items[0].id);
+      await request(server)
+        .get('/api/event-ingestion/jobs?status=UNKNOWN')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(400);
+      await request(server)
+        .post(`/api/event-ingestion/jobs/${receipt.jobId}/retry`)
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ merchantId: otherTeam })
+        .expect(400);
+      await request(server)
+        .get('/api/event-ingestion/jobs?beforeId=' + receipt.jobId)
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(400);
+      await prisma.ingestionJob.update({
+        where: { id: receipt.jobId },
+        data: { status: 'COMPLETED', finishedAt: new Date() },
+      });
+      await retry(userToken).expect(409);
+    } finally {
+      await prisma.merchantMember.deleteMany({
+        where: { merchantId: otherTeam },
+      });
+      await prisma.merchant.delete({ where: { id: otherTeam } });
+      await prisma.merchantMember.deleteMany({
+        where: { merchantId, authUserId: viewer },
+      });
+    }
+  });
+
   it('uses M01 merchant context/OAuth and atomically persists the original event and one queued job', async () => {
     const event = {
       ...mockWebhookEvent(),
@@ -144,8 +269,10 @@ describe('M01 ↔ M02 communication over HTTP and real PostgreSQL (MOCK PayPal/J
       actorKind: 'PAYPAL',
       outcome: 'SUCCEEDED',
     });
-    const verification = calls.find((call) =>
-      call.path.endsWith('verify-webhook-signature'),
+    const verification = calls.find(
+      (call) =>
+        call.path.endsWith('verify-webhook-signature') &&
+        JSON.parse(String(call.init?.body)).webhook_event.id === event.id,
     );
     expect(verification?.init?.headers).toMatchObject({
       Authorization: 'Bearer MOCK_M01_SERVER_TOKEN',

@@ -1,5 +1,48 @@
 # M02 — Ingesta de webhooks PayPal
 
+## Operación por equipo — 13 de noviembre de 2026
+
+Las rutas de operación requieren JWT Supabase y membresía activa. Seleccionar
+el equipo con `X-Merchant-Id`; el servidor obtiene la autoridad de M01.
+
+- `GET /api/event-ingestion/health`: última recepción verificada y persistida,
+  fecha del trabajo pendiente más antiguo y conteos `QUEUED`, `FAILED` y
+  `COMPLETED` del equipo. Fechas nulas y conteos cero indican ausencia de datos,
+  no una conexión PayPal saludable. No prueba conectividad externa ni que el
+  worker esté activado.
+- `GET /api/event-ingestion/jobs`: consulta para ADMIN y VIEWER, con `status`
+  opcional y `limit` entre 1 y 100 (25 por defecto). La respuesta incluye
+  metadatos, fechas, código de error y cursor `nextCursor`; para continuar enviar
+  ambos `before` y `beforeId`. No devuelve payload, firmas, cuerpos ni secretos.
+- `POST /api/event-ingestion/jobs/:id/retry`, cuerpo `{}`: solo ADMIN. Cambia
+  `FAILED` a `QUEUED`, limpia el error/fecha de finalización y agrega
+  `INGESTION_RETRIED` a M09 en la misma transacción. La auditoría conserva el
+  código anterior. Si falla la auditoría, se revierte también el cambio de estado.
+  Un trabajo ajeno o inexistente devuelve 404; uno pendiente o completado, 409. Dos solicitudes simultáneas producen un solo reencolado y una auditoría.
+
+Reencolar no cambia el evento firmado ni vuelve a llamar a PayPal. El consumidor
+M03/M07 debe estar activo para procesarlo; una causa terminal no corregida
+volverá a fallar. Los errores inesperados del consumidor conservan el rollback
+existente y el trabajo `QUEUED`, disponible para el siguiente ciclo del worker.
+No se permite repetir trabajos completados ni se crean eventos/trabajos nuevos.
+
+El incremento no cambia el schema ni requiere migración propia. Las pruebas
+PostgreSQL/HTTP cubren aislamiento entre equipos, roles, concurrencia, paginación,
+rollback de auditoría y recuperación por HTTP seguida del consumidor real M03.
+La suite partner comprueba capturas/disputas para dos vendedores y revocación
+solo después de verificar la firma. PayPal e identidad son MOCK explícitos;
+esto no acredita una prueba nueva con dos cuentas Sandbox reales ni despliegue.
+
+Validación local ejecutada: `pnpm check` aprobado (414 pruebas unitarias/HTTP,
+lint, formato, tipos, Prisma y build) y `pnpm test:db` aprobado (206 pruebas,
+17 archivos). Las 22 migraciones presentes se aplicaron a PostgreSQL desechable
+y se repitió `pnpm db:deploy` sin pendientes. Esos totales incluyen el trabajo
+local previo de invitaciones M01; sus cambios se conservan fuera del commit M02.
+
+Los reembolsos, reversiones y capturas denegadas siguen fuera del procesamiento
+de negocio de este incremento: se conservan verificados como eventos ignorados.
+Su incorporación requiere definir también los estados y consumidores de M03.
+
 `POST /api/webhooks/paypal` recibe entregas de PayPal Sandbox. La ruta no usa
 el JWT del merchant: autentica cada evento mediante la API oficial de
 verificación de firmas de PayPal. Solo devuelve HTTP 200 cuando el evento y,
@@ -55,12 +98,12 @@ mismas referencias sin crear otro trabajo; `IGNORED` indica un tipo no soportado
 verificado y guardado, con `jobId=null`. Ninguno significa procesamiento de
 una transacción, investigación o resolución de una disputa.
 
-| Tipo PayPal                 | Trabajo pendiente      | Consumidor futuro |
-| --------------------------- | ---------------------- | ----------------- |
-| `PAYMENT.CAPTURE.COMPLETED` | `TRANSACTION_CAPTURED` | M03               |
-| `CUSTOMER.DISPUTE.CREATED`  | `DISPUTE_CHANGED`      | M07               |
-| `CUSTOMER.DISPUTE.UPDATED`  | `DISPUTE_CHANGED`      | M07               |
-| `CUSTOMER.DISPUTE.RESOLVED` | `DISPUTE_CHANGED`      | M07               |
+| Tipo PayPal                 | Trabajo pendiente      | Consumidor |
+| --------------------------- | ---------------------- | ---------- |
+| `PAYMENT.CAPTURE.COMPLETED` | `TRANSACTION_CAPTURED` | M03        |
+| `CUSTOMER.DISPUTE.CREATED`  | `DISPUTE_CHANGED`      | M07        |
+| `CUSTOMER.DISPUTE.UPDATED`  | `DISPUTE_CHANGED`      | M07        |
+| `CUSTOMER.DISPUTE.RESOLVED` | `DISPUTE_CHANGED`      | M07        |
 
 ## Persistencia e idempotencia
 

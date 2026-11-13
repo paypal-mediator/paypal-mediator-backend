@@ -35,6 +35,7 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
         'WEBHOOK_DUPLICATE',
         'WEBHOOK_REJECTED',
         'INGESTION_FINISHED',
+        'INGESTION_RETRIED',
         'TRANSACTION_CAPTURED',
         'ORDER_CREATED',
         'ORDER_SOURCE_STARTED',
