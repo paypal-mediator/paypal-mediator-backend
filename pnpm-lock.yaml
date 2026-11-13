@@ -75,6 +75,18 @@ importers:
       '@nestjs/swagger':
         specifier: 11.4.8
         version: 11.4.8(@nestjs/common@11.2.8(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.2.8)(reflect-metadata@0.2.2)
+      '@nlpjs/core':
+        specifier: 4.26.1
+        version: 4.26.1
+      '@nlpjs/lang-en':
+        specifier: 4.26.1
+        version: 4.26.1
+      '@nlpjs/lang-es':
+        specifier: 4.26.1
+        version: 4.26.1
+      '@nlpjs/nlp':
+        specifier: 4.27.0
+        version: 4.27.0
       '@prisma/adapter-pg':
         specifier: 7.10.1
         version: 7.10.1
@@ -559,6 +571,45 @@ packages:
         optional: true
       class-validator:
         optional: true
+
+  '@nlpjs/core@4.26.1':
+    resolution: {integrity: sha512-M/PeFddsi3y7Z1piFJxsLGm5/xdMhcrpOsml7s6CTEgYo8iduaT30HDd61tZxDyvvJseU6uFqlXSn7XKkAcC1g==}
+
+  '@nlpjs/lang-en-min@4.26.1':
+    resolution: {integrity: sha512-1sJZ7dy7ysqzbsB8IklguvB88J8EPIv4XGVkZCcwecKtOw+fp5LAsZ3TJVmEf18iK1gD4cEGr7qZg5fpPxTpWQ==}
+
+  '@nlpjs/lang-en@4.26.1':
+    resolution: {integrity: sha512-GVoJpOjyk5TtBAqo/fxsiuuH7jXycyakGT0gw5f01u9lOmUnpJegvXyGff/Nb0j14pXcGHXOhmpWrcTrG2B0LQ==}
+
+  '@nlpjs/lang-es@4.26.1':
+    resolution: {integrity: sha512-fIPQt+WPcNdyxZOCMkOPlMb4Y1iE585QxjB9IAdFz8ZtVg7mc4dlv5f46ud7ppdMh84iLOuOdo6pzu2Cqm14lw==}
+
+  '@nlpjs/language-min@4.25.0':
+    resolution: {integrity: sha512-g8jtbDbqtRm+dlD/1Vnb4VWfKbKteApEGVTqIMxYkk6N/HMhvLZ5J2svrxzrB98a/HZ0fb//YBfFgymnz9Oukg==}
+
+  '@nlpjs/ner@4.27.0':
+    resolution: {integrity: sha512-ptwkxriJdmgHSH9TfP10JQ1jviaSl2SupSFGUvTuWkuJhobQd3hbnlSq40V6XYvJNmqh9M9zEab/AKeghxYOTA==}
+
+  '@nlpjs/neural@4.25.0':
+    resolution: {integrity: sha512-Oz20denGiBe0DlQsS7lN4TNrATN1nXlHKc/HB6jJPegjVmgJVCugDaHwIGoV7qOWyA6F2fRRwOgD+quNT2gVpg==}
+
+  '@nlpjs/nlg@4.26.1':
+    resolution: {integrity: sha512-PCJWiZ7464ChXXUGvjBZIFtoqkC24Oy6X63HgQrSv+63svz22Y5Cmu1MYLk77Nb+4keWv+hKhFJKDkvJoOpBVg==}
+
+  '@nlpjs/nlp@4.27.0':
+    resolution: {integrity: sha512-q6X7sY6TYVnQRZJKF/6mfLFlNA5oRYLhgQ5k3i1IBqH9lbWTAZJr31w/dCf97HXaYaj+vJp3h0ucfNumme9EIw==}
+
+  '@nlpjs/nlu@4.27.0':
+    resolution: {integrity: sha512-j4DUdoXS/y/Xag6ysYXx7Ve8NBmUVViUSCJhj3r49+zGyYtyVAHuVcqSej5q0tJjn0JSMT+6+ip8klON1q8ixw==}
+
+  '@nlpjs/sentiment@4.26.1':
+    resolution: {integrity: sha512-U2WmcW3w6yDDO45+Y7v5e6DPQj8e0x+RUUePPyRu2uIZmUtIKG+qCPMWnNLMmYQZoSQEFxmMMlLcGDC7tN7o3w==}
+
+  '@nlpjs/similarity@4.26.1':
+    resolution: {integrity: sha512-QutSBFGo/huNuz60PgqCjub0oBd9S8MLrjme33U5GzxuSvToQzXtn9/ynIia8qDm009D09VXV+LPeNE4h7yuSg==}
+
+  '@nlpjs/slot@4.26.1':
+    resolution: {integrity: sha512-mK8EEy5O+mRGne822PIKMxHSFh8j+iC7hGJ6T31XdFsNhFEYXLI/0dmeBstZgTSKBTe27HNFgCCwuGb77u0o9w==}
 
   '@noble/hashes@1.8.0':
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
@@ -2659,6 +2710,61 @@ snapshots:
       path-to-regexp: 8.4.2
       reflect-metadata: 0.2.2
       swagger-ui-dist: 5.34.1
+
+  '@nlpjs/core@4.26.1': {}
+
+  '@nlpjs/lang-en-min@4.26.1':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+
+  '@nlpjs/lang-en@4.26.1':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+      '@nlpjs/lang-en-min': 4.26.1
+
+  '@nlpjs/lang-es@4.26.1':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+
+  '@nlpjs/language-min@4.25.0': {}
+
+  '@nlpjs/ner@4.27.0':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+      '@nlpjs/language-min': 4.25.0
+      '@nlpjs/similarity': 4.26.1
+
+  '@nlpjs/neural@4.25.0': {}
+
+  '@nlpjs/nlg@4.26.1':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+
+  '@nlpjs/nlp@4.27.0':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+      '@nlpjs/ner': 4.27.0
+      '@nlpjs/nlg': 4.26.1
+      '@nlpjs/nlu': 4.27.0
+      '@nlpjs/sentiment': 4.26.1
+      '@nlpjs/slot': 4.26.1
+
+  '@nlpjs/nlu@4.27.0':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+      '@nlpjs/language-min': 4.25.0
+      '@nlpjs/neural': 4.25.0
+      '@nlpjs/similarity': 4.26.1
+
+  '@nlpjs/sentiment@4.26.1':
+    dependencies:
+      '@nlpjs/core': 4.26.1
+      '@nlpjs/language-min': 4.25.0
+      '@nlpjs/neural': 4.25.0
+
+  '@nlpjs/similarity@4.26.1': {}
+
+  '@nlpjs/slot@4.26.1': {}
 
   '@noble/hashes@1.8.0': {}
 

@@ -59,6 +59,8 @@ model Merchant {
   externalRecords         ExternalRecord[]
   transactionLinks        TransactionLink[]
   mediationPolicy         MediationPolicy?
+  conciliationPolicy      ConciliationPolicy?
+  conciliationChats       ConciliationChat[]
 
   @@map("merchants")
 }
@@ -762,4 +764,61 @@ model PayPalAccount {
   merchant   Merchant  @relation(fields: [merchantId], references: [id], onDelete: Restrict)
 
   @@map("paypal_accounts")
+}
+
+model ConciliationPolicy {
+  merchantId String @id @map("merchant_id") @db.Uuid
+  settings Json
+  version Int @default(1)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  @@map("conciliation_policies")
+}
+
+model ConciliationChat {
+  id String @id @default(uuid()) @db.Uuid
+  merchantId String @map("merchant_id") @db.Uuid
+  orderId String? @map("order_id") @db.Uuid
+  transactionId String? @map("transaction_id") @db.Uuid
+  orderReference String @map("order_reference") @db.VarChar(255)
+  tokenHash String @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  state String @default("WAITING") @db.VarChar(24)
+  category String @default("OTHER") @db.VarChar(24)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  messages ConciliationMessage[]
+  @@unique([id, merchantId])
+  @@index([merchantId, updatedAt, id])
+  @@map("conciliation_chats")
+}
+
+model ConciliationMessage {
+  id String @id @default(uuid()) @db.Uuid
+  chatId String @map("chat_id") @db.Uuid
+  merchantId String @map("merchant_id") @db.Uuid
+  author String @db.VarChar(16)
+  sequence Int
+  text String @db.VarChar(2000)
+  language String @db.VarChar(2)
+  idempotencyKey String @map("idempotency_key") @db.Uuid
+  responseToId String? @unique @map("response_to_id") @db.Uuid
+  classification Json?
+  draftText String? @map("draft_text") @db.VarChar(1500)
+  plan String? @db.VarChar(1000)
+  draftStatus String @default("NONE") @map("draft_status") @db.VarChar(24)
+  version Int @default(0)
+  policyVersion Int? @map("policy_version")
+  policySnapshot Json? @map("policy_snapshot")
+  approvedBy String? @map("approved_by") @db.Uuid
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  chat ConciliationChat @relation(fields: [chatId, merchantId], references: [id, merchantId], onDelete: Restrict)
+  @@unique([chatId, author, idempotencyKey])
+  @@unique([chatId, sequence])
+  @@index([merchantId, createdAt])
+  @@index([chatId, createdAt, id])
+  @@map("conciliation_messages")
 }

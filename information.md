@@ -1,3 +1,7 @@
+## Conciliacion preventiva - implementacion, 2026-11-12
+
+Nuevo modulo independiente de disputas: chat privado por pedido o pago, agente NLP.js local bilingue y generador de propuestas solo para preguntas/quejas. Confirmaciones positivas no cargan el modelo ni llaman al generador. Borradores privados, edicion/aprobacion del comerciante y reglas automaticas opcionales con textos aprobados en ambos idiomas. Incluye enlaces revocables, RLS, idempotencia y recuperacion manual. Ver [flujo, API, limites y pruebas](docs/preventive-conciliations.md). La migracion propia es `20261112020000_preventive_conciliations`; no se modifican tablas privadas de otros modulos.
+
 ## Odoo Online - conexiones por equipo, 2026-11-12
 
 Odoo es el unico ERP habilitado para nuevas conexiones. Settings > Connections permite agregar instancias por equipo y enviar URL, base de datos y API Key para verificacion real antes de cifrar y guardar. Se corrige context_get.uid y se restringen escrituras a ADMIN. Ver [alcance y operacion](docs/odoo-connections.md). No cambia el schema.

@@ -1,5 +1,10 @@
 # Organización del backend
 
+`conciliations/` es propietario del chat preventivo, sus políticas y mensajes.
+Clasifica mediante NLP.js local antes de invocar al generador de borradores.
+Consume interfaces públicas de M03 para pedidos/pagos y conserva la mediación
+de disputas PayPal como flujo independiente. Ver [conciliación preventiva](preventive-conciliations.md).
+
 M01 también es propietario de `paypal_accounts` y del onboarding PayPal por
 negocio. Los clientes consumen cabeceras de vendedor mediante su interfaz pública;
 M02 resuelve vendedores de webhooks firmados. Ver [flujo y configuración](paypal-business-onboarding.md).
