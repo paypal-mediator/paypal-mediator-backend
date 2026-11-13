@@ -1,368 +1,332 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   SubmissionResultSchema,
-  type SubmissionResult,
-  SubmissionGuardResultSchema,
-  type SubmissionGuardResult,
-  type SubmitRequest,
   SubmissionListResponseSchema,
-  type SubmissionListResponse,
+  type SubmitRequest,
+  type SubmissionGuardResult,
+  type MerchantRole,
 } from '@resolve-ai/contracts';
 import { PrismaService } from '../../common/database/prisma.service.js';
 import { ApiException } from '../../common/http/api.exception.js';
-import { Prisma, type Submission } from '../../generated/prisma/client.js';
-import { AuditService } from '../../modules/monitoring/index.js';
-import {
-  PAYPAL_FETCH,
-  PAYPAL_SANDBOX_URL,
-  PayPalAuthService,
-} from '../merchants/index.js';
+import { contentHash } from '../../common/data/content-hash.js';
+import type { Prisma, Submission } from '../../generated/prisma/client.js';
+import { AuditService } from '../monitoring/audit.service.js';
+import { MerchantsService } from '../merchants/index.js';
+import { DisputesService } from '../disputes/index.js';
+import { VerifierService } from '../verifier/index.js';
+import { TransactionsService } from '../transactions/index.js';
+import { MediationPayPalClient } from './mediation-paypal.client.js';
 import { evaluateSubmissionGuard } from './submission-guard.js';
-
-type VerificationVerdict = 'APPROVED' | 'INCOMPLETE' | 'REJECTED';
-
-interface DisputeWithVerification {
-  id: string;
-  merchantId: string;
-  paypalDisputeId: string;
-  paypalStatus: string | null;
-  paypalStage: string | null;
-  paypalReason: string | null;
-  reasonCategory: string | null;
-  internalState: string | null;
-  linkStatus: string | null;
-  linkReason: string | null;
-  transactionId: string | null;
-  amount: Prisma.Decimal | null;
-  currencyCode: string | null;
-  verifiedAt: Date | null;
-  verificationVerdict: VerificationVerdict | null;
-  verifiedEvidenceIds: string[];
-  merchantAllowSubmissions: boolean | null;
-  merchantRequireApproval: boolean | null;
-  existingSubmission: boolean | null;
-}
 
 @Injectable()
 export class SubmissionsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(PAYPAL_FETCH) private readonly fetcher: typeof fetch,
-    @Inject(PayPalAuthService) private readonly auth: PayPalAuthService,
-    @Inject(AuditService)
-    private readonly audit: AuditService,
+    @Inject(DisputesService) private readonly disputes: DisputesService,
+    @Inject(VerifierService) private readonly verifier: VerifierService,
+    @Inject(MerchantsService) private readonly merchants: MerchantsService,
+    @Inject(TransactionsService)
+    private readonly transactions: TransactionsService,
+    @Inject(MediationPayPalClient)
+    private readonly paypal: MediationPayPalClient,
+    @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
-  /**
-   * Gather all data needed to evaluate the Submission Guard for a dispute.
-   */
   async resolveDisputeContext(
     merchantId: string,
     disputeId: string,
-  ): Promise<DisputeWithVerification> {
-    const dispute = await this.prisma.dispute.findFirst({
-      where: { id: disputeId, merchantId },
-      include: {
-        merchant: {
-          select: {
-            allowSubmissions: true,
-            requireMerchantApproval: true,
-          },
-        },
-        transaction: {
-          select: {
-            id: true,
-            verifications: {
-              orderBy: [{ createdAt: 'desc' }],
-              take: 1,
-            },
-          },
-        },
-        submissions: {
-          select: { id: true },
-          take: 1,
-        },
-      },
-    });
-
-    if (!dispute) {
-      throw new ApiException('DISPUTE_NOT_FOUND', 'Dispute not found', 404);
-    }
-
-    const latestVerification = dispute.transaction?.verifications[0];
-    const verificationResult =
-      (latestVerification?.result as
-        | { verdict?: VerificationVerdict; verifiedEvidenceIds?: string[] }
-        | undefined) ?? {};
-    const verificationVerdict =
-      verificationResult.verdict === 'APPROVED' ||
-      verificationResult.verdict === 'INCOMPLETE' ||
-      verificationResult.verdict === 'REJECTED'
-        ? verificationResult.verdict
-        : null;
-    const verifiedEvidenceIds: string[] = Array.isArray(
-      verificationResult.verifiedEvidenceIds,
-    )
-      ? verificationResult.verifiedEvidenceIds
-      : [];
-
-    return {
-      id: dispute.id,
-      merchantId: dispute.merchantId,
-      paypalDisputeId: dispute.paypalDisputeId,
+    request: SubmitRequest,
+  ) {
+    const dispute = await this.disputes.detail(merchantId, disputeId);
+    const policy = await this.merchants.getPolicy(merchantId);
+    const review = dispute.link.transactionId
+      ? await this.verifier.submissionReview(
+          merchantId,
+          dispute.link.transactionId,
+          dispute.id,
+          dispute.lastEventAt,
+          request.verificationId,
+        )
+      : null;
+    const guard = evaluateSubmissionGuard({
+      internalState: dispute.internalState,
+      linkStatus: dispute.link.status,
+      verificationVerdict: review ? 'APPROVED' : null,
+      verifiedEvidenceIds: review?.evidenceIds ?? [],
+      merchantAllowSubmissions: policy.allowSubmissions,
+      merchantRequireApproval: policy.requireMerchantApproval,
+      merchantApproved: request.approve === true,
       paypalStatus: dispute.paypalStatus,
       paypalStage: dispute.paypalStage,
-      paypalReason: dispute.paypalReason,
-      reasonCategory: dispute.reasonCategory,
-      internalState: dispute.internalState,
-      linkStatus: dispute.linkStatus,
-      linkReason: dispute.linkReason,
-      transactionId: dispute.transactionId,
-      amount: dispute.amount,
-      currencyCode: dispute.currencyCode,
-      verifiedAt: latestVerification?.finishedAt ?? null,
-      verificationVerdict,
-      verifiedEvidenceIds,
-      merchantAllowSubmissions: dispute.merchant.allowSubmissions,
-      merchantRequireApproval: dispute.merchant.requireMerchantApproval,
-      existingSubmission: dispute.submissions.length > 0,
-    };
+      existingSubmission: false,
+    });
+    if (dispute.reasonCategory !== 'ITEM_NOT_RECEIVED') {
+      guard.verdict = 'BLOCKED';
+      guard.reasons.push({
+        code: 'DISPUTE_REASON_UNSUPPORTED',
+        explanation: 'Only case-specific INR reviews are supported.',
+        evidenceIds: [],
+      });
+    }
+    return { dispute, review, guard };
   }
 
-  /**
-   * Evaluate the Submission Guard without making any PayPal call.
-   * Returns the guard result and whether submission would be allowed.
-   */
   async evaluateGuard(
     merchantId: string,
     disputeId: string,
   ): Promise<SubmissionGuardResult> {
-    const ctx = await this.resolveDisputeContext(merchantId, disputeId);
-    return evaluateSubmissionGuard({
-      internalState: ctx.internalState,
-      linkStatus: ctx.linkStatus,
-      verificationVerdict: ctx.verificationVerdict,
-      verifiedEvidenceIds: ctx.verifiedEvidenceIds,
-      merchantAllowSubmissions: ctx.merchantAllowSubmissions,
-      merchantRequireApproval: ctx.merchantRequireApproval,
-      paypalStatus: ctx.paypalStatus,
-      paypalStage: ctx.paypalStage,
-      existingSubmission: ctx.existingSubmission,
-    });
+    return (
+      await this.resolveDisputeContext(merchantId, disputeId, {
+        idempotencyKey: disputeId,
+      })
+    ).guard;
   }
 
-  /**
-   * Submit evidence to PayPal. This is the only entry point that can call
-   * PayPal's provide-evidence endpoint. It is protected by the Submission Guard.
-   */
   async submit(
     merchantId: string,
     disputeId: string,
     actorUserId: string,
     request: SubmitRequest,
-  ): Promise<SubmissionResult> {
-    // Idempotency: reject if we already processed this key for this dispute.
+    role?: MerchantRole,
+  ) {
+    if (role !== 'ADMIN')
+      throw new ApiException(
+        'MERCHANT_ADMIN_REQUIRED',
+        'An administrator is required',
+        403,
+      );
+    await this.disputes.detail(merchantId, disputeId);
+    const requestHash = contentHash({
+      merchantId,
+      disputeId,
+      actorUserId,
+      verificationId: request.verificationId ?? null,
+      approve: request.approve === true,
+    });
+    const replay = (row: Submission) => {
+      if (
+        row.merchantId !== merchantId ||
+        row.disputeId !== disputeId ||
+        row.requestHash !== requestHash
+      )
+        throw new ApiException(
+          'SUBMISSION_IDEMPOTENCY_CONFLICT',
+          'Idempotency key already used for a different request',
+          409,
+        );
+      return this.present(row);
+    };
     const existing = await this.prisma.submission.findUnique({
       where: { idempotencyKey: request.idempotencyKey },
     });
-    if (existing && existing.disputeId === disputeId) {
-      return this.mapSubmission(existing);
-    }
-
-    const ctx = await this.resolveDisputeContext(merchantId, disputeId);
-
-    // Run the deterministic guard first.
-    const guardResult = evaluateSubmissionGuard({
-      internalState: ctx.internalState,
-      linkStatus: ctx.linkStatus,
-      verificationVerdict: ctx.verificationVerdict,
-      verifiedEvidenceIds: ctx.verifiedEvidenceIds,
-      merchantAllowSubmissions: ctx.merchantAllowSubmissions,
-      merchantRequireApproval: ctx.merchantRequireApproval,
-      paypalStatus: ctx.paypalStatus,
-      paypalStage: ctx.paypalStage,
-      existingSubmission: ctx.existingSubmission,
-    });
-
-    // If blocked, record and return without calling PayPal.
-    if (guardResult.verdict === 'BLOCKED') {
-      return this.recordSubmission(
-        disputeId,
-        merchantId,
-        actorUserId,
-        request.idempotencyKey,
-        'BLOCKED',
-        null,
-        null,
-        null,
-        'SUBMISSION_BLOCKED_BY_GUARD',
-        'Submission Guard blocked the submission',
-        guardResult,
-      );
-    }
-
-    // Guard allowed: call PayPal provide-evidence.
-    let paypalRequestId: string | null = null;
-    let paypalResponseStatus: number | null = null;
-    let submittedAt: Date | null = null;
-    let errorCode: string | null = null;
-    let errorMessage: string | null = null;
-    let status: 'SUBMITTED' | 'FAILED' = 'SUBMITTED';
-
-    try {
-      const signal = AbortSignal.timeout(10000);
-      const token = await this.auth.getAccessToken(signal, true);
-
-      const response = await this.fetcher(
-        `${PAYPAL_SANDBOX_URL}/v1/customer/disputes/${ctx.paypalDisputeId}/provide-evidence`,
-        {
-          method: 'POST',
-          redirect: 'error',
-          signal,
-          headers: {
-            ...(await this.auth.merchantHeaders(merchantId)),
-            Authorization: `Bearer ${token.accessToken}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'PayPal-Request-Id': request.idempotencyKey.toString(),
-          },
-          body: JSON.stringify({
-            evidence_items: ctx.verifiedEvidenceIds.map((id) => ({
-              evidence_id: id,
-            })),
-          }),
-        },
-      );
-
-      paypalResponseStatus = response.status;
-
-      if (!response.ok) {
-        await response.body?.cancel();
-        status = 'FAILED';
-        errorCode = 'PAYPAL_API_ERROR';
-        errorMessage = `PayPal provide-evidence returned ${response.status}`;
-        paypalRequestId = null;
-      } else {
-        const body = await response.json();
-        paypalRequestId = body?.request_id ?? body?.id ?? null;
-        submittedAt = new Date();
-      }
-    } catch (err) {
-      status = 'FAILED';
-      errorCode = 'SUBMISSION_REQUEST_FAILED';
-      errorMessage =
-        err instanceof Error ? err.message : 'Unknown submission error';
-    }
-
-    return this.recordSubmission(
-      disputeId,
+    if (existing) return replay(existing);
+    const ctx = await this.resolveDisputeContext(
       merchantId,
-      actorUserId,
-      request.idempotencyKey,
-      status,
-      paypalRequestId,
-      paypalResponseStatus,
-      submittedAt,
-      errorCode,
-      errorMessage,
-      guardResult,
+      disputeId,
+      request,
+    );
+    const acquired = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`submission-key:${request.idempotencyKey}`}, 0))::text`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`submission:${merchantId}:${disputeId}`}, 0))::text`;
+      const prior = await tx.submission.findUnique({
+        where: { idempotencyKey: request.idempotencyKey },
+      });
+      if (prior) {
+        replay(prior);
+        return { row: prior, created: false };
+      }
+      const active = await tx.submission.findFirst({
+        where: {
+          merchantId,
+          disputeId,
+          status: { in: ['PENDING', 'UNKNOWN', 'SUBMITTED'] },
+        },
+      });
+      if (active)
+        throw new ApiException(
+          'SUBMISSION_ALREADY_RESERVED',
+          'A submission exists or requires reconciliation',
+          409,
+        );
+      const blocked = ctx.guard.verdict === 'BLOCKED';
+      const row = await tx.submission.create({
+        data: {
+          merchantId,
+          disputeId,
+          idempotencyKey: request.idempotencyKey,
+          requestHash,
+          status: blocked ? 'BLOCKED' : 'PENDING',
+          guardVerdict: ctx.guard.verdict,
+          guardReasons: ctx.guard.reasons as unknown as Prisma.InputJsonValue,
+          errorCode: blocked ? 'SUBMISSION_BLOCKED_BY_GUARD' : null,
+          errorMessage: blocked
+            ? 'Submission Guard blocked the submission'
+            : null,
+        },
+      });
+      await this.auditAttempt(tx, row, actorUserId);
+      return { row, created: true };
+    });
+    if (!acquired.created || acquired.row.status === 'BLOCKED')
+      return this.present(acquired.row);
+    let dispatched = false;
+    try {
+      const detail = await this.paypal.detail(
+        merchantId,
+        ctx.dispute.paypalDisputeId,
+      );
+      const latest = await this.resolveDisputeContext(
+        merchantId,
+        disputeId,
+        request,
+      );
+      const transaction = await this.transactions.detail(
+        merchantId,
+        ctx.dispute.link.transactionId!,
+      );
+      if (
+        latest.guard.verdict !== 'ALLOWED' ||
+        !latest.review ||
+        latest.dispute.lastEventAt !== ctx.dispute.lastEventAt ||
+        detail.status !== 'WAITING_FOR_SELLER_RESPONSE' ||
+        detail.reason !== ctx.dispute.paypalReason ||
+        contentHash(
+          detail.messages.map((message) => ({
+            postedBy:
+              message.posted_by === 'ARBITER' ? 'OTHER' : message.posted_by,
+            postedAt: new Date(message.time_posted).toISOString(),
+            content: message.content,
+          })),
+        ) !== contentHash(latest.dispute.messages) ||
+        detail.evidences.some(
+          (evidence) =>
+            evidence.source === 'REQUESTED_FROM_SELLER' &&
+            evidence.evidence_type !== 'OTHER',
+        ) ||
+        detail.messages.some(
+          (message) => (message.documents?.length ?? 0) > 0,
+        ) ||
+        detail.evidences.some(
+          (evidence) => (evidence.documents?.length ?? 0) > 0,
+        ) ||
+        detail.supporting_info.length > 0 ||
+        detail.dispute_life_cycle_stage !== ctx.dispute.paypalStage ||
+        detail.disputed_transactions.some(
+          (t) => t.seller_transaction_id !== transaction.paypalCaptureId,
+        ) ||
+        !this.paypal.can(detail, 'provide-evidence')
+      )
+        throw new ApiException(
+          'SUBMISSION_CONTEXT_CHANGED',
+          'Current PayPal actions or verified context do not permit submission',
+          409,
+        );
+      const form = new FormData();
+      form.append(
+        'input',
+        JSON.stringify({
+          evidences: [{ evidence_type: 'OTHER', notes: latest.review.notes }],
+        }),
+      );
+      dispatched = true;
+      await this.paypal.perform(
+        merchantId,
+        detail,
+        'provide-evidence',
+        form,
+        request.idempotencyKey,
+      );
+      return await this.finish(acquired.row.id, actorUserId, 'SUBMITTED', null);
+    } catch {
+      return this.finish(
+        acquired.row.id,
+        actorUserId,
+        dispatched ? 'UNKNOWN' : 'FAILED',
+        dispatched
+          ? 'SUBMISSION_RECONCILIATION_REQUIRED'
+          : 'SUBMISSION_PREFLIGHT_FAILED',
+      );
+    }
+  }
+
+  private async finish(
+    id: string,
+    actorUserId: string,
+    status: 'SUBMITTED' | 'FAILED' | 'UNKNOWN',
+    errorCode: string | null,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const row = await tx.submission.update({
+        where: { id },
+        data: {
+          status,
+          errorCode,
+          errorMessage: errorCode
+            ? 'Submission requires review; no automatic resend was performed'
+            : null,
+          submittedAt: status === 'SUBMITTED' ? new Date() : null,
+          paypalResponseStatus: status === 'SUBMITTED' ? 200 : null,
+        },
+      });
+      await this.auditAttempt(tx, row, actorUserId);
+      return this.present(row);
+    });
+  }
+
+  private async auditAttempt(
+    tx: Prisma.TransactionClient,
+    row: Submission,
+    actorUserId: string,
+  ) {
+    await this.audit.append(
+      {
+        merchantId: row.merchantId,
+        actorUserId,
+        resourceType: 'SUBMISSION',
+        resourceId: row.id,
+        outcome:
+          row.status === 'SUBMITTED'
+            ? 'SUCCEEDED'
+            : row.status === 'PENDING'
+              ? 'STARTED'
+              : row.status === 'BLOCKED'
+                ? 'BLOCKED'
+                : 'FAILED',
+        record: {
+          action: 'SUBMISSION_ATTEMPTED',
+          details: {
+            state:
+              row.status === 'SUBMITTED'
+                ? 'COMPLETED'
+                : row.status === 'PENDING'
+                  ? 'QUEUED'
+                  : row.status === 'BLOCKED'
+                    ? 'IGNORED'
+                    : 'FAILED',
+            ...(row.errorCode ? { errorCode: row.errorCode } : {}),
+          },
+        },
+      },
+      tx,
     );
   }
 
-  private async recordSubmission(
-    disputeId: string,
-    merchantId: string,
-    actorUserId: string,
-    idempotencyKey: string,
-    status: 'SUBMITTED' | 'BLOCKED' | 'FAILED',
-    paypalRequestId: string | null,
-    paypalResponseStatus: number | null,
-    submittedAt: Date | null,
-    errorCode: string | null,
-    errorMessage: string | null,
-    guardResult: SubmissionGuardResult,
-  ): Promise<SubmissionResult> {
-    return this.prisma.$transaction(async (tx) => {
-      // Re-check idempotency inside transaction.
-      const existing = await tx.submission.findUnique({
-        where: { idempotencyKey },
-      });
-      if (existing) {
-        return this.mapSubmission(existing);
-      }
-
-      const submission = await tx.submission.create({
-        data: {
-          idempotencyKey,
-          merchantId,
-          disputeId,
-          environment: 'sandbox',
-          status,
-          paypalRequestId,
-          paypalResponseStatus,
-          submittedAt,
-          errorCode,
-          errorMessage,
-          guardVerdict: guardResult.verdict,
-          guardReasons: guardResult.reasons,
-        },
-      });
-
-      // Audit the submission attempt via M09.
-      const auditRecord: Parameters<typeof this.audit.append>[0]['record'] = {
-        action: 'SUBMISSION_ATTEMPTED',
-        details: {
-          state:
-            status === 'SUBMITTED'
-              ? 'COMPLETED'
-              : status === 'FAILED'
-                ? 'FAILED'
-                : 'IGNORED',
-          ...(errorCode ? { errorCode } : {}),
-          ...(paypalResponseStatus ? { httpStatus: paypalResponseStatus } : {}),
-          ...(submittedAt ? { observedAt: submittedAt.toISOString() } : {}),
-        },
-      } as Parameters<typeof this.audit.append>[0]['record'];
-
-      await this.audit.append(
-        {
-          merchantId,
-          actorUserId,
-          resourceType: 'SUBMISSION',
-          resourceId: submission.id,
-          outcome: status === 'SUBMITTED' ? 'SUCCEEDED' : 'BLOCKED',
-          record: auditRecord,
-        },
-        tx,
-      );
-
-      return this.mapSubmission(submission);
-    });
-  }
-
-  private mapSubmission(row: Submission): SubmissionResult {
+  private present(row: Submission) {
     return SubmissionResultSchema.parse({
       id: row.id,
       disputeId: row.disputeId,
-      status: row.status as SubmissionResult['status'],
+      status: row.status,
       paypalRequestId: row.paypalRequestId,
       paypalResponseStatus: row.paypalResponseStatus,
       submittedAt: row.submittedAt?.toISOString() ?? null,
       errorCode: row.errorCode,
       errorMessage: row.errorMessage,
-      guardResult: SubmissionGuardResultSchema.parse({
-        verdict: row.guardVerdict,
-        reasons: row.guardReasons,
-      }),
+      guardResult: { verdict: row.guardVerdict, reasons: row.guardReasons },
       createdAt: row.createdAt.toISOString(),
     });
   }
 
-  async list(
-    merchantId: string,
-    page: number,
-    pageSize: number,
-  ): Promise<SubmissionListResponse> {
+  async list(merchantId: string, page: number, pageSize: number) {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.submission.findMany({
         where: { merchantId },
@@ -372,12 +336,11 @@ export class SubmissionsService {
       }),
       this.prisma.submission.count({ where: { merchantId } }),
     ]);
-
     return SubmissionListResponseSchema.parse({
-      items: items.map((item) => this.mapSubmission(item)),
+      items: items.map((row) => this.present(row)),
+      total,
       page,
       pageSize,
-      total,
     });
   }
 }

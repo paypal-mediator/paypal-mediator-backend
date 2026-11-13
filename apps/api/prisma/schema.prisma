@@ -478,13 +478,14 @@ model Submission {
   guardVerdict    String   @map("guard_verdict") @db.VarChar(16)
   guardReasons    Json     @map("guard_reasons")
   idempotencyKey  String   @unique @map("idempotency_key") @db.Uuid
+    requestHash     String?  @map("request_hash") @db.VarChar(64)
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   merchant   Merchant   @relation(fields: [merchantId], references: [id], onDelete: Restrict)
   dispute    Dispute    @relation(fields: [disputeId], references: [id], onDelete: Restrict)
   events     SubmissionEvent[]
 
-  @@unique([merchantId, disputeId])
+    @@index([merchantId, disputeId])
   @@index([merchantId, createdAt, id])
   @@map("submissions")
 }

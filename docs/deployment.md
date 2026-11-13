@@ -1,5 +1,24 @@
 # Backend público y webhook PayPal
 
+## M07/M08 publicados — 13 de noviembre de 2026
+
+Commit `322eff4dce6522bd5e4875cb8cd3462b877d4284` enviado a main y confirmado
+Live en Render, despliegue `dep-dbrljpbm8hqs739kcaug`, servicio
+`srv-dbq6q2qjnfac73eual9g`. Los logs de arranque muestran aplicadas las cuatro
+migraciones desde `20261113040000_submission_safety` hasta
+`20261113070000_submission_rls`, seguidas de arranque NestJS y pg-boss conectado.
+No se hizo una consulta SQL independiente de producción.
+
+Readiness público 200/PostgreSQL up. La ruta nueva de investigación rechaza
+sin sesión con 401; con la sesión existente, las lecturas de equipos, disputas
+y actividad filtrada M08 respondieron 200. No se dispararon inferencias ni
+presentaciones PayPal. El ciclo real de disputa sigue pendiente.
+
+CI aprobado con 459 pruebas unitarias/HTTP, 215 PostgreSQL, 162 de mediación
+y repetición de migraciones sin pendientes. El cambio previo del frontend
+anidado quedó excluido. Ver [CI](https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43485103612),
+[evidencia](evidence/m07-m08-render-20261113.json) y [alcance M08](m08-submissions.md).
+
 ## Asociación Odoo publicada — 13 de noviembre de 2026
 
 Commit `9bcd974` enviado a main y confirmado Live en Render, despliegue

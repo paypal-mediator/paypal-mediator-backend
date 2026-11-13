@@ -1,5 +1,19 @@
 # Organización del backend
 
+Estado vigente: [information.md](../information.md). Las secciones históricas
+inferiores no sustituyen los incrementos implementados que documentan las guías.
+
+## Integración M07/M08 del 13 de noviembre de 2026
+
+`DisputesService` publica el contexto autorizado de la disputa. La composición
+de `/api/disputes/:id/investigate` reside en VerifierModule, que ya depende de
+InvestigatorModule y DisputesModule, evitando imports circulares en M07.
+Verifier publica `submissionReview` con caso, versión e integridad comprobados.
+SubmissionsModule consume esas interfaces, políticas M01 y pago M03, y escribe
+solo intentos M08 y auditoría por AuditService. No se escriben tablas privadas
+de M05/M06/M07. PENDING/UNKNOWN mantienen una reserva persistente para evitar
+reenvíos ambiguos. Ver [contrato M08](m08-submissions.md).
+
 `conciliations/` es propietario del chat preventivo, sus políticas y mensajes.
 Clasifica mediante NLP.js local antes de invocar al generador de borradores.
 Consume interfaces públicas de M03 para pedidos/pagos y conserva la mediación

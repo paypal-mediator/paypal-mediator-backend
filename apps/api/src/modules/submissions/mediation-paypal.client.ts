@@ -23,6 +23,7 @@ export const PayPalMediationDetailSchema = z.object({
   create_time: z.iso.datetime({ offset: true }),
   status: z.string().min(1).max(64),
   dispute_life_cycle_stage: z.string().min(1).max(64),
+  reason: z.string().max(128).optional(),
   seller_response_due_date: z.iso.datetime({ offset: true }).optional(),
   disputed_transactions: z
     .array(z.object({ seller_transaction_id: z.string().min(1).max(255) }))

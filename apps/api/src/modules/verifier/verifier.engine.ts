@@ -23,7 +23,15 @@ import { enforceVerification } from './verification-policy.js';
 
 export type InvestigationSnapshot = Awaited<
   ReturnType<TransactionsService['investigationSnapshot']>
->;
+> & {
+  dispute?: {
+    id: string;
+    paypalDisputeId: string;
+    reason: string;
+    lastEventAt: string;
+    messages: unknown[];
+  };
+};
 export interface VerificationTrace {
   step: number;
   durationMs?: number;
@@ -59,7 +67,10 @@ export class VerifierEngine {
       {
         role: 'user',
         text: JSON.stringify({
-          task: 'Revision independiente de preparacion preventiva INR.',
+          task: snapshot.dispute
+            ? 'Revision independiente de evidencia para responder esta disputa INR concreta. Contrasta cada afirmacion con originales y mensajes; no autorices si faltan pruebas para el reclamo.'
+            : 'Revision independiente de preparacion preventiva INR.',
+          dispute: snapshot.dispute ?? null,
           verificationAsOf: new Date().toISOString(),
           untrustedInvestigatorDraft: draft,
           requiredClaimUnits: units,

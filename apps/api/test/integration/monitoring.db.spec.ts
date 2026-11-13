@@ -196,6 +196,10 @@ describe('M09 PostgreSQL and HTTP (MOCK identity issuer)', () => {
     await request(context.app.getHttpServer())
       .get('/api/activity?module=M08')
       .auth(token, { type: 'bearer' })
+      .expect(200);
+    await request(context.app.getHttpServer())
+      .get('/api/activity?module=M99')
+      .auth(token, { type: 'bearer' })
       .expect(400);
   });
 

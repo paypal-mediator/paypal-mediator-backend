@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -23,6 +24,7 @@ import {
 } from '@resolve-ai/contracts';
 import {
   MerchantAccessGuard,
+  MerchantAdminOnly,
   type MerchantRequest,
 } from '../merchants/index.js';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -42,15 +44,18 @@ export class SubmissionsController {
   ) {}
 
   @Post(':id/submit')
+  @MerchantAdminOnly()
   @ApiOperation({
     summary:
       'Submit evidence to PayPal after Submission Guard approval (M08). Requires Verifier APPROVED and merchant authorization.',
   })
   @ApiParam({ name: 'id', schema: { type: 'string', format: 'uuid' } })
+  @ApiBody({ schema: zodOpenApi(SubmitRequestSchema) })
   @ApiResponse({
-    status: 200,
+    status: 201,
     schema: zodOpenApi(SubmissionResultSchema),
-    description: 'Submission recorded (SUBMITTED, BLOCKED, or FAILED)',
+    description:
+      'Recorded submission; inspect SUBMITTED, BLOCKED, FAILED, PENDING or UNKNOWN',
   })
   @ApiResponse({
     status: 404,
@@ -71,6 +76,7 @@ export class SubmissionsController {
       disputeId,
       request.merchantActor.userId,
       body,
+      request.merchantActor.role,
     );
   }
 }
