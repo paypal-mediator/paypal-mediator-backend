@@ -164,6 +164,7 @@ export class ConciliationsService {
     const items = await this.db.conciliationChat.findMany({
       where: {
         merchantId,
+        messages: { some: { author: 'BUYER' } },
         ...(orderId ? { orderId } : {}),
         ...(transactionId ? { transactionId } : {}),
       },

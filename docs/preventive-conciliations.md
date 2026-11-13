@@ -2,9 +2,9 @@
 
 ## Flujo
 
-Este módulo es independiente de `mediation`, que opera sobre disputas existentes de PayPal. Un ADMIN crea un enlace desde Conciliations para un pedido comercial o una captura ya registrada en su equipo. M03 verifica la referencia mediante sus interfaces públicas. El comprador abre `/contact#<token>` y conversa sin una cuenta del dashboard. No abre ni escala disputas PayPal.
+Este módulo es independiente de `mediation`, que opera sobre disputas existentes de PayPal. El comprador inicia la conversación al enviar su primer mensaje desde `/contact#<token>`, sin una cuenta del dashboard. El comerciante recibe esas conversaciones y responde; Conciliations no ofrece un botón para iniciar conversaciones ni crear enlaces. La lista excluye los enlaces provisionados que todavía no tienen mensajes del comprador. M03 verifica la referencia del pedido/pago mediante sus interfaces públicas. No abre ni escala disputas PayPal.
 
-El enlace contiene 256 bits aleatorios, caduca entre 1 y 30 días (7 desde la interfaz) y se puede revocar. Solo se guarda su SHA-256; el token se muestra una vez. El comprador debe recibirlo por un canal del comerciante: no se envían correos ni WhatsApp automáticamente. Poseer el enlace autoriza esta conversación; no equivale a identidad PayPal verificada.
+El backend conserva un endpoint ADMIN para provisionar enlaces de acceso por pedido/pago; provisionar un enlace no inicia ni publica una conversación. El enlace contiene 256 bits aleatorios, caduca entre 1 y 30 días y se puede revocar. Solo se guarda su SHA-256; el token se devuelve una vez. Su entrega automática dentro de recibos sigue pendiente de integrar con el sistema que crea la venta; no se envían correos ni WhatsApp automáticamente. Poseer el enlace autoriza esta conversación; no equivale a identidad PayPal verificada.
 
 El frontend retira el fragmento de la URL y conserva el token en sessionStorage de esa pestaña. Las solicitudes públicas usan `X-Chat-Token`, no parámetros de URL, y `no-store`/`no-referrer`. La respuesta pública contiene únicamente referencia comercial y mensajes publicados; nunca borradores, planes, configuraciones ni identidad interna del administrador.
 
@@ -39,7 +39,7 @@ El detalle privado devuelve `chat.orderSource`: identifica la procedencia regist
 Entradas Zod: `packages/contracts/src/conciliations.ts`. Código: `modules/conciliations`. Tablas propias: `conciliation_policies`, `conciliation_chats`, `conciliation_messages`; RLS habilitado sin políticas Data API para navegadores. La autorización de equipo se aplica en el backend. VIEWER solo lee; todas las operaciones administrativas requieren ADMIN. No se escriben tablas privadas de M03/M07.
 
 - `GET/PUT /api/conciliations/policy`
-- `GET /api/conciliations` (hasta 100 recientes; filtros opcionales `orderId`/`transactionId`)
+- `GET /api/conciliations` (hasta 100 recientes con mensajes del comprador; filtros opcionales `orderId`/`transactionId`)
 - `POST /api/conciliations/links` con pedido **o** pago, nunca ambos
 - `GET /api/conciliations/:id`
 - `POST /api/conciliations/:id/approve`, `/manual-review`, `/close`, `/revoke`

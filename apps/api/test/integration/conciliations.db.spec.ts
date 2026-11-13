@@ -168,6 +168,12 @@ describe('preventive conciliation: real PostgreSQL/HTTP, MOCK identity and NLP/L
     const created = await link(),
       before = generationCount;
     const key = randomUUID();
+    const beforeContact = await get('/api/conciliations').expect(200);
+    expect(
+      beforeContact.body.items.some(
+        (item: { id: string }) => item.id === created.id,
+      ),
+    ).toBe(false);
     await send(created.token, 'llego bien', key).expect(201);
     await send(created.token, 'llego bien', key).expect(201);
     expect(generationCount).toBe(before);
@@ -175,6 +181,12 @@ describe('preventive conciliation: real PostgreSQL/HTTP, MOCK identity and NLP/L
     expect(view.body.chat.state).toBe('NO_ACTION');
     expect(view.body.messages).toHaveLength(1);
     expect(view.body.messages[0].classification.source).toBe('FAST_FILTER');
+    const afterContact = await get('/api/conciliations').expect(200);
+    expect(
+      afterContact.body.items.some(
+        (item: { id: string }) => item.id === created.id,
+      ),
+    ).toBe(true);
     await send(created.token, 'different body', key).expect(409);
   });
   it('keeps proposals private, sends the merchant-edited approval exactly once, and rejects stale drafts', async () => {
