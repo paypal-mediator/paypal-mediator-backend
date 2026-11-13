@@ -1,5 +1,6 @@
 import { z } from 'zod';
 export * from './merchants.js';
+export * from './merchant-invitations.js';
 export * from './event-ingestion.js';
 export * from './transactions.js';
 export * from './orders.js';

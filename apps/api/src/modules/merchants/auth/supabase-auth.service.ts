@@ -18,7 +18,7 @@ export class SupabaseAuthService {
   private readonly issuer: string | undefined;
   private readonly keys: ReturnType<typeof createRemoteJWKSet> | undefined;
 
-  constructor(@Inject(ENVIRONMENT) environment: Environment) {
+  constructor(@Inject(ENVIRONMENT) private readonly environment: Environment) {
     this.issuer = environment.SUPABASE_URL
       ? `${environment.SUPABASE_URL}/auth/v1`
       : undefined;
@@ -29,6 +29,53 @@ export class SupabaseAuthService {
           cacheMaxAge: 600000,
         })
       : undefined;
+  }
+
+  async identity(authorization: string | undefined) {
+    const userId = await this.authenticate(authorization);
+    const key =
+      this.environment.SUPABASE_SECRET_KEY ??
+      this.environment.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key)
+      throw new ApiException(
+        'AUTH_IDENTITY_UNAVAILABLE',
+        'Verified identity lookup is not configured',
+        503,
+      );
+    let profile: unknown;
+    try {
+      const response = await fetch(`${this.issuer}/user`, {
+        headers: { authorization: authorization!, apikey: key },
+        signal: AbortSignal.timeout(5000),
+        redirect: 'error',
+      });
+      if (!response.ok) throw new Error('Identity lookup failed');
+      profile = await response.json();
+    } catch {
+      throw new ApiException(
+        'AUTH_IDENTITY_UNAVAILABLE',
+        'Unable to verify the current account email',
+        503,
+      );
+    }
+    const parsed = z
+      .object({
+        id: z.uuid(),
+        email: z.email(),
+        email_confirmed_at: z.iso.datetime({ offset: true }).nullable(),
+      })
+      .safeParse(profile);
+    if (
+      !parsed.success ||
+      parsed.data.id !== userId ||
+      !parsed.data.email_confirmed_at
+    )
+      throw new ApiException(
+        'VERIFIED_EMAIL_REQUIRED',
+        'Confirm your account email before using invitations',
+        403,
+      );
+    return { userId, email: parsed.data.email.trim().toLowerCase() };
   }
 
   async authenticate(authorization: string | undefined): Promise<string> {

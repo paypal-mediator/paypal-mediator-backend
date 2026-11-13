@@ -42,6 +42,7 @@ model Merchant {
   allowSubmissions        Boolean              @default(false) @map("allow_submissions")
   requireMerchantApproval Boolean              @default(true) @map("require_merchant_approval")
   members                 MerchantMember[]
+  invitations             MerchantInvitation[]
   paypalAccount           PayPalAccount?
   paymentAdjustments      PaymentAdjustment[]
   integration             MerchantIntegration?
@@ -114,7 +115,35 @@ model MerchantMember {
 
   @@index([merchantId])
   @@index([authUserId])
+  @@unique([merchantId, authUserId])
   @@map("merchant_members")
+}
+
+model MerchantInvitation {
+  id                  String       @id @default(uuid()) @db.Uuid
+  merchantId          String       @map("merchant_id") @db.Uuid
+  email               String       @db.VarChar(254)
+  role                MerchantRole @default(VIEWER)
+  status              String       @default("PENDING") @db.VarChar(16)
+  createdBy           String       @map("created_by") @db.Uuid
+  acceptedBy          String?      @map("accepted_by") @db.Uuid
+  acceptedAt          DateTime?    @map("accepted_at") @db.Timestamptz(3)
+  expiresAt           DateTime     @map("expires_at") @db.Timestamptz(3)
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deliveryStatus      String       @default("PENDING") @map("delivery_status") @db.VarChar(24)
+  emailVersion        Int          @default(1) @map("email_version")
+  emailAttempts       Int          @default(0) @map("email_attempts")
+  emailSentAt         DateTime?    @map("email_sent_at") @db.Timestamptz(3)
+  emailErrorCode      String?      @map("email_error_code") @db.VarChar(80)
+  nextEmailAttemptAt  DateTime?    @map("next_email_attempt_at") @db.Timestamptz(3)
+  emailLeaseUntil     DateTime?    @map("email_lease_until") @db.Timestamptz(3)
+  merchant            Merchant     @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@index([email, status, expiresAt])
+  @@index([merchantId, createdAt, id])
+  @@index([deliveryStatus, nextEmailAttemptAt])
+  @@map("merchant_invitations")
 }
 
 model MerchantIntegration {

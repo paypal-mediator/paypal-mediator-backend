@@ -23,6 +23,11 @@ M01 también es propietario de `paypal_accounts` y del onboarding PayPal por
 negocio. Los clientes consumen cabeceras de vendedor mediante su interfaz pública;
 M02 resuelve vendedores de webhooks firmados. Ver [flujo y configuración](paypal-business-onboarding.md).
 
+M01 también conserva `merchant_invitations`, las altas de miembros al aceptar y
+el outbox de correo. El destinatario usa identidad Supabase confirmada actual,
+sin depender de una membresía previa; los administradores operan sobre el equipo
+autorizado. El enlace no concede acceso por sí mismo. Ver [invitaciones](team-invitations.md).
+
 ```text
 apps/api/
   prisma.config.ts           # Prisma CLI y conexión para migraciones

@@ -48,7 +48,7 @@ documental no representa probabilidad de ganar. PayPal decide el resultado ofici
 
 | Módulo | Implementado actualmente | Límite o pendiente vigente |
 | --- | --- | --- |
-| M01 — Merchant & Integrations | JWT Supabase/JWKS, membresías ADMIN/VIEWER, lista y creación de equipos, selección con `X-Merchant-Id`, políticas y conexión PayPal Sandbox por negocio con Partner Referrals, revocación y cabeceras de vendedor. | Invitaciones/join y los datos adicionales del wizard no están implementados en este checkout. Falta comprobar dos vendedores reales aislados. |
+| M01 — Merchant & Integrations | JWT Supabase/JWKS, membresías ADMIN/VIEWER, equipos e invitaciones por correo verificado, selección con `X-Merchant-Id`, políticas y conexión PayPal Sandbox por negocio. Invitaciones con aceptación/rechazo, revocación, vencimiento, enlace compartible y outbox Resend/SMTP. | El correo requiere proveedor y remitente configurados; SENT solo confirma aceptación del proveedor. Datos adicionales del wizard y prueba de dos vendedores PayPal reales aislados pendientes. Ver [invitaciones](docs/team-invitations.md). |
 | M02 — Event Ingestion | Firma oficial PayPal, cuerpo original, deduplicación, eventos/trabajos transaccionales, salud y recuperación ADMIN por equipo. Capturas, disputas, consentimiento y ajustes financieros. | Falta entrega firmada real nueva de REFUNDED/REVERSED y ciclo genuino de disputa. |
 | M03 — Transaction Manager | Capturas, pedidos, readiness, fuentes Orders v2/Odoo, reembolsos/reversiones persistentes, saldo y revisión de inconsistencias. | La instancia Odoo consultada no tiene registros; asociación con datos reales pendiente. No inicia devoluciones. |
 | M04 — Evidence Vault | Originales privados, hashes, versiones, documentos, expedientes y fuentes PayPal/Odoo. Storage real verificado previamente. | Datos y documentos Odoo reales pendientes; los proveedores incompletos no deben presentarse como conectores terminados. |
@@ -178,7 +178,7 @@ MOCK locales no las sustituyen.
    de originales adjuntos del caso. La ruta actual se detiene ante esos requisitos.
 3. Completar el workflow autónomo M07 si se requiere: ciclos persistentes limitados,
    estados de progreso y escalamiento, respetando los contratos de mediación.
-4. Invitaciones/join y datos adicionales del wizard M01; entrega automática del
+4. Configurar y verificar correo de invitaciones y datos adicionales del wizard M01; entrega automática del
    enlace de conciliación según quién controle el checkout.
 5. Reproducir el 500 observado en actividad remota; no confundir esa observación
    histórica con un fallo demostrado en todas las versiones actuales.

@@ -1,4 +1,10 @@
 import { Module } from '@nestjs/common';
+import {
+  TeamInvitationsController,
+  AccountInvitationsController,
+} from './merchant-invitations.controller.js';
+import { MerchantInvitationsService } from './merchant-invitations.service.js';
+import { InvitationMailer } from './invitation-mailer.js';
 import { AuditModule } from '../monitoring/audit.module.js';
 import { SupabaseAuthService } from './auth/supabase-auth.service.js';
 import { MerchantAccessGuard } from './auth/merchant-access.guard.js';
@@ -16,8 +22,15 @@ import { PayPalOnboardingService } from './paypal/paypal-onboarding.service.js';
 
 @Module({
   imports: [AuditModule],
-  controllers: [MerchantsController, MerchantAccountsController],
+  controllers: [
+    MerchantsController,
+    MerchantAccountsController,
+    TeamInvitationsController,
+    AccountInvitationsController,
+  ],
   providers: [
+    MerchantInvitationsService,
+    InvitationMailer,
     SupabaseAuthService,
     MerchantAccessGuard,
     MerchantsService,

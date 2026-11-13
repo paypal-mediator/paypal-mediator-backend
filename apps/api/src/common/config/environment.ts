@@ -55,6 +55,18 @@ export const EnvironmentSchema = z.object({
     .max(30000)
     .default(3000),
   SWAGGER_ENABLED: booleanFlag.optional(),
+  INVITATION_EMAIL_PROVIDER: z
+    .enum(['disabled', 'smtp', 'resend'])
+    .default('disabled'),
+  INVITATION_EMAIL_FROM: optionalString(z.email().max(254)),
+  INVITATION_APP_URL: optionalString(z.url()),
+  INVITATION_EMAIL_WORKER_ENABLED: booleanFlag.default(true),
+  RESEND_API_KEY: optionalString(z.string().min(1).max(2048)),
+  SMTP_HOST: optionalString(z.string().trim().min(1).max(255)),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: booleanFlag.default(false),
+  SMTP_USERNAME: optionalString(z.string().min(1).max(512)),
+  SMTP_PASSWORD: optionalString(z.string().min(1).max(2048)),
   PAYPAL_ENV: z.literal('sandbox').default('sandbox'),
   TRANSACTION_WORKER_ENABLED: booleanFlag.default(false),
   DISPUTE_WORKER_ENABLED: booleanFlag.default(false),

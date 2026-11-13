@@ -109,6 +109,19 @@ export const AuditRecordSchema = z.discriminatedUnion('action', [
     })
     .strict(),
   z.strictObject({
+    action: z.literal('TEAM_INVITATION_EVENT'),
+    details: z.strictObject({
+      event: z.enum([
+        'CREATED',
+        'ACCEPTED',
+        'DECLINED',
+        'REVOKED',
+        'EMAIL_REQUESTED',
+      ]),
+      invitationId: z.uuid(),
+    }),
+  }),
+  z.strictObject({
     action: z.literal('MEDIATION_EVENT'),
     details: z.strictObject({
       event: z.enum([
@@ -199,6 +212,7 @@ export const ActivityQuerySchema = z
       .enum([
         'SETTINGS_UPDATED',
         'MEDIATION_EVENT',
+        'TEAM_INVITATION_EVENT',
         ...AuditRecordSchema.options[1].shape.action.options,
       ])
       .optional(),

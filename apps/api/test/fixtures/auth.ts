@@ -1,8 +1,18 @@
 import { createServer, type Server } from 'node:http';
-import { exportJWK, generateKeyPair, SignJWT, type JWTPayload } from 'jose';
+import {
+  decodeJwt,
+  exportJWK,
+  generateKeyPair,
+  SignJWT,
+  type JWTPayload,
+} from 'jose';
 
 // MOCK identity provider only for tests; real crypto and real JWKS HTTP lookup.
 export async function createMockAuth() {
+  const profiles = new Map<
+    string,
+    { email: string; email_confirmed_at: string | null }
+  >();
   const { privateKey, publicKey } = await generateKeyPair('ES256');
   const publicJwk = {
     ...(await exportJWK(publicKey)),
@@ -11,6 +21,23 @@ export async function createMockAuth() {
     use: 'sig',
   };
   const server: Server = createServer((req, res) => {
+    if (req.url === '/auth/v1/user') {
+      try {
+        const id = decodeJwt((req.headers.authorization ?? '').slice(7)).sub!;
+        const profile = profiles.get(id);
+        if (!profile) {
+          res.writeHead(401).end();
+          return;
+        }
+        res
+          .writeHead(200, { 'Content-Type': 'application/json' })
+          .end(JSON.stringify({ id, ...profile }));
+        return;
+      } catch {
+        res.writeHead(401).end();
+        return;
+      }
+    }
     if (req.url !== '/auth/v1/.well-known/jwks.json') {
       res.writeHead(404).end();
       return;
@@ -25,6 +52,7 @@ export async function createMockAuth() {
     throw new Error('Mock auth failed to listen');
   const origin = `http://127.0.0.1:${address.port}`;
   return {
+    profiles,
     origin,
     async token(userId: string, overrides: JWTPayload = {}) {
       return new SignJWT({
