@@ -1,0 +1,93 @@
+{
+  "checkedAt": "2026-11-14T00:07:19.173Z",
+  "teamId": "55568059-91c3-42d2-8eb6-480d04833f91",
+  "role": "MEMBER",
+  "realAuth": true,
+  "realPublishedApi": true,
+  "checks": [
+    "ADMIN can invite MEMBER; recipient accepts and receives MEMBER membership",
+    "MEMBER registers a labeled DEMO order and creates/closes an operational buyer conversation",
+    "MEMBER cannot list/create invitations, rename the team, connect/check PayPal or authorize evidence submission"
+  ],
+  "orderId": "2c3bb1cf-80b2-42d4-aee6-deef93e93934",
+  "conversationId": "2b43843e-dbbb-4bb5-8020-ed23aa106c95",
+  "invitationId": "ca9f7102-0639-4fa6-8d76-10e7f5670908",
+  "notice": "Two existing confirmed accounts; a labeled QA team and DEMO order, no real purchase, PayPal call, tracking registration or evidence submission.",
+  "browser": {
+    "checkedAt": "2026-11-14T00:12:27.843Z",
+    "apiMocks": false,
+    "checks": [
+      {
+        "viewport": "1440x1000",
+        "adminControlsHidden": true,
+        "teamRenameDisabled": true,
+        "operationalChatControlsVisible": true,
+        "memberRevokedQaBuyerLink": true,
+        "pageExceptions": 0
+      },
+      {
+        "viewport": "390x844",
+        "adminControlsHidden": true,
+        "teamRenameDisabled": true,
+        "operationalChatControlsVisible": true,
+        "memberRevokedQaBuyerLink": false,
+        "pageExceptions": 0
+      }
+    ],
+    "memberOptionAvailableToAdmin": true
+  },
+  "release": {
+    "backend": {
+      "commit": "023d56cc8b1bbda1f68e6c63885683c3f6abd4e9",
+      "deployId": "dep-dbrqajmq1p3s73e3fv5g",
+      "status": "live",
+      "finishedAt": "2026-11-14T00:04:41.957725Z"
+    },
+    "frontend": {
+      "commit": "0a5ddebe1f5f3e0029a797bebfd6f7829885ab72",
+      "deployId": "dep-dbrqalh5efls73e1efp0",
+      "status": "live",
+      "finishedAt": "2026-11-14T00:04:01.844731Z"
+    }
+  },
+  "database": {
+    "tlsVerified": true,
+    "migration": "20261113080000_member_role",
+    "finishedAt": "2026-11-14T00:04:30.764Z",
+    "checksumMatchesRepository": true,
+    "roles": ["ADMIN", "MEMBER", "VIEWER"],
+    "qaMemberships": [
+      {
+        "role": "MEMBER",
+        "count": 1
+      },
+      {
+        "role": "ADMIN",
+        "count": 1
+      }
+    ]
+  },
+  "validation": {
+    "backendUnitAndHttp": 462,
+    "postgres": 239,
+    "migrationsAppliedAndRepeated": 29,
+    "frontendTests": 41,
+    "frontendLint": true,
+    "frontendTypes": true,
+    "frontendBuild": true,
+    "ci": {
+      "conclusion": "success",
+      "headSha": "023d56cc8b1bbda1f68e6c63885683c3f6abd4e9",
+      "status": "completed",
+      "url": "https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43531547687"
+    }
+  },
+  "mail": {
+    "provider": "resend",
+    "testingSender": "onboarding@resend.dev",
+    "previousInvitationProviderAccepted": true,
+    "inboxVerified": false
+  },
+  "qaNote": "An initial QA order omitted DEMO in sourceSystem and was rejected by the existing database constraint. Correcting the labeled test data allowed the same MEMBER request; no M03 behavior was changed.",
+  "finalVerifiedAt": "2026-11-14T00:13:19.134Z"
+}

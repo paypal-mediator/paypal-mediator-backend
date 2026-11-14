@@ -33,6 +33,16 @@ proveedor confirmada, llegada a la bandeja no comprobada. El remitente de prueba
 no habilita envíos a cualquier destinatario; falta un dominio verificado para
 ese alcance. Ver [evidencia](docs/evidence/team-invitations-render-20261113.json).
 
+**Rol MEMBER publicado:** backend `023d56c` y frontend `0a5ddeb`, ambos Live.
+MEMBER consulta y edita contenido operativo (pedidos, evidencia, seguimiento y
+conversaciones preventivas); ajustes, invitaciones, conexiones, facturación,
+agentes y autorización de presentaciones PayPal siguen reservados a ADMIN.
+No se cambia ningún rol existente; VIEWER conserva lectura. Migración
+`20261113080000_member_role` aplicada, con enum y checksum comprobados mediante
+TLS verificado. Pruebas: 462 unitarias/HTTP, 239 PostgreSQL, 41 frontend y CI
+aprobado. API real y Chrome en escritorio/móvil verificaron MEMBER operativo y
+bloqueo de administración. Ver [evidencia](docs/evidence/team-member-render-20261113.json).
+
 ## Producto y reglas
 
 ResolveAI prepara expedientes de pagos PayPal y ayuda al vendedor a investigar

@@ -1,5 +1,24 @@
 # Backend público y webhook PayPal
 
+## Rol MEMBER publicado — 13 de noviembre de 2026
+
+Backend `023d56c`, despliegue `dep-dbrqajmq1p3s73e3fv5g`, y frontend `0a5ddeb`,
+despliegue `dep-dbrqalh5efls73e1efp0`, confirmados Live. La migración aditiva
+`20261113080000_member_role` incorpora MEMBER sin cambiar membresías existentes.
+Consulta independiente con TLS verificado confirmó enum ADMIN/MEMBER/VIEWER,
+migración terminada y checksum igual al repositorio.
+
+CI aprobado: 462 pruebas unitarias/HTTP, 239 PostgreSQL y 162 de mediación.
+Las 29 migraciones se aplicaron y repitieron sin pendientes. Frontend: 41 pruebas,
+lint, tipos y build. Una invitación real dio MEMBER a una cuenta confirmada en
+un equipo QA separado. Pudo registrar un pedido DEMO y crear/cerrar una
+conversación, mientras administración, invitaciones, conexión PayPal y presentación
+de evidencia devolvieron 403. Chrome sin mocks verificó controles operativos y
+restricciones administrativas en escritorio/móvil y la opción MEMBER para ADMIN.
+Ver [permisos](team-invitations.md#roles-y-permisos),
+[CI](https://github.com/paypal-mediator/paypal-mediator-backend/actions/runs/43531547687)
+y [evidencia](evidence/team-member-render-20261113.json).
+
 ## Invitaciones M01 publicadas — 13 de noviembre de 2026
 
 Backend `ea7328c`, despliegue `dep-dbrpsiui0phs73b4o4q0`, y frontend `ed42d78`,

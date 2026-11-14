@@ -26,6 +26,13 @@ el frontend no sustituye esa autorización. No cambia automáticamente ningún r
 existente. Aceptar otra invitación no eleva una membresía ya activa. El rol por
 defecto de una invitación continúa siendo VIEWER.
 
+El rol está publicado en backend `023d56c` y frontend `0a5ddeb`. La migración
+`20261113080000_member_role` solo agrega MEMBER al enum. Pruebas PostgreSQL
+verifican invitación/aceptación, pedidos y evidencia editables, conversaciones,
+lectura de VIEWER y rechazos de administración para MEMBER. Las pruebas
+publicadas usan dos cuentas existentes en un equipo QA y Chrome sin mocks.
+Ver [evidencia MEMBER](evidence/team-member-render-20261113.json).
+
 ## API pública
 
 - `GET/POST /api/merchants/me/invitations`: listar las 100 invitaciones más
