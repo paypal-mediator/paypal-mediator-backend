@@ -21,9 +21,14 @@ restricciones VIEWER y ausencia de elevación de un miembro activo. Chrome sin
 mocks confirmó creación y aceptación desde el enlace, equipo seleccionado,
 recarga y permisos en escritorio y móvil. Frontend: 40 pruebas, lint, tipos y build.
 
-Resend aún no está configurado en la última lectura de Render: el estado es
-`NOT_CONFIGURED`, los enlaces y el dashboard funcionan, y no se acredita envío
-ni recepción de correo. Configuración y límites en [invitaciones](team-invitations.md).
+Resend se configuró después con clave secreta de solo envío, worker habilitado
+y `INVITATION_EMAIL_FROM=onboarding@resend.dev`. El despliegue de configuración
+`dep-dbrq4odg1s2s73d85ur0` quedó Live sobre `ae49823`. Una invitación real
+procesada en Render alcanzó `SENT` sin error; esto acredita aceptación por Resend,
+no llegada a la bandeja. El usuario eligió mantener el remitente de pruebas;
+envíos a otros destinatarios requieren un remitente de dominio verificado.
+Ver [prueba de correo](evidence/team-invitations-email-20261113.json).
+Configuración y límites en [invitaciones](team-invitations.md).
 Ver [evidencia](evidence/team-invitations-render-20261113.json).
 
 ## M07/M08 publicados — 13 de noviembre de 2026

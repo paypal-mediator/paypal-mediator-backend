@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-11-13T23:52:36.361Z",
+  "invitationId": "bb1ae5f5-b801-46c3-a084-5827b2d87da9",
+  "teamId": "719d8a91-161d-4857-a30f-f7483079981b",
+  "provider": "resend",
+  "sender": "onboarding@resend.dev",
+  "testingSender": true,
+  "deliveryStatus": "SENT",
+  "emailSentAt": "2026-11-13T23:52:25.130Z",
+  "emailErrorCode": null,
+  "providerAccepted": true,
+  "recipientInboxVerified": false,
+  "activation": {
+    "secretStoredInRender": true,
+    "secretReadbackMatches": true,
+    "workerEnabled": true,
+    "deployId": "dep-dbrq4odg1s2s73d85ur0",
+    "commit": "ae498230ac0a341288d309a5fd6e899ef7b5d401",
+    "deployStatus": "live",
+    "finishedAt": "2026-11-13T23:52:00.435802Z"
+  },
+  "scope": "User chose the Resend testing sender only. The key is sending-only. Provider acceptance is verified; recipient inbox and delivery to arbitrary addresses are not verified."
+}

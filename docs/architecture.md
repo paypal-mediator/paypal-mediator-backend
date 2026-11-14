@@ -28,6 +28,11 @@ el outbox de correo. El destinatario usa identidad Supabase confirmada actual,
 sin depender de una membresía previa; los administradores operan sobre el equipo
 autorizado. El enlace no concede acceso por sí mismo. Ver [invitaciones](team-invitations.md).
 
+`MerchantEditorOnly` autoriza a ADMIN y MEMBER para edición operativa de pedidos,
+evidencia, seguimiento y conversaciones preventivas. `MerchantAdminOnly` conserva
+ajustes, invitaciones, conexiones, facturación, agentes y presentación a PayPal.
+VIEWER mantiene lectura. Ambos controles usan membresías activas de M01.
+
 ```text
 apps/api/
   prisma.config.ts           # Prisma CLI y conexión para migraciones

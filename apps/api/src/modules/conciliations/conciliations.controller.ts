@@ -25,6 +25,7 @@ import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
 import {
   MerchantAccessGuard,
   MerchantAdminOnly,
+  MerchantEditorOnly,
   type MerchantRequest,
 } from '../merchants/index.js';
 import { ConciliationsService } from './conciliations.service.js';
@@ -64,7 +65,7 @@ export class ConciliationsController {
     );
   }
   @Post('links')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @Header('Cache-Control', 'no-store')
   create(
     @Req() req: MerchantRequest,
@@ -87,7 +88,7 @@ export class ConciliationsController {
     return this.service.view(req.merchantActor.merchantId, id);
   }
   @Post(':id/approve')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   approve(
     @Req() req: MerchantRequest,
     @Param('id', new ZodValidationPipe(z.uuid())) id: string,
@@ -97,7 +98,7 @@ export class ConciliationsController {
     return this.service.approve(req.merchantActor, id, body);
   }
   @Post(':id/close')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   close(
     @Req() req: MerchantRequest,
     @Param('id', new ZodValidationPipe(z.uuid())) id: string,
@@ -105,7 +106,7 @@ export class ConciliationsController {
     return this.service.close(req.merchantActor, id);
   }
   @Post(':id/manual-review')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   manualReview(
     @Req() req: MerchantRequest,
     @Param('id', new ZodValidationPipe(z.uuid())) id: string,
@@ -113,7 +114,7 @@ export class ConciliationsController {
     return this.service.manualReview(req.merchantActor, id);
   }
   @Post(':id/revoke')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   revoke(
     @Req() req: MerchantRequest,
     @Param('id', new ZodValidationPipe(z.uuid())) id: string,

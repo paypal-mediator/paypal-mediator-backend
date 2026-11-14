@@ -26,8 +26,12 @@ al recargar y restringir VIEWER. Dos cuentas existentes con correo confirmado
 participaron en un equipo QA identificado. Migración y RLS comprobados con TLS
 verificado; checksum igual al repositorio. CI: 462 pruebas unitarias/HTTP,
 235 PostgreSQL y 162 de mediación; frontend: 40 pruebas, lint, tipos y build.
-El correo permanece `NOT_CONFIGURED` hasta configurar Resend en Render; no se
-ha confirmado envío ni recepción de correo. Ver [evidencia](docs/evidence/team-invitations-render-20261113.json).
+Resend está configurado en Render con clave de solo envío y el remitente de
+pruebas `onboarding@resend.dev`, por elección del usuario. Una invitación real
+procesada por el worker quedó `SENT`, con fecha y sin error: aceptación del
+proveedor confirmada, llegada a la bandeja no comprobada. El remitente de pruebas
+no habilita envíos a cualquier destinatario; falta un dominio verificado para
+ese alcance. Ver [evidencia](docs/evidence/team-invitations-render-20261113.json).
 
 ## Producto y reglas
 
@@ -188,7 +192,8 @@ MOCK locales no las sustituyen.
    de originales adjuntos del caso. La ruta actual se detiene ante esos requisitos.
 3. Completar el workflow autónomo M07 si se requiere: ciclos persistentes limitados,
    estados de progreso y escalamiento, respetando los contratos de mediación.
-4. Configurar y verificar correo de invitaciones y datos adicionales del wizard M01; entrega automática del
+4. Habilitar un remitente de dominio verificado para invitaciones a cualquier
+   destinatario y completar datos adicionales del wizard M01; entrega automática del
    enlace de conciliación según quién controle el checkout.
 5. Reproducir el 500 observado en actividad remota; no confundir esa observación
    histórica con un fallo demostrado en todas las versiones actuales.

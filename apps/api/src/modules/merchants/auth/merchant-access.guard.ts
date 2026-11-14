@@ -25,6 +25,8 @@ export interface MerchantActor {
 export type MerchantRequest = Request & { merchantActor: MerchantActor };
 const ADMIN_ONLY = 'merchants:admin-only';
 export const MerchantAdminOnly = () => SetMetadata(ADMIN_ONLY, true);
+const EDITOR_ONLY = 'merchants:editor-only';
+export const MerchantEditorOnly = () => SetMetadata(EDITOR_ONLY, true);
 
 @Injectable()
 export class MerchantAccessGuard implements CanActivate {
@@ -107,6 +109,16 @@ export class MerchantAccessGuard implements CanActivate {
         403,
       );
     }
+    const editorOnly = this.reflector.getAllAndOverride<boolean>(EDITOR_ONLY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (editorOnly && role !== 'ADMIN' && role !== 'MEMBER')
+      throw new ApiException(
+        'MERCHANT_EDITOR_REQUIRED',
+        'An administrator or member is required to edit team content',
+        403,
+      );
     request.merchantActor = {
       userId,
       merchantId,

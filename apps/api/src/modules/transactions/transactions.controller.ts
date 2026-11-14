@@ -36,7 +36,7 @@ import {
 } from '@resolve-ai/contracts';
 import {
   MerchantAccessGuard,
-  MerchantAdminOnly,
+  MerchantEditorOnly,
   type MerchantRequest,
 } from '../merchants/index.js';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -52,10 +52,10 @@ import { TransactionsService } from './transactions.service.js';
 @Controller('transactions')
 export class TransactionsController {
   @Post(':id/refresh-order-sources')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @ApiOperation({
     summary:
-      'Fetch/retry registered order information sources (ADMIN); source failures remain explicit',
+      'Fetch/retry registered order information sources (ADMIN/MEMBER); source failures remain explicit',
   })
   @ApiResponse({ status: 201, schema: zodOpenApi(TransactionResponseSchema) })
   refreshOrderSources(
@@ -70,10 +70,10 @@ export class TransactionsController {
   ) {}
 
   @Post(':id/evidence/files')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @ApiOperation({
     summary:
-      'Store an original document in private Storage (ADMIN, maximum 512 KiB)',
+      'Store an original document in private Storage (ADMIN/MEMBER, maximum 512 KiB)',
   })
   @ApiBody({ schema: zodOpenApi(UploadEvidenceFileSchema) })
   @ApiResponse({ status: 201, schema: zodOpenApi(EvidenceReceiptSchema) })
@@ -189,10 +189,10 @@ export class TransactionsController {
   }
 
   @Post(':id/refresh-evidence')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @ApiOperation({
     summary:
-      'Reconcile order and persist payment/order evidence in the dossier (ADMIN)',
+      'Reconcile order and persist payment/order evidence in the dossier (ADMIN/MEMBER)',
   })
   @ApiResponse({ status: 201, schema: zodOpenApi(TransactionResponseSchema) })
   refresh(
@@ -215,10 +215,10 @@ export class TransactionsController {
   }
 
   @Post(':id/evidence')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @ApiOperation({
     summary:
-      'Append a sourced tracking/delivery record; this does not verify delivery authenticity (ADMIN)',
+      'Append a sourced tracking/delivery record; this does not verify delivery authenticity (ADMIN/MEMBER)',
   })
   @ApiBody({ schema: zodOpenApi(RegisterEvidenceSchema) })
   @ApiResponse({

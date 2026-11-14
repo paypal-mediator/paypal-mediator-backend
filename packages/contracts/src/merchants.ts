@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const MerchantRoleSchema = z.enum(['ADMIN', 'VIEWER']);
+export const MerchantRoleSchema = z.enum(['ADMIN', 'MEMBER', 'VIEWER']);
 export type MerchantRole = z.infer<typeof MerchantRoleSchema>;
 
 export const MerchantPolicySchema = z.object({

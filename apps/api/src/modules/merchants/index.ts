@@ -9,6 +9,7 @@ export {
 export {
   MerchantAccessGuard,
   MerchantAdminOnly,
+  MerchantEditorOnly,
   type MerchantActor,
   type MerchantRequest,
 } from './auth/merchant-access.guard.js';

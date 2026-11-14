@@ -1,11 +1,30 @@
 # M01: invitaciones a equipos
 
 El administrador crea una invitación desde Settings > Invitations usando el correo
-y el rol ADMIN o VIEWER. El destinatario la consulta desde el dashboard, desde
+y el rol ADMIN, MEMBER o VIEWER. El destinatario la consulta desde el dashboard, desde
 Join a team o desde el enlace compartido. El enlace abre la aplicación y requiere
 iniciar sesión con el correo invitado confirmado por Supabase Auth. El ID del
 enlace no concede acceso por sí mismo. Las invitaciones vencen en siete días y
 el administrador puede revocarlas.
+
+## API pública
+
+## Roles y permisos
+
+| Operación                                                     | ADMIN | MEMBER | VIEWER |
+| ------------------------------------------------------------- | ----- | ------ | ------ |
+| Consultar datos del equipo                                    | Sí    | Sí     | Sí     |
+| Registrar pedidos y añadir/versionar evidencia                | Sí    | Sí     | No     |
+| Actualizar fuentes y seguimiento de envíos                    | Sí    | Sí     | No     |
+| Responder y gestionar conversaciones preventivas              | Sí    | Sí     | No     |
+| Cambiar ajustes, conexiones, facturación o invitaciones       | Sí    | No     | No     |
+| Ejecutar investigación/verificación y autorizar envíos PayPal | Sí    | No     | No     |
+
+MEMBER conserva edición operativa sin autoridad administrativa. El servidor
+comprueba el rol de la membresía activa en cada solicitud; ocultar controles en
+el frontend no sustituye esa autorización. No cambia automáticamente ningún rol
+existente. Aceptar otra invitación no eleva una membresía ya activa. El rol por
+defecto de una invitación continúa siendo VIEWER.
 
 ## API pública
 
@@ -89,7 +108,12 @@ Chrome de escritorio y móvil ejerció el frontend publicado sin mocks: creació
 aceptación por enlace, selección automática del equipo, selección tras recargar
 y ocultación de controles ADMIN al VIEWER. La suite local usa proveedores MOCK
 explícitos; las verificaciones publicadas usan Supabase Auth y PostgreSQL reales.
-El correo queda pendiente de credenciales y remitente Resend en Render.
+Resend quedó configurado con clave de solo envío y `onboarding@resend.dev`.
+Por decisión del usuario se usa ese remitente de pruebas, limitado al correo
+asociado a su cuenta Resend. El worker real procesó una invitación y registró
+`SENT` sin error, confirmando aceptación del proveedor; la bandeja del destinatario
+no se inspeccionó. Para invitar por correo a cualquier destinatario se necesita
+un remitente de dominio verificado. Ver [prueba real de correo](evidence/team-invitations-email-20261113.json).
 
 La migración tolera un índice único de membresías ya existente solo si su
 definición es correcta. Nunca elimina el índice ni fusiona miembros duplicados.

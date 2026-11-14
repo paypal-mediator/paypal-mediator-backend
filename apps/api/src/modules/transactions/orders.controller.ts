@@ -28,7 +28,7 @@ import {
 } from '@resolve-ai/contracts';
 import {
   MerchantAccessGuard,
-  MerchantAdminOnly,
+  MerchantEditorOnly,
   type MerchantRequest,
 } from '../merchants/index.js';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -43,10 +43,10 @@ export class OrdersController {
   constructor(@Inject(OrdersService) private readonly orders: OrdersService) {}
 
   @Post()
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @ApiOperation({
     summary:
-      'Register an immutable merchant order and reconcile matching payments (ADMIN)',
+      'Register an immutable merchant order and reconcile matching payments (ADMIN/MEMBER)',
   })
   @ApiBody({ schema: zodOpenApi(CreateOrderSchema) })
   @ApiResponse({ status: 201, schema: zodOpenApi(OrderReceiptSchema) })

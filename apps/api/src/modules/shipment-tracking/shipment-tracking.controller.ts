@@ -27,6 +27,7 @@ import {
 import {
   MerchantAccessGuard,
   MerchantAdminOnly,
+  MerchantEditorOnly,
   type MerchantRequest,
 } from '../merchants/index.js';
 import { ZodValidationPipe } from '../../common/http/zod-validation.pipe.js';
@@ -61,7 +62,7 @@ export class ShipmentTrackingController {
     return this.tracking.read(req.merchantActor.merchantId, id);
   }
   @Post('transactions/:id/shipment-tracking/resolve')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @ApiBody({ schema: zodOpenApi(ResolveShipmentTrackingSchema) })
   @ApiOperation({
     summary: 'Resolve tracking: PayPal, ERP, then 17TRACK fallback',
@@ -94,7 +95,7 @@ export class ShipmentTrackingController {
     return this.tracking.readForDispute(req.merchantActor.merchantId, id);
   }
   @Post('disputes/:id/shipment-tracking/resolve')
-  @MerchantAdminOnly()
+  @MerchantEditorOnly()
   @ApiBody({ schema: zodOpenApi(ResolveShipmentTrackingSchema) })
   @ApiResponse({
     status: 201,

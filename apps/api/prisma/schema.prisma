@@ -101,6 +101,7 @@ model Subscription {
 
 enum MerchantRole {
   ADMIN
+  MEMBER
   VIEWER
 }
 
